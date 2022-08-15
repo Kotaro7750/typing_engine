@@ -69,6 +69,50 @@ impl Chunk {
             key_stroke_candidates,
         }
     }
+
+    // このチャンクを打つのに必要な最小のキーストローク数を計算する
+    fn calc_min_key_stroke_count(&self) -> usize {
+        assert!(self.key_stroke_candidates.is_some());
+
+        self.key_stroke_candidates
+            .as_ref()
+            .unwrap()
+            .iter()
+            .map(|candidate| candidate.calc_key_stroke_count())
+            .min()
+            .unwrap()
+    }
+
+    // チャンクをcount_striction回のキーストロークで終わるように制限する
+    // 最後のチャンクに使うことを想定している
+    // ex. 「し」というチャンクには「si」「shi」「ci」という候補があるがこれを1回のキーストロークに制限すると「s」「c」となる
+    pub fn strict_key_stroke_count(&mut self, count_striction: usize) {
+        // 制限によってキーストロークが0回になったり必要キーストローク数が増えてはいけない
+        assert!(count_striction != 0 && count_striction <= self.calc_min_key_stroke_count());
+
+        let mut new_key_stroke_candidates = self.key_stroke_candidates.as_ref().unwrap().clone();
+
+        new_key_stroke_candidates
+            .iter_mut()
+            // 変更するのは制限よりも長い候補のみでいい
+            .filter(|candidate| candidate.calc_key_stroke_count() > count_striction)
+            .for_each(|candidate| candidate.strict_key_stroke_count(count_striction));
+
+        // 制限の結果重複するキーストロークが生じる可能性があるので縮退させる
+        let mut exists_in_candidates: HashSet<String> = HashSet::new();
+        new_key_stroke_candidates.retain(|candidate| {
+            let whole_key_stroke = candidate.whole_key_stroke().to_string();
+            if exists_in_candidates.contains(&whole_key_stroke) {
+                false
+            } else {
+                exists_in_candidates.insert(whole_key_stroke);
+                true
+            }
+        });
+
+        self.key_stroke_candidates
+            .replace(new_key_stroke_candidates);
+    }
 }
 
 // 綴りのみの不完全なチャンク列にキーストローク候補を追加する
@@ -274,17 +318,29 @@ impl ChunkKeyStrokeCandidate {
         }
     }
 
-    // この候補のキーストローク系列の特定のキーストロークを取り出す
-    fn key_stroke_char_at_position(&self, position: usize) -> KeyStrokeChar {
+    // キーストローク全体の文字列を生成する
+    fn whole_key_stroke(&self) -> KeyStrokeString {
         let mut s = String::new();
 
         for key_stroke in &self.key_stroke_elements {
             s.push_str(key_stroke);
         }
 
-        assert!(position <= s.chars().count() - 1);
+        s.try_into().unwrap()
+    }
 
-        s.chars().nth(position).unwrap().try_into().unwrap()
+    // この候補のキーストローク系列の特定のキーストロークを取り出す
+    fn key_stroke_char_at_position(&self, position: usize) -> KeyStrokeChar {
+        let whole_key_stroke = self.whole_key_stroke();
+
+        assert!(position <= whole_key_stroke.chars().count() - 1);
+
+        whole_key_stroke
+            .chars()
+            .nth(position)
+            .unwrap()
+            .try_into()
+            .unwrap()
     }
 
     // 何回のキーストロークで打つことができるか
@@ -296,6 +352,41 @@ impl ChunkKeyStrokeCandidate {
         }
 
         s.chars().count()
+    }
+
+    // この候補のキーストローク回数をstrict_count回に制限する
+    // この候補の属するチャンクが最後のチャンクであることを想定している
+    fn strict_key_stroke_count(&mut self, strict_count: usize) {
+        assert!(strict_count < self.calc_key_stroke_count());
+
+        let mut new_key_stroke_elements: Vec<KeyStrokeString> = Vec::new();
+
+        let mut count = 0;
+        for key_stroke_element in &self.key_stroke_elements {
+            let count_of_element = key_stroke_element.chars().count();
+
+            if count + count_of_element >= strict_count {
+                let count_after_truncate = strict_count - count;
+                assert!(count_after_truncate > 0);
+
+                let mut truncated = String::new();
+                for (i, c) in key_stroke_element.chars().enumerate() {
+                    if i < count_after_truncate {
+                        truncated.push(c);
+                    }
+                }
+
+                new_key_stroke_elements.push(truncated.try_into().unwrap());
+                break;
+            }
+
+            new_key_stroke_elements.push(key_stroke_element.clone());
+            count += count_of_element;
+        }
+
+        self.key_stroke_elements = new_key_stroke_elements;
+        // この候補の属するチャンクが最後のチャンクであることを想定しているので次のチャンクへの制限はなくてもよい
+        self.next_chunk_head_constraint.take();
     }
 }
 
@@ -432,5 +523,28 @@ mod test {
                 chunk!("g", vec![candidate!(["g"])]),
             ]
         );
+    }
+
+    #[test]
+    fn strict_key_stroke_count_1() {
+        let mut chunk = chunk!(
+            "じょ",
+            vec![
+                candidate!(["jo"]),
+                candidate!(["zyo"]),
+                candidate!(["jyo"]),
+                candidate!(["zi", "lyo"]),
+                candidate!(["zi", "xyo"]),
+                candidate!(["ji", "lyo"]),
+                candidate!(["ji", "xyo"]),
+            ]
+        );
+
+        chunk.strict_key_stroke_count(1);
+
+        assert_eq!(
+            chunk,
+            chunk!("じょ", vec![candidate!(["j"]), candidate!(["z"]),])
+        )
     }
 }
