@@ -34,7 +34,7 @@ impl VocabularyEntry {
 
     // 語彙からチャンク列を構築する
     // この段階ではそれぞれのチャンクに対するキーストローク候補は設定しない
-    fn construct_chunks_from_vocabulary_entry(&self) -> Vec<Chunk> {
+    pub fn construct_chunks(&self) -> Vec<Chunk> {
         let mut chunks = Vec::<Chunk>::new();
 
         let spell_chars: Vec<char> = self.construct_spell_string().chars().collect();
@@ -98,12 +98,12 @@ mod test {
         };
     }
 
-    macro_rules! equal_check_construct_chunks_from_vocabulary {
+    macro_rules! equal_check_construct_chunks {
         (($vs:literal,[$($spell:literal),*]), [$($s:literal),*]) => {
             let ve = vocabulary_entry!($vs,[$($spell),*]);
 
             assert_eq!(
-                ve.construct_chunks_from_vocabulary_entry(),
+                ve.construct_chunks(),
                 vec![$(chunk!($s)),*]
             );
         }
@@ -111,16 +111,16 @@ mod test {
 
     #[test]
     fn construct_chunks_from_vocabulary_entry_1() {
-        equal_check_construct_chunks_from_vocabulary!(("今日", ["きょ", "う"]), ["きょ", "う"]);
+        equal_check_construct_chunks!(("今日", ["きょ", "う"]), ["きょ", "う"]);
     }
 
     #[test]
     fn construct_chunks_from_vocabulary_entry_2() {
-        equal_check_construct_chunks_from_vocabulary!((" 　", [" ", "　"]), [" ", "　"]);
+        equal_check_construct_chunks!((" 　", [" ", "　"]), [" ", "　"]);
     }
 
     #[test]
     fn construct_chunks_from_vocabulary_entry_3() {
-        equal_check_construct_chunks_from_vocabulary!(("big", ["b", "i", "g"]), ["b", "i", "g"]);
+        equal_check_construct_chunks!(("big", ["b", "i", "g"]), ["b", "i", "g"]);
     }
 }
