@@ -70,8 +70,34 @@ impl Chunk {
         }
     }
 
+    // このチャンクを打つのに必要な最小のキーストローク数を推測する
+    // キーストロークをまだ付与していないチャンクに対して行うため推測である
+    pub fn estimate_min_key_stroke_count(&self) -> usize {
+        assert!(self.key_stroke_candidates.is_none());
+
+        // ここで推測するのはあくまでも最小なので基本的には変換辞書から引いたものをそのまま使う
+        // これは，2文字のチャンクの最小キーストロークは2文字をまとめて打つものだからである
+        // 「っ」は次のチャンクによっては1回のキーストロークで打てるため1回としてカウントする
+        match &self.spell {
+            ChunkSpell::DisplayableAscii(_) => 1,
+            ChunkSpell::SingleChar(spell_string) | ChunkSpell::DoubleChar(spell_string) => {
+                if spell_string.as_str() == "っ" {
+                    1
+                } else {
+                    CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY
+                        .get(spell_string.as_str())
+                        .unwrap()
+                        .iter()
+                        .map(|key_stroke_str| key_stroke_str.chars().count())
+                        .min()
+                        .unwrap()
+                }
+            }
+        }
+    }
+
     // このチャンクを打つのに必要な最小のキーストローク数を計算する
-    fn calc_min_key_stroke_count(&self) -> usize {
+    pub fn calc_min_key_stroke_count(&self) -> usize {
         assert!(self.key_stroke_candidates.is_some());
 
         self.key_stroke_candidates
@@ -116,7 +142,7 @@ impl Chunk {
 }
 
 // 綴りのみの不完全なチャンク列にキーストローク候補を追加する
-fn append_key_stroke_to_chunks(chunks: &mut Vec<Chunk>) {
+pub fn append_key_stroke_to_chunks(chunks: &mut Vec<Chunk>) {
     let mut next_chunk_spell: Option<ChunkSpell> = None;
 
     // このチャンクが「っ」としたときにキーストロークの連続によって表現できるキーストローク群

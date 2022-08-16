@@ -3,29 +3,41 @@ use crate::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
 use crate::spell::SpellString;
 
 // 辞書中の各語彙
+#[derive(Debug, Clone)]
 pub struct VocabularyEntry {
     // 問題文として表示する文字列
     view: String,
     // viewの各文字のそれぞれの綴り
     // ex. 「機能」という語彙に対しては[き,のう]
-    spell_list: Vec<SpellString>,
+    spells: Vec<SpellString>,
 }
 
 impl VocabularyEntry {
-    fn new(view: String, spell_list: Vec<SpellString>) -> Option<Self> {
+    pub fn new(view: String, spell_list: Vec<SpellString>) -> Option<Self> {
         if view.chars().count() != spell_list.len() {
             None
         } else {
-            Some(Self { view, spell_list })
+            Some(Self {
+                view,
+                spells: spell_list,
+            })
         }
+    }
+
+    pub fn view(&self) -> &str {
+        self.view.as_str()
+    }
+
+    pub fn spells(&self) -> &Vec<SpellString> {
+        &self.spells
     }
 
     // 語彙全体の綴りを構築する
     // 表示文字列の各文字に対しての綴りをつなげたもの
-    fn construct_spell_string(&self) -> SpellString {
+    pub fn construct_spell_string(&self) -> SpellString {
         let mut s = String::new();
 
-        for spell in &self.spell_list {
+        for spell in &self.spells {
             s.push_str(spell);
         }
 

@@ -1,5 +1,9 @@
 use crate::utility::{is_displayable_ascii, is_hiragana, is_japanese_symbol};
-use std::{error::Error, fmt::Display, ops::Deref};
+use std::{
+    error::Error,
+    fmt::Display,
+    ops::{Deref, DerefMut},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 // 綴りとして使用可能な文字で構成された文字列
@@ -35,6 +39,12 @@ impl Deref for SpellString {
     type Target = String;
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl DerefMut for SpellString {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
