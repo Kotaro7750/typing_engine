@@ -92,31 +92,15 @@ impl VocabularyEntry {
 mod test {
     use super::*;
 
-    macro_rules! chunk {
-        ($s:literal) => {
-            Chunk::new(String::from($s).try_into().unwrap(), None)
-        };
-    }
-
-    macro_rules! vocabulary_entry {
-        ($vs:literal,[$($spell:literal),*]) => {
-            VocabularyEntry::new( String::from($vs),
-                vec![
-                    $(
-                        String::from($spell).try_into().unwrap(),
-                    )*
-                ]
-            ).unwrap()
-        };
-    }
+    use crate::{gen_unprocessed_chunk, gen_vocabulary_entry};
 
     macro_rules! equal_check_construct_chunks {
         (($vs:literal,[$($spell:literal),*]), [$($s:literal),*]) => {
-            let ve = vocabulary_entry!($vs,[$($spell),*]);
+            let ve = gen_vocabulary_entry!($vs,[$($spell),*]);
 
             assert_eq!(
                 ve.construct_chunks(),
-                vec![$(chunk!($s)),*]
+                vec![$(gen_unprocessed_chunk!($s)),*]
             );
         }
     }

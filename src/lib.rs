@@ -5,3 +5,6 @@ mod query;
 mod spell;
 mod utility;
 mod vocabulary;
+
+#[cfg(test)]
+mod test_utility;

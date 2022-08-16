@@ -420,56 +420,30 @@ impl ChunkKeyStrokeCandidate {
 mod test {
     use super::*;
 
-    macro_rules! unprocessed_chunk {
-        ($chunk_spell:literal) => {
-            Chunk::new($chunk_spell.to_string().try_into().unwrap(), None)
-        };
-    }
-
-    macro_rules! candidate {
-        ([$($key_stroke:literal),*]$(, $constraint:literal)?) => {
-            {
-                let _constraint: Option<KeyStrokeChar> = None;
-                $(let _constraint = Some($constraint.try_into().unwrap());)?
-                ChunkKeyStrokeCandidate::new(vec![$($key_stroke.to_string().try_into().unwrap()),*],_constraint)
-            }
-        };
-    }
-
-    macro_rules! chunk {
-        (
-            $chunk_spell:literal,
-            $key_stroke_candidates:expr
-        ) => {
-            Chunk::new(
-                $chunk_spell.to_string().try_into().unwrap(),
-                Some($key_stroke_candidates),
-            )
-        };
-    }
+    use crate::{gen_candidate, gen_chunk, gen_unprocessed_chunk};
 
     #[test]
     fn append_key_stroke_to_chunks_1() {
-        let mut chunks = vec![unprocessed_chunk!("じょ"), unprocessed_chunk!("ん")];
+        let mut chunks = vec![gen_unprocessed_chunk!("じょ"), gen_unprocessed_chunk!("ん")];
 
         append_key_stroke_to_chunks(&mut chunks);
 
         assert_eq!(
             chunks,
             vec![
-                chunk!(
+                gen_chunk!(
                     "じょ",
                     vec![
-                        candidate!(["jo"]),
-                        candidate!(["zyo"]),
-                        candidate!(["jyo"]),
-                        candidate!(["zi", "lyo"]),
-                        candidate!(["zi", "xyo"]),
-                        candidate!(["ji", "lyo"]),
-                        candidate!(["ji", "xyo"]),
+                        gen_candidate!(["jo"]),
+                        gen_candidate!(["zyo"]),
+                        gen_candidate!(["jyo"]),
+                        gen_candidate!(["zi", "lyo"]),
+                        gen_candidate!(["zi", "xyo"]),
+                        gen_candidate!(["ji", "lyo"]),
+                        gen_candidate!(["ji", "xyo"]),
                     ]
                 ),
-                chunk!("ん", vec![candidate!(["nn"]), candidate!(["xn"])])
+                gen_chunk!("ん", vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])])
             ]
         );
     }
@@ -477,9 +451,9 @@ mod test {
     #[test]
     fn append_key_stroke_to_chunks_2() {
         let mut chunks = vec![
-            unprocessed_chunk!("う"),
-            unprocessed_chunk!("っ"),
-            unprocessed_chunk!("う"),
+            gen_unprocessed_chunk!("う"),
+            gen_unprocessed_chunk!("っ"),
+            gen_unprocessed_chunk!("う"),
         ];
 
         append_key_stroke_to_chunks(&mut chunks);
@@ -487,22 +461,30 @@ mod test {
         assert_eq!(
             chunks,
             vec![
-                chunk!(
+                gen_chunk!(
                     "う",
-                    vec![candidate!(["u"]), candidate!(["wu"]), candidate!(["whu"])]
-                ),
-                chunk!(
-                    "っ",
                     vec![
-                        candidate!(["w"], 'w'),
-                        candidate!(["ltu"]),
-                        candidate!(["xtu"]),
-                        candidate!(["ltsu"])
+                        gen_candidate!(["u"]),
+                        gen_candidate!(["wu"]),
+                        gen_candidate!(["whu"])
                     ]
                 ),
-                chunk!(
+                gen_chunk!(
+                    "っ",
+                    vec![
+                        gen_candidate!(["w"], 'w'),
+                        gen_candidate!(["ltu"]),
+                        gen_candidate!(["xtu"]),
+                        gen_candidate!(["ltsu"])
+                    ]
+                ),
+                gen_chunk!(
                     "う",
-                    vec![candidate!(["u"]), candidate!(["wu"]), candidate!(["whu"])]
+                    vec![
+                        gen_candidate!(["u"]),
+                        gen_candidate!(["wu"]),
+                        gen_candidate!(["whu"])
+                    ]
                 ),
             ]
         );
@@ -511,9 +493,9 @@ mod test {
     #[test]
     fn append_key_stroke_to_chunks_3() {
         let mut chunks = vec![
-            unprocessed_chunk!("か"),
-            unprocessed_chunk!("ん"),
-            unprocessed_chunk!("じ"),
+            gen_unprocessed_chunk!("か"),
+            gen_unprocessed_chunk!("ん"),
+            gen_unprocessed_chunk!("じ"),
         ];
 
         append_key_stroke_to_chunks(&mut chunks);
@@ -521,12 +503,16 @@ mod test {
         assert_eq!(
             chunks,
             vec![
-                chunk!("か", vec![candidate!(["ka"]), candidate!(["ca"])]),
-                chunk!(
+                gen_chunk!("か", vec![gen_candidate!(["ka"]), gen_candidate!(["ca"])]),
+                gen_chunk!(
                     "ん",
-                    vec![candidate!(["n"]), candidate!(["nn"]), candidate!(["xn"])]
+                    vec![
+                        gen_candidate!(["n"]),
+                        gen_candidate!(["nn"]),
+                        gen_candidate!(["xn"])
+                    ]
                 ),
-                chunk!("じ", vec![candidate!(["zi"]), candidate!(["ji"])]),
+                gen_chunk!("じ", vec![gen_candidate!(["zi"]), gen_candidate!(["ji"])]),
             ]
         );
     }
@@ -534,9 +520,9 @@ mod test {
     #[test]
     fn append_key_stroke_to_chunks_4() {
         let mut chunks = vec![
-            unprocessed_chunk!("B"),
-            unprocessed_chunk!("i"),
-            unprocessed_chunk!("g"),
+            gen_unprocessed_chunk!("B"),
+            gen_unprocessed_chunk!("i"),
+            gen_unprocessed_chunk!("g"),
         ];
 
         append_key_stroke_to_chunks(&mut chunks);
@@ -544,25 +530,25 @@ mod test {
         assert_eq!(
             chunks,
             vec![
-                chunk!("B", vec![candidate!(["B"])]),
-                chunk!("i", vec![candidate!(["i"])]),
-                chunk!("g", vec![candidate!(["g"])]),
+                gen_chunk!("B", vec![gen_candidate!(["B"])]),
+                gen_chunk!("i", vec![gen_candidate!(["i"])]),
+                gen_chunk!("g", vec![gen_candidate!(["g"])]),
             ]
         );
     }
 
     #[test]
     fn strict_key_stroke_count_1() {
-        let mut chunk = chunk!(
+        let mut chunk = gen_chunk!(
             "じょ",
             vec![
-                candidate!(["jo"]),
-                candidate!(["zyo"]),
-                candidate!(["jyo"]),
-                candidate!(["zi", "lyo"]),
-                candidate!(["zi", "xyo"]),
-                candidate!(["ji", "lyo"]),
-                candidate!(["ji", "xyo"]),
+                gen_candidate!(["jo"]),
+                gen_candidate!(["zyo"]),
+                gen_candidate!(["jyo"]),
+                gen_candidate!(["zi", "lyo"]),
+                gen_candidate!(["zi", "xyo"]),
+                gen_candidate!(["ji", "lyo"]),
+                gen_candidate!(["ji", "xyo"]),
             ]
         );
 
@@ -570,7 +556,7 @@ mod test {
 
         assert_eq!(
             chunk,
-            chunk!("じょ", vec![candidate!(["j"]), candidate!(["z"]),])
+            gen_chunk!("じょ", vec![gen_candidate!(["j"]), gen_candidate!(["z"]),])
         )
     }
 }
