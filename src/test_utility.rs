@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! gen_unprocessed_chunk {
     ($chunk_spell:literal) => {
-        Chunk::new($chunk_spell.to_string().try_into().unwrap(), None)
+        crate::chunk::Chunk::new($chunk_spell.to_string().try_into().unwrap(), None)
     };
 }
 
@@ -11,7 +11,7 @@ macro_rules! gen_chunk {
             $chunk_spell:literal,
             $key_stroke_candidates:expr
         ) => {
-        Chunk::new(
+        crate::chunk::Chunk::new(
             $chunk_spell.to_string().try_into().unwrap(),
             Some($key_stroke_candidates),
         )
@@ -21,7 +21,7 @@ macro_rules! gen_chunk {
 #[macro_export]
 macro_rules! gen_vocabulary_entry {
         ($vs:literal,[$($spell:literal),*]) => {
-            VocabularyEntry::new( String::from($vs),
+            crate::vocabulary::VocabularyEntry::new( String::from($vs),
                 vec![
                     $(
                         String::from($spell).try_into().unwrap(),
@@ -35,9 +35,9 @@ macro_rules! gen_vocabulary_entry {
 macro_rules! gen_candidate {
         ([$($key_stroke:literal),*]$(, $constraint:literal)?) => {
             {
-                let _constraint: Option<KeyStrokeChar> = None;
+                let _constraint: Option<crate::key_stroke::KeyStrokeChar> = None;
                 $(let _constraint = Some($constraint.try_into().unwrap());)?
-                ChunkKeyStrokeCandidate::new(vec![$($key_stroke.to_string().try_into().unwrap()),*],_constraint)
+                crate::chunk::ChunkKeyStrokeCandidate::new(vec![$($key_stroke.to_string().try_into().unwrap()),*],_constraint)
             }
         };
     }

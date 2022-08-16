@@ -215,3 +215,120 @@ impl Query {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use crate::{gen_candidate, gen_chunk, gen_vocabulary_entry};
+
+    #[test]
+    fn construct_query_1() {
+        let vocabularies = vec![gen_vocabulary_entry!("イオン", ["い", "お", "ん"])];
+
+        let qr = QueryRequest::new(
+            &vocabularies,
+            NonZeroUsize::new(5).unwrap(),
+            VocabularySeparator::WhiteSpace,
+            VocabularyOrder::InOrder,
+        );
+
+        let query = qr.construct_query();
+
+        assert_eq!(
+            query,
+            Query::new(
+                "イオン ".to_string(),
+                "いおん ".to_string().try_into().unwrap(),
+                vec![0, 1, 2, 3],
+                vec![
+                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
+                    gen_chunk!("お", vec![gen_candidate!(["o"])]),
+                    gen_chunk!("ん", vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])]),
+                    gen_chunk!(" ", vec![gen_candidate!([" "])]),
+                ]
+            )
+        );
+    }
+
+    #[test]
+    fn construct_query_2() {
+        let vocabularies = vec![gen_vocabulary_entry!("イオン", ["い", "お", "ん"])];
+
+        let qr = QueryRequest::new(
+            &vocabularies,
+            NonZeroUsize::new(5).unwrap(),
+            VocabularySeparator::None,
+            VocabularyOrder::InOrder,
+        );
+
+        let query = qr.construct_query();
+
+        assert_eq!(
+            query,
+            Query::new(
+                "イオンイオン".to_string(),
+                "いおんいおん".to_string().try_into().unwrap(),
+                vec![0, 1, 2, 3, 4, 5],
+                vec![
+                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
+                    gen_chunk!("お", vec![gen_candidate!(["o"])]),
+                    gen_chunk!("ん", vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])]),
+                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["y"])]),
+                ]
+            )
+        );
+    }
+
+    #[test]
+    fn construct_query_3() {
+        let vocabularies = vec![
+            gen_vocabulary_entry!("イオン", ["い", "お", "ん"]),
+            gen_vocabulary_entry!("買っ", ["か", "っ"]),
+            gen_vocabulary_entry!("た", ["た"]),
+        ];
+
+        let qr = QueryRequest::new(
+            &vocabularies,
+            NonZeroUsize::new(10).unwrap(),
+            VocabularySeparator::None,
+            VocabularyOrder::InOrder,
+        );
+
+        let query = qr.construct_query();
+
+        assert_eq!(
+            query,
+            Query::new(
+                "イオン買ったイオン".to_string(),
+                "いおんかったいおん".to_string().try_into().unwrap(),
+                vec![0, 1, 2, 3, 4, 5, 6, 7, 8],
+                vec![
+                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
+                    gen_chunk!("お", vec![gen_candidate!(["o"])]),
+                    gen_chunk!(
+                        "ん",
+                        vec![
+                            gen_candidate!(["n"]),
+                            gen_candidate!(["nn"]),
+                            gen_candidate!(["xn"])
+                        ]
+                    ),
+                    gen_chunk!("か", vec![gen_candidate!(["ka"]), gen_candidate!(["ca"])]),
+                    gen_chunk!(
+                        "っ",
+                        vec![
+                            gen_candidate!(["t"], 't'),
+                            gen_candidate!(["ltu"]),
+                            gen_candidate!(["xtu"]),
+                            gen_candidate!(["ltsu"]),
+                        ]
+                    ),
+                    gen_chunk!("た", vec![gen_candidate!(["ta"])]),
+                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
+                    gen_chunk!("お", vec![gen_candidate!(["o"])]),
+                ]
+            )
+        );
+    }
+}

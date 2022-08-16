@@ -334,7 +334,7 @@ pub struct ChunkKeyStrokeCandidate {
 }
 
 impl ChunkKeyStrokeCandidate {
-    fn new(
+    pub fn new(
         key_stroke_elements: Vec<KeyStrokeString>,
         next_chunk_head_constraint: Option<KeyStrokeChar>,
     ) -> Self {
