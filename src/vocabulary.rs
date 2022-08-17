@@ -1,3 +1,5 @@
+use std::num::NonZeroUsize;
+
 use crate::chunk::Chunk;
 use crate::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
 use crate::spell::SpellString;
@@ -44,6 +46,24 @@ impl VocabularyEntry {
         s.try_into().unwrap()
     }
 
+    // クエリ用の語彙情報を生成する
+    pub fn construct_vocabulary_info(&self, chunk_count: NonZeroUsize) -> VocabularyInfo {
+        let mut view_position_of_spell: Vec<usize> = vec![];
+
+        self.spells.iter().enumerate().for_each(|(i, spell)| {
+            spell.chars().for_each(|_| {
+                view_position_of_spell.push(i);
+            });
+        });
+
+        VocabularyInfo {
+            view: self.view.clone(),
+            spell: self.construct_spell_string(),
+            view_position_of_spell,
+            chunk_count,
+        }
+    }
+
     // 語彙からチャンク列を構築する
     // この段階ではそれぞれのチャンクに対するキーストローク候補は設定しない
     pub fn construct_chunks(&self) -> Vec<Chunk> {
@@ -85,6 +105,43 @@ impl VocabularyEntry {
         }
 
         chunks
+    }
+}
+
+// クエリ中での語彙
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VocabularyInfo {
+    view: String,
+    spell: SpellString,
+    view_position_of_spell: Vec<usize>,
+    chunk_count: NonZeroUsize,
+}
+
+impl VocabularyInfo {
+    pub fn new(
+        view: String,
+        spell: SpellString,
+        view_position_of_spell: Vec<usize>,
+        chunk_count: NonZeroUsize,
+    ) -> Self {
+        Self {
+            view,
+            spell,
+            view_position_of_spell,
+            chunk_count,
+        }
+    }
+
+    pub fn chunk_count(&self) -> NonZeroUsize {
+        self.chunk_count
+    }
+
+    pub fn view(&self) -> &str {
+        self.view.as_str()
+    }
+
+    pub fn reset_chunk_count(&mut self, chunk_count: NonZeroUsize) {
+        self.chunk_count = chunk_count;
     }
 }
 

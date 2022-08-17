@@ -32,6 +32,18 @@ macro_rules! gen_vocabulary_entry {
     }
 
 #[macro_export]
+macro_rules! gen_vocabulary_info {
+    ($view:literal,$spell:literal,$vpos:expr,$chunk_count:literal) => {
+        crate::vocabulary::VocabularyInfo::new(
+            String::from($view),
+            String::from($spell).try_into().unwrap(),
+            $vpos,
+            $chunk_count.try_into().unwrap(),
+        )
+    };
+}
+
+#[macro_export]
 macro_rules! gen_candidate {
         ([$($key_stroke:literal),*]$(, $constraint:literal)?) => {
             {

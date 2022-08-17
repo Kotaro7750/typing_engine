@@ -3,8 +3,7 @@ use std::num::NonZeroUsize;
 
 use crate::{
     chunk::{append_key_stroke_to_chunks, Chunk},
-    spell::SpellString,
-    vocabulary::VocabularyEntry,
+    vocabulary::{VocabularyEntry, VocabularyInfo},
 };
 
 // 問題文を構成する各語彙の間に入れる語彙
@@ -87,9 +86,7 @@ impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
 
     pub fn construct_query(&self) -> Query {
         let mut query_chunks = Vec::<Chunk>::new();
-        let mut query_view = String::new();
-        let mut query_spell: SpellString = String::new().try_into().unwrap();
-        let mut view_position_of_spell: Vec<usize> = vec![];
+        let mut query_vocabulary_infos = Vec::<VocabularyInfo>::new();
 
         // 語彙リストから選んだ語彙の区切りとして使う語彙
         let separator_vocabulary = if self.vocabulary_separator.is_none() {
@@ -106,7 +103,8 @@ impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
         // 1. 語彙リストから語彙を選ぶ
         // 2. 語彙をパースしてチャンク列を構成する（キーストロークの付与はまだしない）
         // 3. チャンク列に語彙のチャンク列を追加する
-        // 4. 表示用の文字列・綴りを構築する
+        //
+        // キーストロークによる制限は最後にまとめて行う
         while min_key_stroke_count < self.key_stroke_threshold.get() {
             // 1
             // 直前に追加した語彙が語彙リストから選んだ語彙ではなかったり語彙区切りがない場合のみ語彙リストから語彙を選択する
@@ -130,31 +128,16 @@ impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
             // 例えば語彙区切りがない場合には語彙の末尾のキーストロークは次の語彙の先頭チャンクに依存する
             let chunks = vocabulary_entry.construct_chunks();
 
+            query_vocabulary_infos
+                .push(vocabulary_entry.construct_vocabulary_info(chunks.len().try_into().unwrap()));
+
             // 3
             for chunk in chunks {
                 // チャンクのキーストロークの取りうる最小値なのでもし大きかったとしても後で制限する際に削られる
                 min_key_stroke_count += chunk.estimate_min_key_stroke_count();
 
                 query_chunks.push(chunk);
-
-                if min_key_stroke_count >= self.key_stroke_threshold.get() {
-                    break;
-                }
             }
-
-            // 4
-            vocabulary_entry
-                .spells()
-                .iter()
-                .enumerate()
-                .for_each(|(view_i, spell)| {
-                    spell.chars().for_each(|_| {
-                        view_position_of_spell.push(query_view.chars().count() + view_i);
-                    });
-                });
-
-            query_view.push_str(vocabulary_entry.view());
-            query_spell.push_str(vocabulary_entry.construct_spell_string().as_str());
         }
 
         // 全ての語彙や語彙区切りが確定してからキーストロークを付与する
@@ -180,37 +163,45 @@ impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
             last_chunk.calc_min_key_stroke_count() - over_key_stroke_count,
         );
 
-        Query::new(
-            query_view,
-            query_spell,
-            view_position_of_spell,
-            query_chunks,
-        )
+        // チャンクの削除によって語彙も削除される可能性がある
+        let total_chunk_count = query_chunks.len();
+        let mut chunk_count = 0;
+        let mut chunk_count_over = 0;
+
+        query_vocabulary_infos.retain(|vocabulary_info| {
+            if chunk_count >= total_chunk_count {
+                false
+            } else {
+                chunk_count += vocabulary_info.chunk_count().get();
+                if chunk_count >= total_chunk_count {
+                    chunk_count_over = chunk_count - total_chunk_count;
+                }
+                true
+            }
+        });
+
+        // 最後の語彙はチャンク削除によってチャンク数が減っている可能性がある
+        let last_vacabulary_info = query_vocabulary_infos.last_mut().unwrap();
+        last_vacabulary_info.reset_chunk_count(
+            (last_vacabulary_info.chunk_count().get() - chunk_count_over)
+                .try_into()
+                .unwrap(),
+        );
+
+        Query::new(query_vocabulary_infos, query_chunks)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Query {
-    view: String,
-    spell: SpellString,
-    // i番目の要素は綴りのi番目の文字が表示文字列の何番目の文字のものなのかを示している
-    view_position_of_spell: Vec<usize>,
+    vocabulary_infos: Vec<VocabularyInfo>,
     chunks: Vec<Chunk>,
 }
 
 impl Query {
-    fn new(
-        view: String,
-        spell: SpellString,
-        view_position_of_spell: Vec<usize>,
-        chunks: Vec<Chunk>,
-    ) -> Self {
-        assert_eq!(spell.chars().count(), view_position_of_spell.len());
-
+    fn new(vocabulary_infos: Vec<VocabularyInfo>, chunks: Vec<Chunk>) -> Self {
         Self {
-            view,
-            spell,
-            view_position_of_spell,
+            vocabulary_infos,
             chunks,
         }
     }
@@ -220,7 +211,7 @@ impl Query {
 mod test {
     use super::*;
 
-    use crate::{gen_candidate, gen_chunk, gen_vocabulary_entry};
+    use crate::{gen_candidate, gen_chunk, gen_vocabulary_entry, gen_vocabulary_info};
 
     #[test]
     fn construct_query_1() {
@@ -238,9 +229,10 @@ mod test {
         assert_eq!(
             query,
             Query::new(
-                "イオン ".to_string(),
-                "いおん ".to_string().try_into().unwrap(),
-                vec![0, 1, 2, 3],
+                vec![
+                    gen_vocabulary_info!("イオン", "いおん", vec![0, 1, 2], 3),
+                    gen_vocabulary_info!(" ", " ", vec![0], 1)
+                ],
                 vec![
                     gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
                     gen_chunk!("お", vec![gen_candidate!(["o"])]),
@@ -267,9 +259,10 @@ mod test {
         assert_eq!(
             query,
             Query::new(
-                "イオンイオン".to_string(),
-                "いおんいおん".to_string().try_into().unwrap(),
-                vec![0, 1, 2, 3, 4, 5],
+                vec![
+                    gen_vocabulary_info!("イオン", "いおん", vec![0, 1, 2], 3),
+                    gen_vocabulary_info!("イオン", "いおん", vec![0, 1, 2], 1)
+                ],
                 vec![
                     gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
                     gen_chunk!("お", vec![gen_candidate!(["o"])]),
@@ -300,9 +293,12 @@ mod test {
         assert_eq!(
             query,
             Query::new(
-                "イオン買ったイオン".to_string(),
-                "いおんかったいおん".to_string().try_into().unwrap(),
-                vec![0, 1, 2, 3, 4, 5, 6, 7, 8],
+                vec![
+                    gen_vocabulary_info!("イオン", "いおん", vec![0, 1, 2], 3),
+                    gen_vocabulary_info!("買っ", "かっ", vec![0, 1], 2),
+                    gen_vocabulary_info!("た", "た", vec![0], 1),
+                    gen_vocabulary_info!("イオン", "いおん", vec![0, 1, 2], 2),
+                ],
                 vec![
                     gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
                     gen_chunk!("お", vec![gen_candidate!(["o"])]),
