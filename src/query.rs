@@ -382,4 +382,47 @@ mod test {
             )
         );
     }
+
+    #[test]
+    fn construct_query_4() {
+        let vocabularies = vec![
+            gen_vocabulary_entry!("1", ["1"]),
+            gen_vocabulary_entry!("2", ["2"]),
+        ];
+
+        let qr = QueryRequest::new(
+            &vocabularies,
+            NonZeroUsize::new(3).unwrap(),
+            VocabularySeparator::WhiteSpace,
+            VocabularyOrder::Arbitrary(&|prev_vocabulary_index, vocabulary_entries| {
+                if prev_vocabulary_index.is_none() {
+                    vocabulary_entries.len() - 1
+                } else if prev_vocabulary_index.is_some()
+                    && *prev_vocabulary_index.as_ref().unwrap() == 0
+                {
+                    vocabulary_entries.len() - 1
+                } else {
+                    prev_vocabulary_index.as_ref().unwrap() - 1
+                }
+            }),
+        );
+
+        let query = qr.construct_query();
+
+        assert_eq!(
+            query,
+            Query::new(
+                vec![
+                    gen_vocabulary_info!("2", "2", vec![0], 1),
+                    gen_vocabulary_info!(" ", " ", vec![0], 1),
+                    gen_vocabulary_info!("1", "1", vec![0], 1),
+                ],
+                vec![
+                    gen_chunk!("2", vec![gen_candidate!(["2"])]),
+                    gen_chunk!(" ", vec![gen_candidate!([" "])]),
+                    gen_chunk!("1", vec![gen_candidate!(["1"])]),
+                ]
+            )
+        );
+    }
 }
