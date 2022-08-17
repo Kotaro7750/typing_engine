@@ -6,6 +6,15 @@ use crate::{
     vocabulary::{VocabularyEntry, VocabularyInfo},
 };
 
+// クエリを構成する語彙の量指定
+#[derive(Debug, Clone)]
+pub enum VocabularyQuantifier {
+    // キーストローク数での指定
+    KeyStroke(NonZeroUsize),
+    // 語彙数での指定
+    Vocabulary(NonZeroUsize),
+}
+
 // 問題文を構成する各語彙の間に入れる語彙
 #[derive(Debug, Clone)]
 pub enum VocabularySeparator {
@@ -65,7 +74,7 @@ impl<'order_function> VocabularyOrder<'order_function> {
 
 pub struct QueryRequest<'vocabulary, 'order_function> {
     vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
-    key_stroke_threshold: NonZeroUsize,
+    vocabulary_quantifier: VocabularyQuantifier,
     vocabulary_separator: VocabularySeparator,
     vocabulary_order: VocabularyOrder<'order_function>,
 }
@@ -73,13 +82,13 @@ pub struct QueryRequest<'vocabulary, 'order_function> {
 impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
     pub fn new(
         vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
-        key_stroke_threshold: NonZeroUsize,
+        vocabulary_quantifier: VocabularyQuantifier,
         vocabulary_separator: VocabularySeparator,
         vocabulary_order: VocabularyOrder<'order_function>,
     ) -> Self {
         Self {
             vocabulary_entries,
-            key_stroke_threshold,
+            vocabulary_quantifier,
             vocabulary_separator,
             vocabulary_order,
         }
@@ -99,10 +108,15 @@ impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
             &self.vocabulary_order,
         );
 
-        Self::construct_query_with_key_stroke_striction(
-            self.key_stroke_threshold,
-            next_vocabulary_generator,
-        )
+        match self.vocabulary_quantifier {
+            VocabularyQuantifier::KeyStroke(key_stroke_threshold) => {
+                Self::construct_query_with_key_stroke_striction(
+                    key_stroke_threshold,
+                    next_vocabulary_generator,
+                )
+            }
+            _ => unimplemented!("VocabularyQuantifier::Vocabulary is not supportted yet"),
+        }
     }
 
     fn construct_query_with_key_stroke_striction(
@@ -274,7 +288,7 @@ mod test {
 
         let qr = QueryRequest::new(
             &vocabularies,
-            NonZeroUsize::new(5).unwrap(),
+            VocabularyQuantifier::KeyStroke(NonZeroUsize::new(5).unwrap()),
             VocabularySeparator::WhiteSpace,
             VocabularyOrder::InOrder,
         );
@@ -304,7 +318,7 @@ mod test {
 
         let qr = QueryRequest::new(
             &vocabularies,
-            NonZeroUsize::new(5).unwrap(),
+            VocabularyQuantifier::KeyStroke(NonZeroUsize::new(5).unwrap()),
             VocabularySeparator::None,
             VocabularyOrder::InOrder,
         );
@@ -338,7 +352,7 @@ mod test {
 
         let qr = QueryRequest::new(
             &vocabularies,
-            NonZeroUsize::new(10).unwrap(),
+            VocabularyQuantifier::KeyStroke(NonZeroUsize::new(10).unwrap()),
             VocabularySeparator::None,
             VocabularyOrder::InOrder,
         );
@@ -392,7 +406,7 @@ mod test {
 
         let qr = QueryRequest::new(
             &vocabularies,
-            NonZeroUsize::new(3).unwrap(),
+            VocabularyQuantifier::KeyStroke(NonZeroUsize::new(3).unwrap()),
             VocabularySeparator::WhiteSpace,
             VocabularyOrder::Arbitrary(&|prev_vocabulary_index, vocabulary_entries| {
                 if prev_vocabulary_index.is_none() {
@@ -421,6 +435,36 @@ mod test {
                     gen_chunk!("2", vec![gen_candidate!(["2"])]),
                     gen_chunk!(" ", vec![gen_candidate!([" "])]),
                     gen_chunk!("1", vec![gen_candidate!(["1"])]),
+                ]
+            )
+        );
+    }
+
+    #[test]
+    fn construct_query_5() {
+        let vocabularies = vec![gen_vocabulary_entry!("イオン", ["い", "お", "ん"])];
+
+        let qr = QueryRequest::new(
+            &vocabularies,
+            VocabularyQuantifier::Vocabulary(NonZeroUsize::new(2).unwrap()),
+            VocabularySeparator::WhiteSpace,
+            VocabularyOrder::InOrder,
+        );
+
+        let query = qr.construct_query();
+
+        assert_eq!(
+            query,
+            Query::new(
+                vec![
+                    gen_vocabulary_info!("イオン", "いおん", vec![0, 1, 2], 3),
+                    gen_vocabulary_info!(" ", " ", vec![0], 1)
+                ],
+                vec![
+                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
+                    gen_chunk!("お", vec![gen_candidate!(["o"])]),
+                    gen_chunk!("ん", vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])]),
+                    gen_chunk!(" ", vec![gen_candidate!([" "])]),
                 ]
             )
         );
