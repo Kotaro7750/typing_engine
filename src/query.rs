@@ -7,6 +7,7 @@ use crate::{
 };
 
 // 問題文を構成する各語彙の間に入れる語彙
+#[derive(Debug, Clone)]
 pub enum VocabularySeparator {
     None,
     WhiteSpace,
@@ -85,9 +86,6 @@ impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
     }
 
     pub fn construct_query(&self) -> Query {
-        let mut query_chunks = Vec::<Chunk>::new();
-        let mut query_vocabulary_infos = Vec::<VocabularyInfo>::new();
-
         // 語彙リストから選んだ語彙の区切りとして使う語彙
         let separator_vocabulary = if self.vocabulary_separator.is_none() {
             None
@@ -95,9 +93,26 @@ impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
             Some(self.vocabulary_separator.generate_separator_vocabulary())
         };
 
+        let next_vocabulary_generator = NextVocabularyGenerator::new(
+            self.vocabulary_entries,
+            &separator_vocabulary,
+            &self.vocabulary_order,
+        );
+
+        Self::construct_query_with_key_stroke_striction(
+            self.key_stroke_threshold,
+            next_vocabulary_generator,
+        )
+    }
+
+    fn construct_query_with_key_stroke_striction(
+        key_stroke_threshold: NonZeroUsize,
+        mut next_vocabulary_generator: NextVocabularyGenerator,
+    ) -> Query {
+        let mut query_chunks = Vec::<Chunk>::new();
+        let mut query_vocabulary_infos = Vec::<VocabularyInfo>::new();
+
         let mut min_key_stroke_count: usize = 0;
-        let mut prev_vocabulary_index: Option<usize> = None;
-        let mut is_prev_vocabulary: bool = false;
 
         // 要求キーストローク回数を満たすまで以下を繰り返す
         // 1. 語彙リストから語彙を選ぶ
@@ -105,31 +120,17 @@ impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
         // 3. チャンク列に語彙のチャンク列を追加する
         //
         // キーストロークによる制限は最後にまとめて行う
-        while min_key_stroke_count < self.key_stroke_threshold.get() {
+        while min_key_stroke_count < key_stroke_threshold.get() {
             // 1
-            // 直前に追加した語彙が語彙リストから選んだ語彙ではなかったり語彙区切りがない場合のみ語彙リストから語彙を選択する
-            let vocabulary_entry = if is_prev_vocabulary && separator_vocabulary.is_some() {
-                is_prev_vocabulary = false;
-                separator_vocabulary.as_ref().unwrap()
-            } else {
-                is_prev_vocabulary = true;
-
-                let vocabulary_index = self
-                    .vocabulary_order
-                    .next_vocabulary_entry_index(&prev_vocabulary_index, self.vocabulary_entries);
-
-                prev_vocabulary_index.replace(vocabulary_index);
-
-                self.vocabulary_entries.get(vocabulary_index).unwrap()
-            };
+            let vocabulary_entry = next_vocabulary_generator.next().unwrap();
 
             // 2
             // 語彙区切りによっては語彙ごとにキーストロークを付与してはいけないケースがあるためまだ付与しない
             // 例えば語彙区切りがない場合には語彙の末尾のキーストロークは次の語彙の先頭チャンクに依存する
             let chunks = vocabulary_entry.construct_chunks();
 
-            query_vocabulary_infos
-                .push(vocabulary_entry.construct_vocabulary_info(chunks.len().try_into().unwrap()));
+            let chunk_count = chunks.len().try_into().unwrap();
+            query_vocabulary_infos.push(vocabulary_entry.construct_vocabulary_info(chunk_count));
 
             // 3
             for chunk in chunks {
@@ -147,7 +148,7 @@ impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
         let mut actual_key_stroke_count: usize = 0;
         query_chunks.retain(|chunk| {
             // キーストロークの閾値を最初に超えたチャンクの次のチャンクから取り除く
-            if actual_key_stroke_count >= self.key_stroke_threshold.get() {
+            if actual_key_stroke_count >= key_stroke_threshold.get() {
                 false
             } else {
                 // 最終的には採用するチャンクの累積キーストローク回数になる
@@ -158,7 +159,7 @@ impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
 
         // 最後のチャンクのみ制限を行う
         let last_chunk = query_chunks.last_mut().unwrap();
-        let over_key_stroke_count = actual_key_stroke_count - self.key_stroke_threshold.get();
+        let over_key_stroke_count = actual_key_stroke_count - key_stroke_threshold.get();
         last_chunk.strict_key_stroke_count(
             last_chunk.calc_min_key_stroke_count() - over_key_stroke_count,
         );
@@ -189,6 +190,60 @@ impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
         );
 
         Query::new(query_vocabulary_infos, query_chunks)
+    }
+}
+
+// 次の語彙を生成するイテレータ
+struct NextVocabularyGenerator<'this, 'vocabulary, 'order_function> {
+    vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
+    is_prev_vocabulary: bool,
+    prev_vocabulary_index: Option<usize>,
+    separator_vocabulary: &'vocabulary Option<VocabularyEntry>,
+    vocabulary_order: &'this VocabularyOrder<'order_function>,
+}
+
+impl<'this, 'vocabulary, 'order_function>
+    NextVocabularyGenerator<'this, 'vocabulary, 'order_function>
+{
+    fn new(
+        vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
+        separator_vocabulary: &'vocabulary Option<VocabularyEntry>,
+        vocabulary_order: &'this VocabularyOrder<'order_function>,
+    ) -> Self {
+        Self {
+            vocabulary_entries,
+            is_prev_vocabulary: false,
+            prev_vocabulary_index: None,
+            separator_vocabulary,
+            vocabulary_order,
+        }
+    }
+}
+
+impl<'this, 'vocabulary, 'order_function> Iterator
+    for NextVocabularyGenerator<'this, 'vocabulary, 'order_function>
+{
+    type Item = &'vocabulary VocabularyEntry;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(
+            if self.is_prev_vocabulary && self.separator_vocabulary.is_some() {
+                self.is_prev_vocabulary = false;
+                self.separator_vocabulary.as_ref().unwrap()
+            // 直前に追加した語彙が語彙リストから選んだ語彙ではなかったり語彙区切りがない場合のみ語彙リストから語彙を選択する
+            } else {
+                self.is_prev_vocabulary = true;
+
+                let vocabulary_index = self.vocabulary_order.next_vocabulary_entry_index(
+                    &self.prev_vocabulary_index,
+                    self.vocabulary_entries,
+                );
+
+                self.prev_vocabulary_index.replace(vocabulary_index);
+
+                self.vocabulary_entries.get(vocabulary_index).unwrap()
+            },
+        )
     }
 }
 
