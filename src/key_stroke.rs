@@ -45,7 +45,7 @@ impl TryFrom<char> for KeyStrokeChar {
 }
 
 // KeyStrokeCharで構成された文字列
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct KeyStrokeString(String);
 
 impl From<KeyStrokeString> for String {

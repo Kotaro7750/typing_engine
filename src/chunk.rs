@@ -4,7 +4,7 @@ use crate::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
 use crate::key_stroke::{KeyStrokeChar, KeyStrokeString};
 use crate::spell::SpellString;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum ChunkSpell {
     DisplayableAscii(SpellString),
     SingleChar(SpellString),
@@ -51,7 +51,7 @@ impl ChunkSpell {
 
 // タイピングの入力単位
 // 基本的には綴りは１文字だが「きょ」など複数文字の綴りになる場合もある
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Chunk {
     spell: ChunkSpell,
     // チャンクを入力するためのキーストロークは複数の候補がありえる
@@ -326,7 +326,7 @@ fn allow_single_n_as_key_stroke(next_chunk_spell: &Option<ChunkSpell>) -> bool {
 }
 
 // チャンクに対応するキーストロークの候補
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ChunkKeyStrokeCandidate {
     key_stroke_elements: Vec<KeyStrokeString>,
     // 次のチャンクの先頭キーストロークに制限があるケースがある

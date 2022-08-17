@@ -5,7 +5,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 // 綴りとして使用可能な文字で構成された文字列
 // 綴りとして使用可能な文字とは
 // * ひらがな(U+3041~U+308F, U+3092~U+3094)

@@ -7,7 +7,7 @@ use crate::{
 };
 
 // クエリを構成する語彙の量指定
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum VocabularyQuantifier {
     // キーストローク数での指定
     KeyStroke(NonZeroUsize),
@@ -16,7 +16,7 @@ pub enum VocabularyQuantifier {
 }
 
 // 問題文を構成する各語彙の間に入れる語彙
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum VocabularySeparator {
     None,
     WhiteSpace,
@@ -45,6 +45,7 @@ impl VocabularySeparator {
 }
 
 // 問題文を構成する語彙を語彙リストからどのような順番で選ぶか
+#[derive(Clone)]
 pub enum VocabularyOrder<'order_function> {
     Random,
     InOrder,
@@ -72,6 +73,7 @@ impl<'order_function> VocabularyOrder<'order_function> {
     }
 }
 
+#[derive(Clone)]
 pub struct QueryRequest<'vocabulary, 'order_function> {
     vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
     vocabulary_quantifier: VocabularyQuantifier,
@@ -304,7 +306,7 @@ impl<'this, 'vocabulary, 'order_function> Iterator
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Query {
     vocabulary_infos: Vec<VocabularyInfo>,
     chunks: Vec<Chunk>,

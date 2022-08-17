@@ -5,7 +5,7 @@ use crate::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
 use crate::spell::SpellString;
 
 // 辞書中の各語彙
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct VocabularyEntry {
     // 問題文として表示する文字列
     view: String,
@@ -109,7 +109,7 @@ impl VocabularyEntry {
 }
 
 // クエリ中での語彙
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct VocabularyInfo {
     view: String,
     spell: SpellString,
