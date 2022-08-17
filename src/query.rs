@@ -115,7 +115,12 @@ impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
                     next_vocabulary_generator,
                 )
             }
-            _ => unimplemented!("VocabularyQuantifier::Vocabulary is not supportted yet"),
+            VocabularyQuantifier::Vocabulary(vocabulary_count) => {
+                Self::construct_query_with_vocabulary_count(
+                    vocabulary_count,
+                    next_vocabulary_generator,
+                )
+            }
         }
     }
 
@@ -202,6 +207,44 @@ impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
                 .try_into()
                 .unwrap(),
         );
+
+        Query::new(query_vocabulary_infos, query_chunks)
+    }
+
+    fn construct_query_with_vocabulary_count(
+        vocabulary_count: NonZeroUsize,
+        mut next_vocabulary_generator: NextVocabularyGenerator,
+    ) -> Query {
+        let mut query_chunks = Vec::<Chunk>::new();
+        let mut query_vocabulary_infos = Vec::<VocabularyInfo>::new();
+
+        // 要求語彙数を満たすまで以下を繰り返す
+        // 1. 語彙リストから語彙を選ぶ
+        // 2. 語彙をパースしてチャンク列を構成する（キーストロークの付与はまだしない）
+        // 3. チャンク列に語彙のチャンク列を追加する
+        let mut current_vocabulary_count = 0;
+        while current_vocabulary_count < vocabulary_count.get() {
+            // 1
+            let vocabulary_entry = next_vocabulary_generator.next().unwrap();
+
+            // 2
+            // 語彙区切りによっては語彙ごとにキーストロークを付与してはいけないケースがあるためまだ付与しない
+            // 例えば語彙区切りがない場合には語彙の末尾のキーストロークは次の語彙の先頭チャンクに依存する
+            let chunks = vocabulary_entry.construct_chunks();
+
+            let chunk_count = chunks.len().try_into().unwrap();
+            query_vocabulary_infos.push(vocabulary_entry.construct_vocabulary_info(chunk_count));
+
+            // 3
+            for chunk in chunks {
+                query_chunks.push(chunk);
+            }
+
+            current_vocabulary_count += 1;
+        }
+
+        // 全ての語彙や語彙区切りが確定してからキーストロークを付与する
+        append_key_stroke_to_chunks(&mut query_chunks);
 
         Query::new(query_vocabulary_infos, query_chunks)
     }
