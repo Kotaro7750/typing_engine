@@ -1,4 +1,6 @@
-use query::QueryRequest;
+pub use query::{QueryRequest, VocabularyOrder, VocabularyQuantifier, VocabularySeparator};
+pub use spell::{SpellString, SpellStringError};
+pub use vocabulary::VocabularyEntry;
 
 mod chunk;
 mod chunk_key_stroke_dictionary;

@@ -6,15 +6,16 @@ use std::{
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-// 綴りとして使用可能な文字で構成された文字列
-// 綴りとして使用可能な文字とは
-// * ひらがな(U+3041~U+308F, U+3092~U+3094)
-// * 表示可能なASCII(U+20~U+7E)
-// * 日本語記号類
+/// An string only contains characters which can be used as spells.
+/// 
+/// Characters can be used as spells are
+/// * A displayable ASCII. (`U+20` ~ `U+7E`)
+/// * A japanese hiragana. (`U+3041` ~ `U+308F`, `U+3092` ~ `U+3094`)
+/// * A japanese symbol.
 pub struct SpellString(String);
 
 impl SpellString {
-    pub fn contains_displayable_ascii(&self) -> bool {
+    pub(crate) fn contains_displayable_ascii(&self) -> bool {
         for c in self.chars() {
             if is_displayable_ascii(c) {
                 return true;

@@ -4,7 +4,7 @@ use crate::chunk::Chunk;
 use crate::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
 use crate::spell::SpellString;
 
-// 辞書中の各語彙
+/// An vocabulary for used in query.
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct VocabularyEntry {
     // 問題文として表示する文字列
@@ -15,6 +15,14 @@ pub struct VocabularyEntry {
 }
 
 impl VocabularyEntry {
+    /// Construct a new [`VocabularyEntry`].
+    ///
+    /// `view` is this vocabulary itself.
+    /// Each element of `spell_list` describes a spell of each charactor of `view` string.
+    ///
+    /// For example,
+    /// * `"巨大"` has `"巨大"` as `view` , and `["きょ","だい"]` as `spell_list`
+    /// * `"Big"` has `"Big"` as `view` , and `["B","i","g"]` as `spell_list`
     pub fn new(view: String, spell_list: Vec<SpellString>) -> Option<Self> {
         if view.chars().count() != spell_list.len() {
             None
@@ -26,17 +34,17 @@ impl VocabularyEntry {
         }
     }
 
-    pub fn view(&self) -> &str {
+    pub(crate) fn view(&self) -> &str {
         self.view.as_str()
     }
 
-    pub fn spells(&self) -> &Vec<SpellString> {
+    pub(crate) fn spells(&self) -> &Vec<SpellString> {
         &self.spells
     }
 
     // 語彙全体の綴りを構築する
     // 表示文字列の各文字に対しての綴りをつなげたもの
-    pub fn construct_spell_string(&self) -> SpellString {
+    pub(crate) fn construct_spell_string(&self) -> SpellString {
         let mut s = String::new();
 
         for spell in &self.spells {
@@ -47,7 +55,7 @@ impl VocabularyEntry {
     }
 
     // クエリ用の語彙情報を生成する
-    pub fn construct_vocabulary_info(&self, chunk_count: NonZeroUsize) -> VocabularyInfo {
+    pub(crate) fn construct_vocabulary_info(&self, chunk_count: NonZeroUsize) -> VocabularyInfo {
         let mut view_position_of_spell: Vec<usize> = vec![];
 
         self.spells.iter().enumerate().for_each(|(i, spell)| {
@@ -66,7 +74,7 @@ impl VocabularyEntry {
 
     // 語彙からチャンク列を構築する
     // この段階ではそれぞれのチャンクに対するキーストローク候補は設定しない
-    pub fn construct_chunks(&self) -> Vec<Chunk> {
+    pub(crate) fn construct_chunks(&self) -> Vec<Chunk> {
         let mut chunks = Vec::<Chunk>::new();
 
         let spell_chars: Vec<char> = self.construct_spell_string().chars().collect();
@@ -110,7 +118,7 @@ impl VocabularyEntry {
 
 // クエリ中での語彙
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct VocabularyInfo {
+pub(crate) struct VocabularyInfo {
     view: String,
     spell: SpellString,
     view_position_of_spell: Vec<usize>,
@@ -118,7 +126,7 @@ pub struct VocabularyInfo {
 }
 
 impl VocabularyInfo {
-    pub fn new(
+    pub(crate) fn new(
         view: String,
         spell: SpellString,
         view_position_of_spell: Vec<usize>,
@@ -132,15 +140,15 @@ impl VocabularyInfo {
         }
     }
 
-    pub fn chunk_count(&self) -> NonZeroUsize {
+    pub(crate) fn chunk_count(&self) -> NonZeroUsize {
         self.chunk_count
     }
 
-    pub fn view(&self) -> &str {
+    pub(crate) fn view(&self) -> &str {
         self.view.as_str()
     }
 
-    pub fn reset_chunk_count(&mut self, chunk_count: NonZeroUsize) {
+    pub(crate) fn reset_chunk_count(&mut self, chunk_count: NonZeroUsize) {
         self.chunk_count = chunk_count;
     }
 }

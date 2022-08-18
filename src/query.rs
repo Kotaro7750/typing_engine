@@ -6,20 +6,23 @@ use crate::{
     vocabulary::{VocabularyEntry, VocabularyInfo},
 };
 
-// クエリを構成する語彙の量指定
+/// A vocabulary quantifier for constructing query.
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum VocabularyQuantifier {
-    // キーストローク数での指定
+    /// Vocabularies are selected to meet key stroke count.
     KeyStroke(NonZeroUsize),
-    // 語彙数での指定
+    /// Vocabularies are selected to meet vocabulary count.
     Vocabulary(NonZeroUsize),
 }
 
-// 問題文を構成する各語彙の間に入れる語彙
+/// A vocabulary used to separate between vocabularies of query string.
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum VocabularySeparator {
+    /// No vocabulary is inserted between selected vocabularies.
     None,
+    /// Whitespace is inserted between selected vocabularies.
     WhiteSpace,
+    /// Any vocabulary is inserted between selected vocabularies.
     Vocabulary(VocabularyEntry),
 }
 
@@ -44,10 +47,13 @@ impl VocabularySeparator {
     }
 }
 
-// 問題文を構成する語彙を語彙リストからどのような順番で選ぶか
+/// An order specifier by which vocabularies are selected from vocabulary list.
 pub enum VocabularyOrder {
+    /// Vocabularies are selected randomly from vocabulary list.
     Random,
+    /// Vocabularies are selected in-order from vocabulary list.
     InOrder,
+    /// Vocabularies are selected user-defined order from vocabulary list.
     Arbitrary(Box<dyn Fn(&Option<usize>, &Vec<VocabularyEntry>) -> usize>),
 }
 
@@ -72,6 +78,7 @@ impl VocabularyOrder {
     }
 }
 
+/// A request for constructing query.
 pub struct QueryRequest<'vocabulary> {
     vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
     vocabulary_quantifier: VocabularyQuantifier,
@@ -80,6 +87,7 @@ pub struct QueryRequest<'vocabulary> {
 }
 
 impl<'vocabulary> QueryRequest<'vocabulary> {
+    /// Construct a new [`QueryRequest`].
     pub fn new(
         vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
         vocabulary_quantifier: VocabularyQuantifier,
@@ -94,7 +102,7 @@ impl<'vocabulary> QueryRequest<'vocabulary> {
         }
     }
 
-    pub fn construct_query(&self) -> Query {
+    pub(crate) fn construct_query(&self) -> Query {
         // 語彙リストから選んだ語彙の区切りとして使う語彙
         let separator_vocabulary = if self.vocabulary_separator.is_none() {
             None
@@ -301,7 +309,7 @@ impl<'this, 'vocabulary> Iterator for NextVocabularyGenerator<'this, 'vocabulary
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Query {
+pub(crate) struct Query {
     vocabulary_infos: Vec<VocabularyInfo>,
     chunks: Vec<Chunk>,
 }
