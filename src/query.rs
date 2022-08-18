@@ -45,14 +45,13 @@ impl VocabularySeparator {
 }
 
 // 問題文を構成する語彙を語彙リストからどのような順番で選ぶか
-#[derive(Clone)]
-pub enum VocabularyOrder<'order_function> {
+pub enum VocabularyOrder {
     Random,
     InOrder,
-    Arbitrary(&'order_function dyn Fn(&Option<usize>, &Vec<VocabularyEntry>) -> usize),
+    Arbitrary(Box<dyn Fn(&Option<usize>, &Vec<VocabularyEntry>) -> usize>),
 }
 
-impl<'order_function> VocabularyOrder<'order_function> {
+impl VocabularyOrder {
     // 前回の語彙のインデックスと語彙リストから次使う語彙のインデックスを生成する
     fn next_vocabulary_entry_index(
         &self,
@@ -73,20 +72,19 @@ impl<'order_function> VocabularyOrder<'order_function> {
     }
 }
 
-#[derive(Clone)]
-pub struct QueryRequest<'vocabulary, 'order_function> {
+pub struct QueryRequest<'vocabulary> {
     vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
     vocabulary_quantifier: VocabularyQuantifier,
     vocabulary_separator: VocabularySeparator,
-    vocabulary_order: VocabularyOrder<'order_function>,
+    vocabulary_order: VocabularyOrder,
 }
 
-impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
+impl<'vocabulary> QueryRequest<'vocabulary> {
     pub fn new(
         vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
         vocabulary_quantifier: VocabularyQuantifier,
         vocabulary_separator: VocabularySeparator,
-        vocabulary_order: VocabularyOrder<'order_function>,
+        vocabulary_order: VocabularyOrder,
     ) -> Self {
         Self {
             vocabulary_entries,
@@ -253,21 +251,19 @@ impl<'vocabulary, 'order_function> QueryRequest<'vocabulary, 'order_function> {
 }
 
 // 次の語彙を生成するイテレータ
-struct NextVocabularyGenerator<'this, 'vocabulary, 'order_function> {
+struct NextVocabularyGenerator<'this, 'vocabulary> {
     vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
     is_prev_vocabulary: bool,
     prev_vocabulary_index: Option<usize>,
     separator_vocabulary: &'vocabulary Option<VocabularyEntry>,
-    vocabulary_order: &'this VocabularyOrder<'order_function>,
+    vocabulary_order: &'this VocabularyOrder,
 }
 
-impl<'this, 'vocabulary, 'order_function>
-    NextVocabularyGenerator<'this, 'vocabulary, 'order_function>
-{
+impl<'this, 'vocabulary> NextVocabularyGenerator<'this, 'vocabulary> {
     fn new(
         vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
         separator_vocabulary: &'vocabulary Option<VocabularyEntry>,
-        vocabulary_order: &'this VocabularyOrder<'order_function>,
+        vocabulary_order: &'this VocabularyOrder,
     ) -> Self {
         Self {
             vocabulary_entries,
@@ -279,9 +275,7 @@ impl<'this, 'vocabulary, 'order_function>
     }
 }
 
-impl<'this, 'vocabulary, 'order_function> Iterator
-    for NextVocabularyGenerator<'this, 'vocabulary, 'order_function>
-{
+impl<'this, 'vocabulary> Iterator for NextVocabularyGenerator<'this, 'vocabulary> {
     type Item = &'vocabulary VocabularyEntry;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -453,7 +447,7 @@ mod test {
             &vocabularies,
             VocabularyQuantifier::KeyStroke(NonZeroUsize::new(3).unwrap()),
             VocabularySeparator::WhiteSpace,
-            VocabularyOrder::Arbitrary(&|prev_vocabulary_index, vocabulary_entries| {
+            VocabularyOrder::Arbitrary(Box::new(|prev_vocabulary_index, vocabulary_entries| {
                 if prev_vocabulary_index.is_none() {
                     vocabulary_entries.len() - 1
                 } else if prev_vocabulary_index.is_some()
@@ -463,7 +457,7 @@ mod test {
                 } else {
                     prev_vocabulary_index.as_ref().unwrap() - 1
                 }
-            }),
+            })),
         );
 
         let query = qr.construct_query();
