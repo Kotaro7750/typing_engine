@@ -1,7 +1,45 @@
+use std::error::Error;
+use std::fmt::Display;
+
 use crate::chunk::Chunk;
 use crate::chunk::TypedChunk;
 use crate::query::QueryRequest;
 use crate::vocabulary::VocabularyInfo;
+
+/// Error type returned from [`TypingEngine`].
+#[derive(Debug)]
+pub struct TypingEngineError {
+    kind: TypingEngineErrorKind,
+}
+
+impl Display for TypingEngineError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.kind)
+    }
+}
+
+impl Error for TypingEngineError {}
+
+#[derive(Debug)]
+enum TypingEngineErrorKind {
+    MustBeInitialized,
+}
+
+impl TypingEngineErrorKind {
+    fn as_str(&self) -> &'static str {
+        use TypingEngineErrorKind::*;
+
+        match *self {
+            MustBeInitialized => "not initialized",
+        }
+    }
+}
+
+impl Display for TypingEngineErrorKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 enum TypingEngineState {
@@ -44,12 +82,12 @@ impl TypingEngine {
     }
 
     /// Append query using [`QueryRequest`].
-    pub fn append_query(&mut self, query_request: QueryRequest) {
+    pub fn append_query(&mut self, query_request: QueryRequest) -> Result<(), TypingEngineError> {
         unimplemented!();
     }
 
     /// Start typing.
-    pub fn start(&mut self) {
+    pub fn start(&mut self) -> Result<(), TypingEngineError> {
         unimplemented!();
     }
 }
