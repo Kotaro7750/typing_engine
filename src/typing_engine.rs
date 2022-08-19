@@ -2,6 +2,7 @@ use crate::chunk::Chunk;
 use crate::chunk::TypedChunk;
 use crate::query::Query;
 use crate::query::QueryRequest;
+use crate::vocabulary::VocabularyInfo;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 enum TypingEngineState {
@@ -16,6 +17,7 @@ pub struct TypingEngine {
     state: TypingEngineState,
     query: Option<Query>,
     processed_chunk_info: Option<ProcessedChunkInfo>,
+    vocabulary_infos: Option<Vec<VocabularyInfo>>,
 }
 
 impl TypingEngine {
@@ -28,6 +30,7 @@ impl TypingEngine {
             state: TypingEngineState::Uninitialized,
             query: None,
             processed_chunk_info: None,
+            vocabulary_infos: None,
         }
     }
 
