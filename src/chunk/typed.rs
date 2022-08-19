@@ -30,7 +30,7 @@ impl TypedChunk {
 
     pub(crate) fn is_confirmed(&mut self) -> bool {
         assert!(self.chunk.key_stroke_candidates().is_some());
-        let key_stroke_candidates = self.chunk.key_stroke_candidates().as_mut().unwrap();
+        let key_stroke_candidates = self.chunk.key_stroke_candidates().as_ref().unwrap();
 
         let mut is_confirmed = false;
 
@@ -58,7 +58,7 @@ impl TypedChunk {
         assert!(!self.is_confirmed());
 
         assert!(self.chunk.key_stroke_candidates().is_some());
-        let key_stroke_candidates = self.chunk.key_stroke_candidates().as_mut().unwrap();
+        let key_stroke_candidates = self.chunk.key_stroke_candidates().as_ref().unwrap();
 
         assert_eq!(
             key_stroke_candidates.len(),
@@ -83,14 +83,9 @@ impl TypedChunk {
 
         // 何かしらの候補についてキーストロークが有効だったらそれらの候補のみを残しカーソル位置を進める
         if is_hit {
-            let mut index = 0;
-            key_stroke_candidates.retain(|_| {
-                let is_hit = *candidate_hit_miss.get(index).unwrap();
-                index += 1;
-                is_hit
-            });
+            self.chunk.reduce_candidate(&candidate_hit_miss);
 
-            index = 0;
+            let mut index = 0;
             self.cursor_positions_of_candidates.retain(|_| {
                 let is_hit = *candidate_hit_miss.get(index).unwrap();
                 index += 1;

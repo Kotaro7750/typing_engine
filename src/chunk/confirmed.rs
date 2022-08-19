@@ -2,6 +2,8 @@ use crate::chunk::Chunk;
 use crate::key_stroke::ActualKeyStroke;
 use crate::key_stroke::KeyStrokeChar;
 
+use super::ChunkKeyStrokeCandidate;
+
 // 確定したチャンク
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct ConfirmedChunk {

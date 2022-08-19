@@ -4,8 +4,8 @@ use crate::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
 use crate::key_stroke::{KeyStrokeChar, KeyStrokeString};
 use crate::spell::SpellString;
 
-pub(crate) mod typed;
 pub(crate) mod confirmed;
+pub(crate) mod typed;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum ChunkSpell {
@@ -73,8 +73,8 @@ impl Chunk {
         }
     }
 
-    pub(crate) fn key_stroke_candidates(&mut self) -> &mut Option<Vec<ChunkKeyStrokeCandidate>> {
-        &mut self.key_stroke_candidates
+    pub(crate) fn key_stroke_candidates(&self) -> &Option<Vec<ChunkKeyStrokeCandidate>> {
+        &self.key_stroke_candidates
     }
 
     // このチャンクを打つのに必要な最小のキーストローク数を推測する
@@ -156,10 +156,20 @@ impl Chunk {
 
     // チャンクの候補を先頭キーストロークで制限する
     pub(crate) fn strict_chunk_head(&mut self, chunk_head_striction: KeyStrokeChar) {
-        let key_stroke_candidates = self.key_stroke_candidates().as_mut().unwrap();
+        let key_stroke_candidates = self.key_stroke_candidates.as_mut().unwrap();
 
         key_stroke_candidates
             .retain(|candidate| candidate.key_stroke_char_at_position(0) == chunk_head_striction);
+    }
+
+    // 候補を減らす
+    pub(crate) fn reduce_candidate(&mut self, retain_vector: &Vec<bool>) {
+        let mut index = 0;
+        self.key_stroke_candidates.as_mut().unwrap().retain(|_| {
+            let is_hit = *retain_vector.get(index).unwrap();
+            index += 1;
+            is_hit
+        });
     }
 }
 
