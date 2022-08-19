@@ -5,6 +5,7 @@ pub use crate::vocabulary::VocabularyEntry;
 
 mod chunk;
 mod chunk_key_stroke_dictionary;
+mod display_info;
 mod key_stroke;
 mod query;
 mod spell;
