@@ -15,6 +15,20 @@ pub(crate) struct TypedChunk {
 }
 
 impl TypedChunk {
+    pub(crate) fn new(
+        state: TypedChunkState,
+        chunk: Chunk,
+        cursor_positions_of_candidates: Vec<usize>,
+        key_strokes: Vec<ActualKeyStroke>,
+    ) -> Self {
+        Self {
+            state,
+            chunk,
+            cursor_positions_of_candidates,
+            key_strokes,
+        }
+    }
+
     pub(crate) fn is_confirmed(&self) -> bool {
         match self.state {
             TypedChunkState::Inflight => false,
@@ -142,7 +156,7 @@ impl From<Chunk> for TypedChunk {
 
 // タイピング中のチャンクの状態
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum TypedChunkState {
+pub(crate) enum TypedChunkState {
     // 現在打たれている
     Inflight,
     // チャンクを打ち終わり確定している
