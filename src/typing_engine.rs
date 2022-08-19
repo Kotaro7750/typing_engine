@@ -12,6 +12,12 @@ pub struct TypingEngineError {
     kind: TypingEngineErrorKind,
 }
 
+impl TypingEngineError {
+    fn new(kind: TypingEngineErrorKind) -> Self {
+        Self { kind }
+    }
+}
+
 impl Display for TypingEngineError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.kind)
@@ -82,13 +88,44 @@ impl TypingEngine {
     }
 
     /// Append query using [`QueryRequest`].
+    ///
+    /// If this method is called before initializing via calling [`init`](Self::init()) method, this
+    /// method returns error.
     pub fn append_query(&mut self, query_request: QueryRequest) -> Result<(), TypingEngineError> {
-        unimplemented!();
+        if self.is_initialized() {
+            assert!(self.processed_chunk_info.is_some());
+            assert!(self.vocabulary_infos.is_some());
+
+            let (mut vocabulary_infos, chunks) = query_request.construct_query().decompose();
+
+            self.vocabulary_infos
+                .as_mut()
+                .unwrap()
+                .append(&mut vocabulary_infos);
+
+            self.processed_chunk_info
+                .as_mut()
+                .unwrap()
+                .append_chunks(chunks);
+
+            Ok(())
+        } else {
+            Err(TypingEngineError::new(
+                TypingEngineErrorKind::MustBeInitialized,
+            ))
+        }
     }
 
     /// Start typing.
     pub fn start(&mut self) -> Result<(), TypingEngineError> {
         unimplemented!();
+    }
+
+    fn is_initialized(&self) -> bool {
+        match self.state {
+            TypingEngineState::Uninitialized => false,
+            _ => true,
+        }
     }
 }
 
@@ -106,5 +143,9 @@ impl ProcessedChunkInfo {
             inflight_chunk: None,
             confirmed_chunks: vec![],
         }
+    }
+
+    pub(crate) fn append_chunks(&mut self, mut chunks: Vec<Chunk>) {
+        self.unprocessed_chunks.append(&mut chunks);
     }
 }
