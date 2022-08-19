@@ -1,10 +1,11 @@
 use std::collections::VecDeque;
 use std::error::Error;
 use std::fmt::Display;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
-use crate::chunk::typed::TypedChunk;
+use crate::chunk::typed::{KeyStrokeResult, TypedChunk};
 use crate::chunk::Chunk;
+use crate::key_stroke::KeyStrokeChar;
 use crate::query::QueryRequest;
 use crate::vocabulary::VocabularyInfo;
 
@@ -174,19 +175,46 @@ impl ProcessedChunkInfo {
     // 現在打っているチャンクを確定させ未処理のチャンク列の先頭のチャンクの処理を開始する
     pub(crate) fn move_next_chunk(&mut self) {
         // まずは現在打っているチャンクを確定済みチャンク列に追加する
-        if self.inflight_chunk.is_some() {
-            let current_inflight_chunk = self.inflight_chunk.take().unwrap();
-
+        let next_chunk_head_constraint = if self.inflight_chunk.is_some() {
+            let mut current_inflight_chunk = self.inflight_chunk.take().unwrap();
             assert!(current_inflight_chunk.is_confirmed());
 
+            let next_chunk_head_constraint = current_inflight_chunk.next_chunk_head_constraint();
             self.confirmed_chunks.push(current_inflight_chunk);
-        }
+
+            next_chunk_head_constraint
+        } else {
+            None
+        };
 
         assert!(self.inflight_chunk.is_none());
 
         // 未処理チャンク列の先頭チャンクを処理中のチャンクにする
-        if let Some(next_inflight_chunk) = self.unprocessed_chunks.pop_front() {
+        if let Some(mut next_inflight_chunk) = self.unprocessed_chunks.pop_front() {
+            if let Some(next_chunk_head_constraint) = next_chunk_head_constraint {
+                next_inflight_chunk.strict_chunk_head(next_chunk_head_constraint);
+            }
+
             self.inflight_chunk.replace(next_inflight_chunk.into());
         }
+    }
+
+    // 1タイプのキーストロークを与える
+    pub(crate) fn stroke_key(
+        &mut self,
+        key_stroke: KeyStrokeChar,
+        elapsed_time: Duration,
+    ) -> KeyStrokeResult {
+        assert!(self.inflight_chunk.is_some());
+
+        let inflight_chunk = self.inflight_chunk.as_mut().unwrap();
+        let result = inflight_chunk.stroke_key(key_stroke, elapsed_time);
+
+        // このキーストロークでチャンクが確定したら次のチャンクの処理に移る
+        if inflight_chunk.is_confirmed() {
+            self.move_next_chunk();
+        }
+
+        result
     }
 }

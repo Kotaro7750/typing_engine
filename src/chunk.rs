@@ -152,6 +152,14 @@ impl Chunk {
         self.key_stroke_candidates
             .replace(new_key_stroke_candidates);
     }
+
+    // チャンクの候補を先頭キーストロークで制限する
+    pub(crate) fn strict_chunk_head(&mut self, chunk_head_striction: KeyStrokeChar) {
+        let key_stroke_candidates = self.key_stroke_candidates().as_mut().unwrap();
+
+        key_stroke_candidates
+            .retain(|candidate| candidate.key_stroke_char_at_position(0) == chunk_head_striction);
+    }
 }
 
 // 綴りのみの不完全なチャンク列にキーストローク候補を追加する
