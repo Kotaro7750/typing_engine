@@ -365,6 +365,12 @@ impl ChunkKeyStrokeCandidate {
         }
     }
 
+    // この候補が複数文字チャンクを分けて打つ候補か
+    // ex. 「きょ」というチャンクには「き」と「ょ」に分けて打つケースもある
+    pub(crate) fn is_splitted(&self) -> bool {
+        self.key_stroke_elements.len() == 2
+    }
+
     // キーストローク全体の文字列を生成する
     fn whole_key_stroke(&self) -> KeyStrokeString {
         let mut s = String::new();
