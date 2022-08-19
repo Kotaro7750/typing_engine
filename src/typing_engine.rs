@@ -3,8 +3,8 @@ use std::error::Error;
 use std::fmt::Display;
 use std::time::Instant;
 
-use crate::chunk::Chunk;
 use crate::chunk::typed::TypedChunk;
+use crate::chunk::Chunk;
 use crate::query::QueryRequest;
 use crate::vocabulary::VocabularyInfo;
 
@@ -175,9 +175,10 @@ impl ProcessedChunkInfo {
     pub(crate) fn move_next_chunk(&mut self) {
         // まずは現在打っているチャンクを確定済みチャンク列に追加する
         if self.inflight_chunk.is_some() {
-            // XXX 現在打っているチャンクが終了しているかを確かめる必要がある
-
             let current_inflight_chunk = self.inflight_chunk.take().unwrap();
+
+            assert!(current_inflight_chunk.is_confirmed());
+
             self.confirmed_chunks.push(current_inflight_chunk);
         }
 
