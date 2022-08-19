@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use crate::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
-use crate::key_stroke::{KeyStrokeChar, KeyStrokeString};
+use crate::key_stroke::{ActualKeyStroke, KeyStrokeChar, KeyStrokeString};
 use crate::spell::SpellString;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -107,6 +107,13 @@ impl Chunk {
             .map(|candidate| candidate.calc_key_stroke_count())
             .min()
             .unwrap()
+    }
+
+    pub(crate) fn key_stroke_candidates_count(&self) -> Option<usize> {
+        match &self.key_stroke_candidates {
+            Some(v) => Some(v.len()),
+            None => None,
+        }
     }
 
     // チャンクをcount_striction回のキーストロークで終わるように制限する
@@ -413,6 +420,31 @@ impl ChunkKeyStrokeCandidate {
         self.key_stroke_elements = new_key_stroke_elements;
         // この候補の属するチャンクが最後のチャンクであることを想定しているので次のチャンクへの制限はなくてもよい
         self.next_chunk_head_constraint.take();
+    }
+}
+
+// 現在打たれているチャンクや打ち終わったチャンク
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct TypedChunk {
+    chunk: Chunk,
+    // キーストローク候補のそれぞれに対するカーソル位置
+    cursor_positions_of_candidates: Vec<usize>,
+    // ミスタイプも含めた実際のキーストローク
+    key_strokes: Vec<ActualKeyStroke>,
+}
+
+impl From<Chunk> for TypedChunk {
+    fn from(chunk: Chunk) -> Self {
+        let key_stroke_candidates_count = match chunk.key_stroke_candidates_count() {
+            Some(c) => c,
+            None => panic!(),
+        };
+
+        Self {
+            chunk,
+            cursor_positions_of_candidates: vec![0; key_stroke_candidates_count],
+            key_strokes: vec![],
+        }
     }
 }
 

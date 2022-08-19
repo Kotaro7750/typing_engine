@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fmt::Display;
 use std::ops::Deref;
+use std::time::Duration;
 
 use crate::utility::is_displayable_ascii;
 
@@ -91,5 +92,24 @@ impl TryFrom<String> for KeyStrokeString {
         }
 
         Ok(Self(value))
+    }
+}
+
+// タイピング中のそれぞれのキーストローク
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub(crate) struct ActualKeyStroke {
+    // タイピングを開始した時点からこのキーストロークが起こった時点までにかかった時間
+    elapsed_time: Duration,
+    key_stroke: KeyStrokeChar,
+    is_correct: bool,
+}
+
+impl ActualKeyStroke {
+    pub(crate) fn new(elapsed_time: Duration, key_stroke: KeyStrokeChar, is_correct: bool) -> Self {
+        Self {
+            elapsed_time,
+            key_stroke,
+            is_correct,
+        }
     }
 }

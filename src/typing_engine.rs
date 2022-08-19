@@ -1,3 +1,5 @@
+use crate::chunk::Chunk;
+use crate::chunk::TypedChunk;
 use crate::query::Query;
 use crate::query::QueryRequest;
 
@@ -13,6 +15,7 @@ enum TypingEngineState {
 pub struct TypingEngine {
     state: TypingEngineState,
     query: Option<Query>,
+    processed_chunk_info: Option<ProcessedChunkInfo>,
 }
 
 impl TypingEngine {
@@ -24,6 +27,7 @@ impl TypingEngine {
         Self {
             state: TypingEngineState::Uninitialized,
             query: None,
+            processed_chunk_info: None,
         }
     }
 
@@ -42,4 +46,11 @@ impl TypingEngine {
     pub fn start(&mut self) {
         unimplemented!();
     }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub(crate) struct ProcessedChunkInfo {
+    unprocessed_chunks: Vec<Chunk>,
+    inflight_chunk: Option<TypedChunk>,
+    confirmed_chunks: Vec<TypedChunk>,
 }
