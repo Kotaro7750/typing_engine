@@ -3,7 +3,7 @@ use std::time::Duration;
 use crate::chunk::Chunk;
 use crate::key_stroke::{ActualKeyStroke, KeyStrokeChar};
 
-// 現在打たれているチャンクや打ち終わったチャンク
+// 現在打たれているチャンク
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct TypedChunk {
     state: TypedChunkState,

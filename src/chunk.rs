@@ -5,6 +5,7 @@ use crate::key_stroke::{KeyStrokeChar, KeyStrokeString};
 use crate::spell::SpellString;
 
 pub(crate) mod typed;
+pub(crate) mod confirmed;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum ChunkSpell {
