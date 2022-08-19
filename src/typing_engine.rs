@@ -135,6 +135,7 @@ impl TypingEngine {
                 .unwrap()
                 .move_next_chunk();
 
+            self.state = TypingEngineState::Started;
             self.start_time.replace(Instant::now());
             Ok(())
         } else {
