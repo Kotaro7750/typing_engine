@@ -72,6 +72,10 @@ impl Chunk {
         }
     }
 
+    pub(crate) fn key_stroke_candidates(&mut self) -> &mut Option<Vec<ChunkKeyStrokeCandidate>> {
+        &mut self.key_stroke_candidates
+    }
+
     // このチャンクを打つのに必要な最小のキーストローク数を推測する
     // キーストロークをまだ付与していないチャンクに対して行うため推測である
     pub fn estimate_min_key_stroke_count(&self) -> usize {
