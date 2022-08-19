@@ -32,6 +32,7 @@ impl Error for TypingEngineError {}
 #[derive(Debug)]
 enum TypingEngineErrorKind {
     MustBeInitialized,
+    MustBeStarted,
 }
 
 impl TypingEngineErrorKind {
@@ -40,6 +41,7 @@ impl TypingEngineErrorKind {
 
         match *self {
             MustBeInitialized => "not initialized",
+            MustBeStarted => "not started",
         }
     }
 }
@@ -145,10 +147,36 @@ impl TypingEngine {
         }
     }
 
+    /// Give a key stroke to [`TypingEngine`].
+    ///
+    /// If this method is called before initializing via calling [`start`](Self::start()) method,
+    /// this method returns error.
+    pub fn stroke_key(&mut self, key_stroke: KeyStrokeChar) -> Result<(), TypingEngineError> {
+        if self.is_started() {
+            let elapsed_time = self.start_time.as_ref().unwrap().elapsed();
+
+            self.processed_chunk_info
+                .as_mut()
+                .unwrap()
+                .stroke_key(key_stroke, elapsed_time);
+
+            Ok(())
+        } else {
+            Err(TypingEngineError::new(TypingEngineErrorKind::MustBeStarted))
+        }
+    }
+
     fn is_initialized(&self) -> bool {
         match self.state {
             TypingEngineState::Uninitialized => false,
             _ => true,
+        }
+    }
+
+    fn is_started(&self) -> bool {
+        match self.state {
+            TypingEngineState::Started => true,
+            _ => false,
         }
     }
 }
