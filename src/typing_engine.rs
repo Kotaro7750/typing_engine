@@ -75,7 +75,7 @@ impl TypingEngine {
         }
     }
 
-    /// Construct and reset query using [`QueryRequest`].
+    /// Initialize [`TypingEngine`](TypingEngine) by constructing and resetting query using [`QueryRequest`].
     pub fn init(&mut self, query_request: QueryRequest) {
         let query = query_request.construct_query();
         let (vocabulary_infos, chunks) = query.decompose();
