@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 use std::time::Duration;
 
+use crate::chunk::confirmed::ConfirmedChunk;
 use crate::chunk::typed::{KeyStrokeResult, TypedChunk};
 use crate::chunk::Chunk;
 use crate::key_stroke::KeyStrokeChar;
@@ -9,7 +10,7 @@ use crate::key_stroke::KeyStrokeChar;
 pub(crate) struct ProcessedChunkInfo {
     unprocessed_chunks: VecDeque<Chunk>,
     inflight_chunk: Option<TypedChunk>,
-    confirmed_chunks: Vec<TypedChunk>,
+    confirmed_chunks: Vec<ConfirmedChunk>,
 }
 
 impl ProcessedChunkInfo {
@@ -45,8 +46,9 @@ impl ProcessedChunkInfo {
             let mut current_inflight_chunk = self.inflight_chunk.take().unwrap();
             assert!(current_inflight_chunk.is_confirmed());
 
-            let next_chunk_head_constraint = current_inflight_chunk.next_chunk_head_constraint();
-            self.confirmed_chunks.push(current_inflight_chunk);
+            let mut current_confirmed_chunk: ConfirmedChunk = current_inflight_chunk.into();
+            let next_chunk_head_constraint = current_confirmed_chunk.next_chunk_head_constraint();
+            self.confirmed_chunks.push(current_confirmed_chunk);
 
             next_chunk_head_constraint
         } else {
@@ -89,7 +91,6 @@ impl ProcessedChunkInfo {
 mod test {
     use super::*;
 
-    use crate::chunk::typed::TypedChunkState;
     use crate::key_stroke::ActualKeyStroke;
     use crate::{gen_candidate, gen_chunk};
 
@@ -226,10 +227,8 @@ mod test {
                     )
                     .into()
                 ),
-                confirmed_chunks: vec![TypedChunk::new(
-                    TypedChunkState::Confirmed,
+                confirmed_chunks: vec![ConfirmedChunk::new(
                     gen_chunk!("う", vec![gen_candidate!(["u"]),]),
-                    vec![1],
                     vec![ActualKeyStroke::new(
                         Duration::new(1, 0),
                         'u'.try_into().unwrap(),
@@ -249,20 +248,16 @@ mod test {
                     gen_chunk!("う", vec![gen_candidate!(["wu"]), gen_candidate!(["whu"])]).into()
                 ),
                 confirmed_chunks: vec![
-                    TypedChunk::new(
-                        TypedChunkState::Confirmed,
+                    ConfirmedChunk::new(
                         gen_chunk!("う", vec![gen_candidate!(["u"]),]),
-                        vec![1],
                         vec![ActualKeyStroke::new(
                             Duration::new(1, 0),
                             'u'.try_into().unwrap(),
                             true
                         )],
                     ),
-                    TypedChunk::new(
-                        TypedChunkState::Confirmed,
+                    ConfirmedChunk::new(
                         gen_chunk!("っ", vec![gen_candidate!(["w"], 'w'),]),
-                        vec![1],
                         vec![ActualKeyStroke::new(
                             Duration::new(2, 0),
                             'w'.try_into().unwrap(),
@@ -280,7 +275,6 @@ mod test {
             ProcessedChunkInfo {
                 unprocessed_chunks: vec![].into(),
                 inflight_chunk: Some(TypedChunk::new(
-                    TypedChunkState::Inflight,
                     gen_chunk!("う", vec![gen_candidate!(["wu"]), gen_candidate!(["whu"])]).into(),
                     vec![1, 1],
                     vec![ActualKeyStroke::new(
@@ -290,20 +284,16 @@ mod test {
                     )]
                 )),
                 confirmed_chunks: vec![
-                    TypedChunk::new(
-                        TypedChunkState::Confirmed,
+                    ConfirmedChunk::new(
                         gen_chunk!("う", vec![gen_candidate!(["u"]),]),
-                        vec![1],
                         vec![ActualKeyStroke::new(
                             Duration::new(1, 0),
                             'u'.try_into().unwrap(),
                             true
                         )],
                     ),
-                    TypedChunk::new(
-                        TypedChunkState::Confirmed,
+                    ConfirmedChunk::new(
                         gen_chunk!("っ", vec![gen_candidate!(["w"], 'w'),]),
-                        vec![1],
                         vec![ActualKeyStroke::new(
                             Duration::new(2, 0),
                             'w'.try_into().unwrap(),
@@ -322,30 +312,24 @@ mod test {
                 unprocessed_chunks: vec![].into(),
                 inflight_chunk: None,
                 confirmed_chunks: vec![
-                    TypedChunk::new(
-                        TypedChunkState::Confirmed,
+                    ConfirmedChunk::new(
                         gen_chunk!("う", vec![gen_candidate!(["u"]),]),
-                        vec![1],
                         vec![ActualKeyStroke::new(
                             Duration::new(1, 0),
                             'u'.try_into().unwrap(),
                             true
                         )],
                     ),
-                    TypedChunk::new(
-                        TypedChunkState::Confirmed,
+                    ConfirmedChunk::new(
                         gen_chunk!("っ", vec![gen_candidate!(["w"], 'w'),]),
-                        vec![1],
                         vec![ActualKeyStroke::new(
                             Duration::new(2, 0),
                             'w'.try_into().unwrap(),
                             true
                         )],
                     ),
-                    TypedChunk::new(
-                        TypedChunkState::Confirmed,
+                    ConfirmedChunk::new(
                         gen_chunk!("う", vec![gen_candidate!(["wu"])]),
-                        vec![2],
                         vec![
                             ActualKeyStroke::new(
                                 Duration::new(3, 0),
@@ -390,30 +374,24 @@ mod test {
                     .into()
                 ),
                 confirmed_chunks: vec![
-                    TypedChunk::new(
-                        TypedChunkState::Confirmed,
+                    ConfirmedChunk::new(
                         gen_chunk!("う", vec![gen_candidate!(["u"]),]),
-                        vec![1],
                         vec![ActualKeyStroke::new(
                             Duration::new(1, 0),
                             'u'.try_into().unwrap(),
                             true
                         )],
                     ),
-                    TypedChunk::new(
-                        TypedChunkState::Confirmed,
+                    ConfirmedChunk::new(
                         gen_chunk!("っ", vec![gen_candidate!(["w"], 'w'),]),
-                        vec![1],
                         vec![ActualKeyStroke::new(
                             Duration::new(2, 0),
                             'w'.try_into().unwrap(),
                             true
                         )],
                     ),
-                    TypedChunk::new(
-                        TypedChunkState::Confirmed,
+                    ConfirmedChunk::new(
                         gen_chunk!("う", vec![gen_candidate!(["wu"])]),
-                        vec![2],
                         vec![
                             ActualKeyStroke::new(
                                 Duration::new(3, 0),

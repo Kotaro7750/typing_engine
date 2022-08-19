@@ -3,10 +3,11 @@ use std::time::Duration;
 use crate::chunk::Chunk;
 use crate::key_stroke::{ActualKeyStroke, KeyStrokeChar};
 
+use super::confirmed::ConfirmedChunk;
+
 // 現在打たれているチャンク
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct TypedChunk {
-    state: TypedChunkState,
     chunk: Chunk,
     // キーストローク候補のそれぞれに対するカーソル位置
     cursor_positions_of_candidates: Vec<usize>,
@@ -16,24 +17,36 @@ pub(crate) struct TypedChunk {
 
 impl TypedChunk {
     pub(crate) fn new(
-        state: TypedChunkState,
         chunk: Chunk,
         cursor_positions_of_candidates: Vec<usize>,
         key_strokes: Vec<ActualKeyStroke>,
     ) -> Self {
         Self {
-            state,
             chunk,
             cursor_positions_of_candidates,
             key_strokes,
         }
     }
 
-    pub(crate) fn is_confirmed(&self) -> bool {
-        match self.state {
-            TypedChunkState::Inflight => false,
-            TypedChunkState::Confirmed => true,
-        }
+    pub(crate) fn is_confirmed(&mut self) -> bool {
+        assert!(self.chunk.key_stroke_candidates().is_some());
+        let key_stroke_candidates = self.chunk.key_stroke_candidates().as_mut().unwrap();
+
+        let mut is_confirmed = false;
+
+        key_stroke_candidates
+            .iter()
+            .zip(&self.cursor_positions_of_candidates)
+            .for_each(|(candidate, cursor_position)| {
+                // 同時に２つの候補が終了することはないはずである
+                assert!(!is_confirmed);
+
+                if *cursor_position >= candidate.calc_key_stroke_count() {
+                    is_confirmed = true;
+                }
+            });
+
+        is_confirmed
     }
 
     // 現在タイピング中のチャンクに対して1キーストロークのタイプを行う
@@ -42,7 +55,7 @@ impl TypedChunk {
         key_stroke: KeyStrokeChar,
         elapsed_time: Duration,
     ) -> KeyStrokeResult {
-        assert_eq!(self.state, TypedChunkState::Inflight);
+        assert!(!self.is_confirmed());
 
         assert!(self.chunk.key_stroke_candidates().is_some());
         let key_stroke_candidates = self.chunk.key_stroke_candidates().as_mut().unwrap();
@@ -92,48 +105,11 @@ impl TypedChunk {
         self.key_strokes
             .push(ActualKeyStroke::new(elapsed_time, key_stroke, is_hit));
 
-        // 確定した候補を探す
-        if is_hit {
-            let mut is_confirmed = false;
-            key_stroke_candidates
-                .iter()
-                .zip(&self.cursor_positions_of_candidates)
-                .for_each(|(candidate, cursor_position)| {
-                    // 同時に２つの候補が終了することはないはずである
-                    assert!(!is_confirmed);
-
-                    if *cursor_position >= candidate.calc_key_stroke_count() {
-                        is_confirmed = true;
-                    }
-                });
-
-            if is_confirmed {
-                assert!(key_stroke_candidates.len() == 1);
-                self.state = TypedChunkState::Confirmed;
-            }
-        }
-
         if is_hit {
             KeyStrokeResult::Correct
         } else {
             KeyStrokeResult::Wrong
         }
-    }
-
-    // 確定した候補について次のチャンク先頭への制限を生成する
-    pub(crate) fn next_chunk_head_constraint(&mut self) -> Option<KeyStrokeChar> {
-        assert!(self.is_confirmed());
-        assert!(self.chunk.key_stroke_candidates().as_ref().unwrap().len() == 1);
-
-        let confirmed_candidate = self
-            .chunk
-            .key_stroke_candidates()
-            .as_ref()
-            .unwrap()
-            .get(0)
-            .unwrap();
-
-        confirmed_candidate.next_chunk_head_constraint.clone()
     }
 }
 
@@ -144,9 +120,7 @@ impl From<Chunk> for TypedChunk {
             None => panic!(),
         };
 
-        // チャンクから直接確定したチャンクが生成されることはない
         Self {
-            state: TypedChunkState::Inflight,
             chunk,
             cursor_positions_of_candidates: vec![0; key_stroke_candidates_count],
             key_strokes: vec![],
@@ -154,13 +128,10 @@ impl From<Chunk> for TypedChunk {
     }
 }
 
-// タイピング中のチャンクの状態
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum TypedChunkState {
-    // 現在打たれている
-    Inflight,
-    // チャンクを打ち終わり確定している
-    Confirmed,
+impl Into<ConfirmedChunk> for TypedChunk {
+    fn into(self) -> ConfirmedChunk {
+        ConfirmedChunk::new(self.chunk, self.key_strokes)
+    }
 }
 
 // キーストロークの結果
@@ -180,7 +151,6 @@ mod test {
     #[test]
     fn stroke_key_1() {
         let mut typed_chunk = TypedChunk {
-            state: TypedChunkState::Inflight,
             chunk: gen_chunk!(
                 "じょ",
                 vec![
@@ -203,7 +173,6 @@ mod test {
         assert_eq!(
             typed_chunk,
             TypedChunk {
-                state: TypedChunkState::Inflight,
                 chunk: gen_chunk!(
                     "じょ",
                     vec![
@@ -228,7 +197,6 @@ mod test {
         assert_eq!(
             typed_chunk,
             TypedChunk {
-                state: TypedChunkState::Inflight,
                 chunk: gen_chunk!(
                     "じょ",
                     vec![
@@ -252,7 +220,6 @@ mod test {
         assert_eq!(
             typed_chunk,
             TypedChunk {
-                state: TypedChunkState::Confirmed,
                 chunk: gen_chunk!("じょ", vec![gen_candidate!(["jo"]),]),
                 cursor_positions_of_candidates: vec![2],
                 key_strokes: vec![
