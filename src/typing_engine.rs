@@ -4,7 +4,7 @@ use std::fmt::Display;
 use std::time::Instant;
 
 use crate::chunk::Chunk;
-use crate::chunk::TypedChunk;
+use crate::chunk::typed::TypedChunk;
 use crate::query::QueryRequest;
 use crate::vocabulary::VocabularyInfo;
 
