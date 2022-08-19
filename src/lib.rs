@@ -1,58 +1,16 @@
-use query::Query;
-pub use query::{QueryRequest, VocabularyOrder, VocabularyQuantifier, VocabularySeparator};
-pub use spell::{SpellString, SpellStringError};
-pub use vocabulary::VocabularyEntry;
+pub use crate::query::{QueryRequest, VocabularyOrder, VocabularyQuantifier, VocabularySeparator};
+pub use crate::spell::{SpellString, SpellStringError};
+pub use crate::typing_engine::*;
+pub use crate::vocabulary::VocabularyEntry;
 
 mod chunk;
 mod chunk_key_stroke_dictionary;
 mod key_stroke;
 mod query;
 mod spell;
+mod typing_engine;
 mod utility;
 mod vocabulary;
 
 #[cfg(test)]
 mod test_utility;
-
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-enum TypingEngineState {
-    Uninitialized,
-    Ready,
-    Started,
-}
-
-/// The main engine of typing game.
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-pub struct TypingEngine {
-    state: TypingEngineState,
-    query: Option<Query>,
-}
-
-impl TypingEngine {
-    /// Construct an empty engine.
-    ///
-    /// This method only do construct typing engine, so you must call [`init`](Self::init()) method to construct
-    /// query and [`start`](Self::start()) method to start typing.
-    pub fn new() -> Self {
-        Self {
-            state: TypingEngineState::Uninitialized,
-            query: None,
-        }
-    }
-
-    /// Construct and reset query using [`QueryRequest`].
-    pub fn init(&mut self, query_request: QueryRequest) {
-        self.query.replace(query_request.construct_query());
-        self.state = TypingEngineState::Ready;
-    }
-
-    /// Append query using [`QueryRequest`].
-    pub fn append_query(&mut self, query_request: QueryRequest) {
-        unimplemented!();
-    }
-
-    /// Start typing.
-    pub fn start(&mut self) {
-        unimplemented!();
-    }
-}
