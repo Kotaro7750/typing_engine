@@ -321,6 +321,10 @@ impl Query {
             chunks,
         }
     }
+
+    pub(crate) fn decompose(self) -> (Vec<VocabularyInfo>, Vec<Chunk>) {
+        (self.vocabulary_infos, self.chunks)
+    }
 }
 
 #[cfg(test)]
