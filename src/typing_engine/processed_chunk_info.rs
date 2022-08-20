@@ -89,13 +89,21 @@ impl ProcessedChunkInfo {
 
     pub(crate) fn construct_display_info(&self) -> (SpellDisplayInfo, KeyStrokeDisplayInfo) {
         let mut spell = String::new();
-        let mut spell_cursor_position = 0;
+        let mut spell_head_position = 0;
+        let mut spell_cursor_positions = Vec::<usize>::new();
         let mut spell_wrong_positions: Vec<usize> = vec![];
 
         let mut key_stroke = String::new();
         let mut key_stroke_cursor_position = 0;
         let mut key_stroke_wrong_positions: Vec<usize> = vec![];
 
+        // 1. 確定したチャンク
+        // 2. タイプ中のチャンク
+        // 3. 未処理のチャンク
+        //
+        // という順番で表示用の情報を構築する
+
+        // 1. 確定したチャンク
         self.confirmed_chunks.iter().for_each(|confirmed_chunk| {
             // キーストロークのそれぞれがタイプミスかどうか
             confirmed_chunk
@@ -127,21 +135,89 @@ impl ProcessedChunkInfo {
                     let element_index = if wrong_stroke_vector.len() == 1 { 0 } else { i };
 
                     if wrong_stroke_vector[element_index] {
-                        spell_wrong_positions.push(spell_cursor_position);
+                        spell_wrong_positions.push(spell_head_position);
                     }
 
-                    spell_cursor_position += 1;
+                    spell_head_position += 1;
                 });
 
             spell.push_str(confirmed_chunk.as_ref().spell().as_ref());
         });
 
+        // 2. タイプ中のチャンク
+        if self.inflight_chunk.is_none() {
+            spell_cursor_positions = vec![spell_head_position];
+            assert!(self.is_finished());
+        } else {
+            let inflight_chunk = self.inflight_chunk.as_ref().unwrap();
+
+            // キーストローク
+
+            let in_chunk_current_key_stroke_cursor_position =
+                inflight_chunk.current_key_stroke_cursor_position();
+
+            inflight_chunk
+                .construct_wrong_key_stroke_vector()
+                .iter()
+                .enumerate()
+                .for_each(|(i, is_key_stroke_wrong)| {
+                    if *is_key_stroke_wrong {
+                        key_stroke_wrong_positions.push(key_stroke_cursor_position + i);
+                    }
+                });
+
+            // この時点ではカーソル位置はこのチャンクの先頭を指しているので単純に足すだけで良い
+            key_stroke_cursor_position += in_chunk_current_key_stroke_cursor_position;
+
+            key_stroke.push_str(&inflight_chunk.as_ref().min_candidate().whole_key_stroke());
+
+            // 綴り
+
+            // カーソル位置は複数ある場合がある
+            let in_chunk_current_spell_cursor_positions =
+                inflight_chunk.current_spell_cursor_positions();
+
+            spell_cursor_positions = in_chunk_current_spell_cursor_positions
+                .iter()
+                .map(|in_chunk_current_spell_cursor_position| {
+                    spell_head_position + in_chunk_current_spell_cursor_position
+                })
+                .collect();
+
+            let wrong_spell_element_vector = inflight_chunk.construct_wrong_spell_element_vector();
+
+            // 複数文字チャンクを個別に入力した場合はそれぞれの綴りについて
+            // それ以外ではチャンク全体の綴りについて
+            // タイプミス判定をする
+            inflight_chunk
+                .as_ref()
+                .spell()
+                .as_ref()
+                .chars()
+                .enumerate()
+                .for_each(|(i, _)| {
+                    let element_index = if wrong_spell_element_vector.len() == 1 {
+                        0
+                    } else {
+                        i
+                    };
+
+                    if wrong_spell_element_vector[element_index] {
+                        spell_wrong_positions.push(spell_head_position);
+                    }
+
+                    spell_head_position += 1;
+                });
+
+            spell.push_str(inflight_chunk.as_ref().spell().as_ref());
+        }
+
         (
             SpellDisplayInfo::new(
                 spell,
-                vec![spell_cursor_position],
+                spell_cursor_positions,
                 spell_wrong_positions,
-                spell_cursor_position - 1,
+                spell_head_position - 1,
             ),
             KeyStrokeDisplayInfo::new(
                 key_stroke,

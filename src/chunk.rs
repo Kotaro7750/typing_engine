@@ -132,17 +132,29 @@ impl Chunk {
         }
     }
 
-    // このチャンクを打つのに必要な最小のキーストローク数を計算する
-    pub fn calc_min_key_stroke_count(&self) -> usize {
+    // 最小のキーストロークとなる候補を選択する
+    // 同じキーストローク回数の候補が複数あった場合にはもともとの順番が早い方を選択する
+    pub(crate) fn min_candidate(&self) -> &ChunkKeyStrokeCandidate {
         assert!(self.key_stroke_candidates.is_some());
 
-        self.key_stroke_candidates
-            .as_ref()
-            .unwrap()
-            .iter()
-            .map(|candidate| candidate.calc_key_stroke_count())
-            .min()
-            .unwrap()
+        let min_candidate = self.key_stroke_candidates.as_ref().unwrap().iter().reduce(
+            |min_candidate, candidate| {
+                if candidate.calc_key_stroke_count() < min_candidate.calc_key_stroke_count() {
+                    candidate
+                } else {
+                    min_candidate
+                }
+            },
+        );
+
+        assert!(min_candidate.is_some());
+
+        min_candidate.as_ref().unwrap()
+    }
+
+    // このチャンクを打つのに必要な最小のキーストローク数を計算する
+    pub fn calc_min_key_stroke_count(&self) -> usize {
+        self.min_candidate().calc_key_stroke_count()
     }
 
     pub(crate) fn key_stroke_candidates_count(&self) -> Option<usize> {

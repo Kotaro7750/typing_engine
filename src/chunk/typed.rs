@@ -106,6 +106,94 @@ impl TypedChunk {
             KeyStrokeResult::Wrong
         }
     }
+
+    // チャンクの綴りのそれぞれ（基本的には1つだが複数文字を個別で打った場合には2つ）でミスタイプがあったかどうか
+    pub(crate) fn construct_wrong_spell_element_vector(&self) -> Vec<bool> {
+        let element_count = if self.as_ref().min_candidate().is_splitted() {
+            2
+        } else {
+            1
+        };
+
+        // 複数文字のチャンクを個別で打った場合には要素数は2になる
+        let mut wrong_spell_element_vector: Vec<bool> = vec![false; element_count];
+
+        // 打たれたキーストロークではなく候補中のインデックス
+        let mut current_key_stroke_index = 0;
+
+        self.key_strokes.iter().for_each(|actual_key_stroke| {
+            if actual_key_stroke.is_correct() {
+                current_key_stroke_index += 1;
+            } else {
+                wrong_spell_element_vector[self
+                    .as_ref()
+                    .min_candidate()
+                    // キーストロークに対応する位置に変換する
+                    .element_index_at_key_stroke_index(current_key_stroke_index)] = true;
+            }
+        });
+
+        wrong_spell_element_vector
+    }
+
+    // チャンクのキーストロークのそれぞれでミスタイプがあったかどうか
+    pub(crate) fn construct_wrong_key_stroke_vector(&self) -> Vec<bool> {
+        let mut wrong_key_stroke_vector =
+            vec![false; self.chunk.min_candidate().calc_key_stroke_count()];
+
+        // 打たれたキーストロークではなく候補中のインデックス
+        let mut current_key_stroke_index = 0;
+
+        self.key_strokes.iter().for_each(|actual_key_stroke| {
+            if actual_key_stroke.is_correct() {
+                current_key_stroke_index += 1;
+            } else {
+                wrong_key_stroke_vector[current_key_stroke_index] = true;
+            }
+        });
+
+        wrong_key_stroke_vector
+    }
+
+    // チャンクのキーストロークのどこにカーソルを当てるべきか
+    pub(crate) fn current_key_stroke_cursor_position(&self) -> usize {
+        *self
+            .cursor_positions_of_candidates
+            .iter()
+            .reduce(|cursor_position, cursor_position_of_candidate| {
+                // XXX 適切に候補を削減していれば全ての候補でカーソル位置は同じなはず
+                assert!(cursor_position == cursor_position_of_candidate);
+                cursor_position_of_candidate
+            })
+            .unwrap()
+    }
+
+    // チャンクの綴りのどこにカーソルを当てるべきか
+    // 基本的にはチャンク全体だが複数文字を個別で入力している場合にはそれぞれの文字になる
+    pub(crate) fn current_spell_cursor_positions(&self) -> Vec<usize> {
+        let mut cursor_positions: Vec<usize> = vec![];
+
+        if self.as_ref().min_candidate().is_splitted() {
+            // 複数文字チャンクをまとめて入力する場合には現在入力中の綴りのみにカーソルを当てる
+            cursor_positions.push(
+                self.as_ref()
+                    .min_candidate()
+                    .element_index_at_key_stroke_index(self.current_key_stroke_cursor_position()),
+            );
+        } else {
+            // チャンクをまとめて入力している場合にはチャンクの綴り全体にカーソルを当てる
+            self.as_ref()
+                .spell()
+                .as_ref()
+                .chars()
+                .enumerate()
+                .for_each(|(i, _)| {
+                    cursor_positions.push(i);
+                });
+        }
+
+        cursor_positions
+    }
 }
 
 impl From<Chunk> for TypedChunk {
@@ -126,6 +214,12 @@ impl From<Chunk> for TypedChunk {
 impl Into<ConfirmedChunk> for TypedChunk {
     fn into(self) -> ConfirmedChunk {
         ConfirmedChunk::new(self.chunk, self.key_strokes)
+    }
+}
+
+impl AsRef<Chunk> for TypedChunk {
+    fn as_ref(&self) -> &Chunk {
+        &self.chunk
     }
 }
 
