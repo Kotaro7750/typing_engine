@@ -495,13 +495,20 @@ mod test {
                     gen_candidate!(["ki", "xyo"])
                 ]
             ),
-            gen_chunk!("あ", vec![gen_candidate!(["a"]),]),
+            gen_chunk!(
+                "きょ",
+                vec![
+                    gen_candidate!(["kyo"]),
+                    gen_candidate!(["ki", "lyo"]),
+                    gen_candidate!(["ki", "xyo"])
+                ]
+            ),
         ]);
 
         // 2. タイピング開始
         pci.move_next_chunk();
 
-        // 3. k -> u(ミスタイプ) -> y -> o -> k -> i -> j(ミスタイプ) -> x -> y -> o という順で入力
+        // 3. k -> u(ミスタイプ) -> y -> o -> k -> i -> j(ミスタイプ) -> x -> y -> o -> c(ミスタイプ) -> k という順で入力
         pci.stroke_key('k'.try_into().unwrap(), Duration::new(1, 0));
         pci.stroke_key('u'.try_into().unwrap(), Duration::new(2, 0));
         pci.stroke_key('y'.try_into().unwrap(), Duration::new(3, 0));
@@ -512,12 +519,28 @@ mod test {
         pci.stroke_key('x'.try_into().unwrap(), Duration::new(8, 0));
         pci.stroke_key('y'.try_into().unwrap(), Duration::new(9, 0));
         pci.stroke_key('o'.try_into().unwrap(), Duration::new(10, 0));
+        pci.stroke_key('c'.try_into().unwrap(), Duration::new(11, 0));
+        pci.stroke_key('k'.try_into().unwrap(), Duration::new(12, 0));
 
         assert_eq!(
             pci,
             ProcessedChunkInfo {
                 unprocessed_chunks: vec![].into(),
-                inflight_chunk: Some(gen_chunk!("あ", vec![gen_candidate!(["a"]),]).into()),
+                inflight_chunk: Some(TypedChunk::new(
+                    gen_chunk!(
+                        "きょ",
+                        vec![
+                            gen_candidate!(["kyo"]),
+                            gen_candidate!(["ki", "lyo"]),
+                            gen_candidate!(["ki", "xyo"]),
+                        ]
+                    ),
+                    vec![1, 1, 1],
+                    vec![
+                        ActualKeyStroke::new(Duration::new(11, 0), 'c'.try_into().unwrap(), false),
+                        ActualKeyStroke::new(Duration::new(12, 0), 'k'.try_into().unwrap(), true),
+                    ]
+                )),
                 confirmed_chunks: vec![
                     ConfirmedChunk::new(
                         gen_chunk!("きょ", vec![gen_candidate!(["kyo"]),]),
@@ -587,12 +610,17 @@ mod test {
 
         assert_eq!(
             sdi,
-            SpellDisplayInfo::new("きょきょ".to_string(), vec![4], vec![0, 1, 3], 3)
+            SpellDisplayInfo::new(
+                "きょきょきょ".to_string(),
+                vec![4, 5],
+                vec![0, 1, 3, 4, 5],
+                5
+            )
         );
 
         assert_eq!(
             ksdi,
-            KeyStrokeDisplayInfo::new("kyokixyo".to_string(), 8, vec![1, 5])
+            KeyStrokeDisplayInfo::new("kyokixyokyo".to_string(), 9, vec![1, 5, 8])
         );
     }
 }
