@@ -1,7 +1,8 @@
 use crate::key_stroke::KeyStrokeString;
+use serde::{Deserialize, Serialize};
 
 /// A type for composing typing game UI.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct DisplayInfo {
     view: ViewDisplayInfo,
     spell: SpellDisplayInfo,
@@ -37,7 +38,7 @@ impl DisplayInfo {
 }
 
 /// Information about query string itself.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ViewDisplayInfo {
     view: String,
     current_cursor_positions: Vec<usize>,
@@ -94,7 +95,7 @@ impl ViewDisplayInfo {
 }
 
 /// Information about spell of query string.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SpellDisplayInfo {
     spell: String,
     // 現在のカーソル位置
@@ -155,7 +156,7 @@ impl SpellDisplayInfo {
 }
 
 /// Information about key stroke of query string.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct KeyStrokeDisplayInfo {
     key_stroke: String,
     current_cursor_position: usize,
