@@ -2,10 +2,11 @@ use std::error::Error;
 use std::fmt::Display;
 use std::time::Instant;
 
+use crate::display_info::{DisplayInfo, ViewDisplayInfo};
 use crate::key_stroke::KeyStrokeChar;
 use crate::query::QueryRequest;
 use crate::typing_engine::processed_chunk_info::ProcessedChunkInfo;
-use crate::vocabulary::VocabularyInfo;
+use crate::vocabulary::{construct_view_position_of_spell_positions, VocabularyInfo};
 
 mod processed_chunk_info;
 
@@ -161,6 +162,37 @@ impl TypingEngine {
                 .stroke_key(key_stroke, elapsed_time);
 
             Ok(())
+        } else {
+            Err(TypingEngineError::new(TypingEngineErrorKind::MustBeStarted))
+        }
+    }
+
+    /// Construct [`DisplayInfo`] for composing UI.
+    ///
+    /// If this method is called before starting via calling [`start`](Self::start()) method,
+    /// this method returns error.
+    pub fn construct_display_info(&self) -> Result<DisplayInfo, TypingEngineError> {
+        if self.is_started() {
+            let (spell_display_info, key_stroke_display_info) = self
+                .processed_chunk_info
+                .as_ref()
+                .unwrap()
+                .construct_display_info();
+
+            let view_position_of_spell_position =
+                construct_view_position_of_spell_positions(self.vocabulary_infos.as_ref().unwrap());
+
+            let view_display_info = ViewDisplayInfo::new(
+                &spell_display_info,
+                "".to_string(),
+                view_position_of_spell_position,
+            );
+
+            Ok(DisplayInfo::new(
+                view_display_info,
+                spell_display_info,
+                key_stroke_display_info,
+            ))
         } else {
             Err(TypingEngineError::new(TypingEngineErrorKind::MustBeStarted))
         }

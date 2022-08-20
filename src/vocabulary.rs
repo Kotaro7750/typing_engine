@@ -153,6 +153,27 @@ impl VocabularyInfo {
     }
 }
 
+pub(crate) fn construct_view_position_of_spell_positions(
+    vocabulary_infos: &Vec<VocabularyInfo>,
+) -> Vec<usize> {
+    let mut view_position_of_spell_positions: Vec<usize> = vec![];
+
+    let mut index = 0;
+
+    vocabulary_infos.iter().for_each(|vocabulary_info| {
+        vocabulary_info
+            .view_position_of_spell
+            .iter()
+            .for_each(|in_vocabulary_view_position| {
+                view_position_of_spell_positions.push(index + in_vocabulary_view_position);
+            });
+
+        index += vocabulary_info.view().chars().count();
+    });
+
+    view_position_of_spell_positions
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
