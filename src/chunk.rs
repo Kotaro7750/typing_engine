@@ -8,7 +8,7 @@ pub(crate) mod confirmed;
 pub(crate) mod typed;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum ChunkSpell {
+pub(crate) enum ChunkSpell {
     DisplayableAscii(SpellString),
     SingleChar(SpellString),
     DoubleChar(SpellString),
@@ -50,6 +50,31 @@ impl ChunkSpell {
             _ => panic!("cannot split this ChunkSpell type"),
         }
     }
+
+    pub(crate) fn is_double(&self) -> bool {
+        match self {
+            ChunkSpell::DoubleChar(_) => true,
+            _ => false,
+        }
+    }
+
+    // 綴りの文字数
+    pub(crate) fn count(&self) -> usize {
+        match self {
+            ChunkSpell::DoubleChar(_) => 2,
+            _ => 1,
+        }
+    }
+}
+
+impl AsRef<SpellString> for ChunkSpell {
+    fn as_ref(&self) -> &SpellString {
+        match self {
+            ChunkSpell::DisplayableAscii(ss)
+            | ChunkSpell::SingleChar(ss)
+            | ChunkSpell::DoubleChar(ss) => ss,
+        }
+    }
 }
 
 // タイピングの入力単位
@@ -71,6 +96,10 @@ impl Chunk {
             spell: ChunkSpell::new(spell),
             key_stroke_candidates,
         }
+    }
+
+    pub(crate) fn spell(&self) -> &ChunkSpell {
+        &self.spell
     }
 
     pub(crate) fn key_stroke_candidates(&self) -> &Option<Vec<ChunkKeyStrokeCandidate>> {
@@ -382,8 +411,28 @@ impl ChunkKeyStrokeCandidate {
         self.key_stroke_elements.len() == 2
     }
 
+    // 候補の中の特定のキーストロークがどちらの要素に属しているか
+    // 基本的には0だが複数文字を個別で入力するような候補では1にもなりうる
+    pub(crate) fn element_index_at_key_stroke_index(&self, key_stroke_index: usize) -> usize {
+        assert!(key_stroke_index < self.calc_key_stroke_count());
+
+        let mut element_index = 0;
+
+        let mut element_head_key_stroke_index = 0;
+        for (i, element) in self.key_stroke_elements.iter().enumerate() {
+            if key_stroke_index < element_head_key_stroke_index + element.chars().count() {
+                element_index = i;
+                break;
+            }
+
+            element_head_key_stroke_index += element.chars().count();
+        }
+
+        element_index
+    }
+
     // キーストローク全体の文字列を生成する
-    fn whole_key_stroke(&self) -> KeyStrokeString {
+    pub(crate) fn whole_key_stroke(&self) -> KeyStrokeString {
         let mut s = String::new();
 
         for key_stroke in &self.key_stroke_elements {

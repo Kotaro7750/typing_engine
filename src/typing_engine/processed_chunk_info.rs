@@ -4,6 +4,7 @@ use std::time::Duration;
 use crate::chunk::confirmed::ConfirmedChunk;
 use crate::chunk::typed::{KeyStrokeResult, TypedChunk};
 use crate::chunk::Chunk;
+use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
 use crate::key_stroke::KeyStrokeChar;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -84,6 +85,70 @@ impl ProcessedChunkInfo {
         }
 
         result
+    }
+
+    pub(crate) fn construct_display_info(&self) -> (SpellDisplayInfo, KeyStrokeDisplayInfo) {
+        let mut spell = String::new();
+        let mut spell_cursor_position = 0;
+        let mut spell_wrong_positions: Vec<usize> = vec![];
+
+        let mut key_stroke = String::new();
+        let mut key_stroke_cursor_position = 0;
+        let mut key_stroke_wrong_positions: Vec<usize> = vec![];
+
+        self.confirmed_chunks.iter().for_each(|confirmed_chunk| {
+            // キーストロークのそれぞれがタイプミスかどうか
+            confirmed_chunk
+                .construct_key_stroke_wrong_vector()
+                .iter()
+                .for_each(|is_key_stroke_wrong| {
+                    if *is_key_stroke_wrong {
+                        key_stroke_wrong_positions.push(key_stroke_cursor_position);
+                    }
+
+                    key_stroke_cursor_position += 1;
+                });
+
+            key_stroke.push_str(&confirmed_chunk.confirmed_candidate().whole_key_stroke());
+
+            // 綴り要素のそれぞれがタイプミスかどうか
+            let wrong_stroke_vector = confirmed_chunk.construct_wrong_stroke_vector();
+
+            // 複数文字チャンクを個別に入力した場合はそれぞれの綴りについて
+            // それ以外ではチャンク全体の綴りについて
+            // タイプミス判定をする
+            confirmed_chunk
+                .as_ref()
+                .spell()
+                .as_ref()
+                .chars()
+                .enumerate()
+                .for_each(|(i, _)| {
+                    let element_index = if wrong_stroke_vector.len() == 1 { 0 } else { i };
+
+                    if wrong_stroke_vector[element_index] {
+                        spell_wrong_positions.push(spell_cursor_position);
+                    }
+
+                    spell_cursor_position += 1;
+                });
+
+            spell.push_str(confirmed_chunk.as_ref().spell().as_ref());
+        });
+
+        (
+            SpellDisplayInfo::new(
+                spell,
+                vec![spell_cursor_position],
+                spell_wrong_positions,
+                spell_cursor_position - 1,
+            ),
+            KeyStrokeDisplayInfo::new(
+                key_stroke,
+                key_stroke_cursor_position,
+                key_stroke_wrong_positions,
+            ),
+        )
     }
 }
 
@@ -407,6 +472,127 @@ mod test {
                     )
                 ],
             }
+        );
+    }
+
+    #[test]
+    fn construct_display_info_1() {
+        // 1. 初期化
+        let mut pci = ProcessedChunkInfo::new(vec![
+            gen_chunk!(
+                "きょ",
+                vec![
+                    gen_candidate!(["kyo"]),
+                    gen_candidate!(["ki", "lyo"]),
+                    gen_candidate!(["ki", "xyo"])
+                ]
+            ),
+            gen_chunk!(
+                "きょ",
+                vec![
+                    gen_candidate!(["kyo"]),
+                    gen_candidate!(["ki", "lyo"]),
+                    gen_candidate!(["ki", "xyo"])
+                ]
+            ),
+            gen_chunk!("あ", vec![gen_candidate!(["a"]),]),
+        ]);
+
+        // 2. タイピング開始
+        pci.move_next_chunk();
+
+        // 3. k -> u(ミスタイプ) -> y -> o -> k -> i -> j(ミスタイプ) -> x -> y -> o という順で入力
+        pci.stroke_key('k'.try_into().unwrap(), Duration::new(1, 0));
+        pci.stroke_key('u'.try_into().unwrap(), Duration::new(2, 0));
+        pci.stroke_key('y'.try_into().unwrap(), Duration::new(3, 0));
+        pci.stroke_key('o'.try_into().unwrap(), Duration::new(4, 0));
+        pci.stroke_key('k'.try_into().unwrap(), Duration::new(5, 0));
+        pci.stroke_key('i'.try_into().unwrap(), Duration::new(6, 0));
+        pci.stroke_key('j'.try_into().unwrap(), Duration::new(7, 0));
+        pci.stroke_key('x'.try_into().unwrap(), Duration::new(8, 0));
+        pci.stroke_key('y'.try_into().unwrap(), Duration::new(9, 0));
+        pci.stroke_key('o'.try_into().unwrap(), Duration::new(10, 0));
+
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![].into(),
+                inflight_chunk: Some(gen_chunk!("あ", vec![gen_candidate!(["a"]),]).into()),
+                confirmed_chunks: vec![
+                    ConfirmedChunk::new(
+                        gen_chunk!("きょ", vec![gen_candidate!(["kyo"]),]),
+                        vec![
+                            ActualKeyStroke::new(
+                                Duration::new(1, 0),
+                                'k'.try_into().unwrap(),
+                                true
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(2, 0),
+                                'u'.try_into().unwrap(),
+                                false
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(3, 0),
+                                'y'.try_into().unwrap(),
+                                true
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(4, 0),
+                                'o'.try_into().unwrap(),
+                                true
+                            )
+                        ],
+                    ),
+                    ConfirmedChunk::new(
+                        gen_chunk!("きょ", vec![gen_candidate!(["ki", "xyo"]),]),
+                        vec![
+                            ActualKeyStroke::new(
+                                Duration::new(5, 0),
+                                'k'.try_into().unwrap(),
+                                true
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(6, 0),
+                                'i'.try_into().unwrap(),
+                                true
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(7, 0),
+                                'j'.try_into().unwrap(),
+                                false
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(8, 0),
+                                'x'.try_into().unwrap(),
+                                true
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(9, 0),
+                                'y'.try_into().unwrap(),
+                                true
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(10, 0),
+                                'o'.try_into().unwrap(),
+                                true
+                            )
+                        ],
+                    ),
+                ],
+            }
+        );
+
+        let (sdi, ksdi) = pci.construct_display_info();
+
+        assert_eq!(
+            sdi,
+            SpellDisplayInfo::new("きょきょ".to_string(), vec![4], vec![0, 1, 3], 3)
+        );
+
+        assert_eq!(
+            ksdi,
+            KeyStrokeDisplayInfo::new("kyokixyo".to_string(), 8, vec![1, 5])
         );
     }
 }
