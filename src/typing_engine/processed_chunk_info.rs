@@ -169,7 +169,12 @@ impl ProcessedChunkInfo {
             // この時点ではカーソル位置はこのチャンクの先頭を指しているので単純に足すだけで良い
             key_stroke_cursor_position += in_chunk_current_key_stroke_cursor_position;
 
-            key_stroke.push_str(&inflight_chunk.as_ref().min_candidate().whole_key_stroke());
+            key_stroke.push_str(
+                &inflight_chunk
+                    .as_ref()
+                    .min_candidate(None)
+                    .whole_key_stroke(),
+            );
 
             // 綴り
 
@@ -211,6 +216,33 @@ impl ProcessedChunkInfo {
 
             spell.push_str(inflight_chunk.as_ref().spell().as_ref());
         }
+
+        // 3. 未処理のチャンク
+
+        let next_chunk_head_constraint = if self.inflight_chunk.is_some() {
+            self.inflight_chunk
+                .as_ref()
+                .unwrap()
+                .as_ref()
+                .min_candidate(None)
+                .next_chunk_head_constraint()
+                .clone()
+        } else {
+            None
+        };
+
+        self.unprocessed_chunks
+            .iter()
+            .for_each(|unprocessed_chunk| {
+                // キーストローク
+                let candidate = unprocessed_chunk.min_candidate(next_chunk_head_constraint.clone());
+
+                key_stroke.push_str(&candidate.whole_key_stroke());
+
+                // 綴り
+                spell.push_str(unprocessed_chunk.spell().as_ref());
+                spell_head_position += unprocessed_chunk.spell().count();
+            });
 
         (
             SpellDisplayInfo::new(

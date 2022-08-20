@@ -109,7 +109,7 @@ impl TypedChunk {
 
     // チャンクの綴りのそれぞれ（基本的には1つだが複数文字を個別で打った場合には2つ）でミスタイプがあったかどうか
     pub(crate) fn construct_wrong_spell_element_vector(&self) -> Vec<bool> {
-        let element_count = if self.as_ref().min_candidate().is_splitted() {
+        let element_count = if self.as_ref().min_candidate(None).is_splitted() {
             2
         } else {
             1
@@ -127,7 +127,7 @@ impl TypedChunk {
             } else {
                 wrong_spell_element_vector[self
                     .as_ref()
-                    .min_candidate()
+                    .min_candidate(None)
                     // キーストロークに対応する位置に変換する
                     .element_index_at_key_stroke_index(current_key_stroke_index)] = true;
             }
@@ -139,7 +139,7 @@ impl TypedChunk {
     // チャンクのキーストロークのそれぞれでミスタイプがあったかどうか
     pub(crate) fn construct_wrong_key_stroke_vector(&self) -> Vec<bool> {
         let mut wrong_key_stroke_vector =
-            vec![false; self.chunk.min_candidate().calc_key_stroke_count()];
+            vec![false; self.chunk.min_candidate(None).calc_key_stroke_count()];
 
         // 打たれたキーストロークではなく候補中のインデックス
         let mut current_key_stroke_index = 0;
@@ -173,11 +173,11 @@ impl TypedChunk {
     pub(crate) fn current_spell_cursor_positions(&self) -> Vec<usize> {
         let mut cursor_positions: Vec<usize> = vec![];
 
-        if self.as_ref().min_candidate().is_splitted() {
+        if self.as_ref().min_candidate(None).is_splitted() {
             // 複数文字チャンクをまとめて入力する場合には現在入力中の綴りのみにカーソルを当てる
             cursor_positions.push(
                 self.as_ref()
-                    .min_candidate()
+                    .min_candidate(None)
                     .element_index_at_key_stroke_index(self.current_key_stroke_cursor_position()),
             );
         } else {

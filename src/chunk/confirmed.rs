@@ -31,7 +31,7 @@ impl ConfirmedChunk {
     // 確定した候補について次のチャンク先頭への制限を生成する
     pub(crate) fn next_chunk_head_constraint(&mut self) -> Option<KeyStrokeChar> {
         self.confirmed_candidate()
-            .next_chunk_head_constraint
+            .next_chunk_head_constraint()
             .clone()
     }
 
