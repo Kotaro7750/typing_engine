@@ -36,8 +36,7 @@ impl ConfirmedChunk {
     }
 
     // チャンクのそれぞれの綴り（基本的には1つだが複数文字を個別で打った場合には2つ）でミスタイプがあったかどうか
-    // XXX 関数名をconstruct_wrong_spell_element_vectorとかにしたほうがいい
-    pub(crate) fn construct_wrong_stroke_vector(&self) -> Vec<bool> {
+    pub(crate) fn construct_wrong_spell_element_vector(&self) -> Vec<bool> {
         let element_count = if self.confirmed_candidate().is_splitted() {
             2
         } else {

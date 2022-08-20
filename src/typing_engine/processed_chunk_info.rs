@@ -120,7 +120,7 @@ impl ProcessedChunkInfo {
             key_stroke.push_str(&confirmed_chunk.confirmed_candidate().whole_key_stroke());
 
             // 綴り要素のそれぞれがタイプミスかどうか
-            let wrong_stroke_vector = confirmed_chunk.construct_wrong_stroke_vector();
+            let wrong_spell_element_vector = confirmed_chunk.construct_wrong_spell_element_vector();
 
             // 複数文字チャンクを個別に入力した場合はそれぞれの綴りについて
             // それ以外ではチャンク全体の綴りについて
@@ -132,9 +132,9 @@ impl ProcessedChunkInfo {
                 .chars()
                 .enumerate()
                 .for_each(|(i, _)| {
-                    let element_index = if wrong_stroke_vector.len() == 1 { 0 } else { i };
+                    let element_index = if wrong_spell_element_vector.len() == 1 { 0 } else { i };
 
-                    if wrong_stroke_vector[element_index] {
+                    if wrong_spell_element_vector[element_index] {
                         spell_wrong_positions.push(spell_head_position);
                     }
 
