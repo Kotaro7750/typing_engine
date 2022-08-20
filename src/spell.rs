@@ -7,7 +7,7 @@ use std::{
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// An string only contains characters which can be used as spells.
-/// 
+///
 /// Characters can be used as spells are
 /// * A displayable ASCII. (`U+20` ~ `U+7E`)
 /// * A japanese hiragana. (`U+3041` ~ `U+308F`, `U+3092` ~ `U+3094`)

@@ -37,7 +37,7 @@ impl ProcessedChunkInfo {
                 .replace(chunks.pop_front().unwrap().into());
         }
 
-        self.unprocessed_chunks.append(&mut (chunks.into()));
+        self.unprocessed_chunks.append(&mut chunks);
     }
 
     // 現在打っているチャンクを確定させ未処理のチャンク列の先頭のチャンクの処理を開始する
@@ -132,7 +132,11 @@ impl ProcessedChunkInfo {
                 .chars()
                 .enumerate()
                 .for_each(|(i, _)| {
-                    let element_index = if wrong_spell_element_vector.len() == 1 { 0 } else { i };
+                    let element_index = if wrong_spell_element_vector.len() == 1 {
+                        0
+                    } else {
+                        i
+                    };
 
                     if wrong_spell_element_vector[element_index] {
                         spell_wrong_positions.push(spell_head_position);

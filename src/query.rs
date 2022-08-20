@@ -29,10 +29,7 @@ pub enum VocabularySeparator {
 impl VocabularySeparator {
     // 語彙の区切り語彙がないかどうか
     fn is_none(&self) -> bool {
-        match self {
-            Self::None => true,
-            _ => false,
-        }
+        matches!(self, Self::None)
     }
 
     fn generate_separator_vocabulary(&self) -> VocabularyEntry {

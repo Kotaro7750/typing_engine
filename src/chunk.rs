@@ -34,7 +34,7 @@ impl ChunkSpell {
             Self::DoubleChar(spell_string) => (
                 spell_string
                     .chars()
-                    .nth(0)
+                    .next()
                     .unwrap()
                     .to_string()
                     .try_into()
@@ -164,10 +164,7 @@ impl Chunk {
     }
 
     pub(crate) fn key_stroke_candidates_count(&self) -> Option<usize> {
-        match &self.key_stroke_candidates {
-            Some(v) => Some(v.len()),
-            None => None,
-        }
+        self.key_stroke_candidates.as_ref().map(|v| v.len())
     }
 
     // チャンクをcount_striction回のキーストロークで終わるように制限する
@@ -210,7 +207,7 @@ impl Chunk {
     }
 
     // 候補を減らす
-    pub(crate) fn reduce_candidate(&mut self, retain_vector: &Vec<bool>) {
+    pub(crate) fn reduce_candidate(&mut self, retain_vector: &[bool]) {
         let mut index = 0;
         self.key_stroke_candidates.as_mut().unwrap().retain(|_| {
             let is_hit = *retain_vector.get(index).unwrap();
@@ -221,7 +218,7 @@ impl Chunk {
 }
 
 // 綴りのみの不完全なチャンク列にキーストローク候補を追加する
-pub fn append_key_stroke_to_chunks(chunks: &mut Vec<Chunk>) {
+pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
     let mut next_chunk_spell: Option<ChunkSpell> = None;
 
     // このチャンクが「っ」としたときにキーストロークの連続によって表現できるキーストローク群
@@ -254,7 +251,6 @@ pub fn append_key_stroke_to_chunks(chunks: &mut Vec<Chunk>) {
                             "n" => allow_single_n_as_key_stroke(&next_chunk_spell),
                             _ => true,
                         })
-                        .map(|e| *e)
                         .for_each(|key_stroke| {
                             key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
                                 vec![key_stroke.to_string().try_into().unwrap()],
@@ -392,15 +388,26 @@ fn allow_single_n_as_key_stroke(next_chunk_spell: &Option<ChunkSpell>) -> bool {
     // 次のチャンクがASCII・母音・な行・「ゃ」「ゅ」「ょ」を除くや行の場合には許容しない
     match next_chunk_spell {
         ChunkSpell::DisplayableAscii(_) => false,
-        ChunkSpell::SingleChar(spell_string) => match spell_string.as_str() {
-            "あ" | "い" | "う" | "え" | "お" | "な" | "に" | "ぬ" | "ね" | "の" | "や" | "ゆ"
-            | "よ" | "ん" => false,
-            _ => true,
-        },
-        ChunkSpell::DoubleChar(spell_string) => match spell_string.as_str() {
-            "にゃ" | "にぃ" | "にゅ" | "にぇ" | "にょ" => false,
-            _ => true,
-        },
+        ChunkSpell::SingleChar(spell_string) => !matches!(
+            spell_string.as_str(),
+            "あ" | "い"
+                | "う"
+                | "え"
+                | "お"
+                | "な"
+                | "に"
+                | "ぬ"
+                | "ね"
+                | "の"
+                | "や"
+                | "ゆ"
+                | "よ"
+                | "ん"
+        ),
+        ChunkSpell::DoubleChar(spell_string) => matches!(
+            spell_string.as_str(),
+            "にゃ" | "にぃ" | "にゅ" | "にぇ" | "にょ"
+        ),
     }
 }
 
@@ -468,7 +475,7 @@ impl ChunkKeyStrokeCandidate {
     fn key_stroke_char_at_position(&self, position: usize) -> KeyStrokeChar {
         let whole_key_stroke = self.whole_key_stroke();
 
-        assert!(position <= whole_key_stroke.chars().count() - 1);
+        assert!(position < whole_key_stroke.chars().count());
 
         whole_key_stroke
             .chars()

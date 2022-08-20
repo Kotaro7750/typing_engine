@@ -91,11 +91,11 @@ impl VocabularyEntry {
                 String::from("")
             };
 
-            let spell = if uni.is_ascii_graphic() || uni == ' ' {
-                i += 1;
-                uni.to_string()
-            } else {
-                if CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY.contains_key(bi.as_str()) {
+            let spell =
+                if uni.is_ascii_graphic() || uni == ' ' {
+                    i += 1;
+                    uni.to_string()
+                } else if CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY.contains_key(bi.as_str()) {
                     i += 2;
                     bi
                 } else {
@@ -105,9 +105,8 @@ impl VocabularyEntry {
                     i += 1;
                     uni.to_string()
                 }
-            }
-            .try_into()
-            .unwrap();
+                .try_into()
+                .unwrap();
 
             chunks.push(Chunk::new(spell, None));
         }
@@ -155,7 +154,7 @@ impl VocabularyInfo {
 }
 
 pub(crate) fn construct_view_position_of_spell_positions(
-    vocabulary_infos: &Vec<VocabularyInfo>,
+    vocabulary_infos: &[VocabularyInfo],
 ) -> Vec<usize> {
     let mut view_position_of_spell_positions: Vec<usize> = vec![];
 

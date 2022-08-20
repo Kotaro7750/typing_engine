@@ -199,16 +199,16 @@ impl TypingEngine {
     }
 
     fn is_initialized(&self) -> bool {
-        match self.state {
-            TypingEngineState::Uninitialized => false,
-            _ => true,
-        }
+        !matches!(self.state, TypingEngineState::Uninitialized)
     }
 
     fn is_started(&self) -> bool {
-        match self.state {
-            TypingEngineState::Started => true,
-            _ => false,
-        }
+        matches!(self.state, TypingEngineState::Started)
+    }
+}
+
+impl Default for TypingEngine {
+    fn default() -> Self {
+        Self::new()
     }
 }
