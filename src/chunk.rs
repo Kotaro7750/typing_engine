@@ -51,13 +51,6 @@ impl ChunkSpell {
         }
     }
 
-    pub(crate) fn is_double(&self) -> bool {
-        match self {
-            ChunkSpell::DoubleChar(_) => true,
-            _ => false,
-        }
-    }
-
     // 綴りの文字数
     pub(crate) fn count(&self) -> usize {
         match self {

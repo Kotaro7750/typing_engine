@@ -1,4 +1,3 @@
-use crate::key_stroke::KeyStrokeString;
 use serde::{Deserialize, Serialize};
 
 /// A type for composing typing game UI.

@@ -90,7 +90,7 @@ impl ProcessedChunkInfo {
     pub(crate) fn construct_display_info(&self) -> (SpellDisplayInfo, KeyStrokeDisplayInfo) {
         let mut spell = String::new();
         let mut spell_head_position = 0;
-        let mut spell_cursor_positions = Vec::<usize>::new();
+        let spell_cursor_positions;
         let mut spell_wrong_positions: Vec<usize> = vec![];
 
         let mut key_stroke = String::new();

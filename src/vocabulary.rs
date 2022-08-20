@@ -34,11 +34,11 @@ impl VocabularyEntry {
         }
     }
 
-    pub(crate) fn view(&self) -> &str {
+    pub fn view(&self) -> &str {
         self.view.as_str()
     }
 
-    pub(crate) fn spells(&self) -> &Vec<SpellString> {
+    pub fn spells(&self) -> &Vec<SpellString> {
         &self.spells
     }
 
@@ -126,6 +126,7 @@ pub(crate) struct VocabularyInfo {
 }
 
 impl VocabularyInfo {
+    #[cfg(test)]
     pub(crate) fn new(
         view: String,
         spell: SpellString,
@@ -176,8 +177,6 @@ pub(crate) fn construct_view_position_of_spell_positions(
 
 #[cfg(test)]
 mod test {
-    use super::*;
-
     use crate::{gen_unprocessed_chunk, gen_vocabulary_entry};
 
     macro_rules! equal_check_construct_chunks {

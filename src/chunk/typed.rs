@@ -16,6 +16,7 @@ pub(crate) struct TypedChunk {
 }
 
 impl TypedChunk {
+    #[cfg(test)]
     pub(crate) fn new(
         chunk: Chunk,
         cursor_positions_of_candidates: Vec<usize>,
