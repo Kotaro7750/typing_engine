@@ -579,6 +579,10 @@ mod test {
                     gen_candidate!(["ki", "xyo"])
                 ]
             ),
+            gen_chunk!(
+                "きょ",
+                vec![gen_candidate!(["ky"]), gen_candidate!(["ki"]),]
+            ),
         ]);
 
         // 2. タイピング開始
@@ -601,7 +605,11 @@ mod test {
         assert_eq!(
             pci,
             ProcessedChunkInfo {
-                unprocessed_chunks: vec![].into(),
+                unprocessed_chunks: vec![gen_chunk!(
+                    "きょ",
+                    vec![gen_candidate!(["ky"]), gen_candidate!(["ki"]),]
+                ),]
+                .into(),
                 inflight_chunk: Some(TypedChunk::new(
                     gen_chunk!(
                         "きょ",
@@ -687,16 +695,16 @@ mod test {
         assert_eq!(
             sdi,
             SpellDisplayInfo::new(
-                "きょきょきょ".to_string(),
+                "きょきょきょきょ".to_string(),
                 vec![4, 5],
                 vec![0, 1, 3, 4, 5],
-                5
+                7
             )
         );
 
         assert_eq!(
             ksdi,
-            KeyStrokeDisplayInfo::new("kyokixyokyo".to_string(), 9, vec![1, 5, 8])
+            KeyStrokeDisplayInfo::new("kyokixyokyoky".to_string(), 9, vec![1, 5, 8])
         );
     }
 }
