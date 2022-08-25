@@ -51,7 +51,7 @@ pub enum VocabularyOrder {
     /// Vocabularies are selected in-order from vocabulary list.
     InOrder,
     /// Vocabularies are selected user-defined order from vocabulary list.
-    Arbitrary(Box<dyn Fn(&Option<usize>, &Vec<VocabularyEntry>) -> usize>),
+    Arbitrary(Box<dyn Fn(&Option<usize>, &[&VocabularyEntry]) -> usize>),
 }
 
 impl VocabularyOrder {
@@ -59,7 +59,7 @@ impl VocabularyOrder {
     fn next_vocabulary_entry_index(
         &self,
         prev_index: &Option<usize>,
-        vocabulary_entries: &Vec<VocabularyEntry>,
+        vocabulary_entries: &[&VocabularyEntry],
     ) -> usize {
         match self {
             Self::Random => random::<usize>() % vocabulary_entries.len(),
@@ -77,7 +77,7 @@ impl VocabularyOrder {
 
 /// A request for constructing query.
 pub struct QueryRequest<'vocabulary> {
-    vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
+    vocabulary_entries: Vec<&'vocabulary VocabularyEntry>,
     vocabulary_quantifier: VocabularyQuantifier,
     vocabulary_separator: VocabularySeparator,
     vocabulary_order: VocabularyOrder,
@@ -86,13 +86,13 @@ pub struct QueryRequest<'vocabulary> {
 impl<'vocabulary> QueryRequest<'vocabulary> {
     /// Construct a new [`QueryRequest`].
     pub fn new(
-        vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
+        vocabulary_entries: &[&'vocabulary VocabularyEntry],
         vocabulary_quantifier: VocabularyQuantifier,
         vocabulary_separator: VocabularySeparator,
         vocabulary_order: VocabularyOrder,
     ) -> Self {
         Self {
-            vocabulary_entries,
+            vocabulary_entries: From::<&[&VocabularyEntry]>::from(vocabulary_entries),
             vocabulary_quantifier,
             vocabulary_separator,
             vocabulary_order,
@@ -108,7 +108,7 @@ impl<'vocabulary> QueryRequest<'vocabulary> {
         };
 
         let next_vocabulary_generator = NextVocabularyGenerator::new(
-            self.vocabulary_entries,
+            &self.vocabulary_entries,
             &separator_vocabulary,
             &self.vocabulary_order,
         );
@@ -257,7 +257,7 @@ impl<'vocabulary> QueryRequest<'vocabulary> {
 
 // 次の語彙を生成するイテレータ
 struct NextVocabularyGenerator<'this, 'vocabulary> {
-    vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
+    vocabulary_entries: &'this [&'vocabulary VocabularyEntry],
     is_prev_vocabulary: bool,
     prev_vocabulary_index: Option<usize>,
     separator_vocabulary: &'vocabulary Option<VocabularyEntry>,
@@ -266,7 +266,7 @@ struct NextVocabularyGenerator<'this, 'vocabulary> {
 
 impl<'this, 'vocabulary> NextVocabularyGenerator<'this, 'vocabulary> {
     fn new(
-        vocabulary_entries: &'vocabulary Vec<VocabularyEntry>,
+        vocabulary_entries: &'this [&'vocabulary VocabularyEntry],
         separator_vocabulary: &'vocabulary Option<VocabularyEntry>,
         vocabulary_order: &'this VocabularyOrder,
     ) -> Self {
@@ -335,7 +335,11 @@ mod test {
         let vocabularies = vec![gen_vocabulary_entry!("イオン", ["い", "お", "ん"])];
 
         let qr = QueryRequest::new(
-            &vocabularies,
+            vocabularies
+                .iter()
+                .map(|ve| ve)
+                .collect::<Vec<&VocabularyEntry>>()
+                .as_slice(),
             VocabularyQuantifier::KeyStroke(NonZeroUsize::new(5).unwrap()),
             VocabularySeparator::WhiteSpace,
             VocabularyOrder::InOrder,
@@ -365,7 +369,11 @@ mod test {
         let vocabularies = vec![gen_vocabulary_entry!("イオン", ["い", "お", "ん"])];
 
         let qr = QueryRequest::new(
-            &vocabularies,
+            vocabularies
+                .iter()
+                .map(|ve| ve)
+                .collect::<Vec<&VocabularyEntry>>()
+                .as_slice(),
             VocabularyQuantifier::KeyStroke(NonZeroUsize::new(5).unwrap()),
             VocabularySeparator::None,
             VocabularyOrder::InOrder,
@@ -399,7 +407,11 @@ mod test {
         ];
 
         let qr = QueryRequest::new(
-            &vocabularies,
+            vocabularies
+                .iter()
+                .map(|ve| ve)
+                .collect::<Vec<&VocabularyEntry>>()
+                .as_slice(),
             VocabularyQuantifier::KeyStroke(NonZeroUsize::new(10).unwrap()),
             VocabularySeparator::None,
             VocabularyOrder::InOrder,
@@ -453,7 +465,11 @@ mod test {
         ];
 
         let qr = QueryRequest::new(
-            &vocabularies,
+            vocabularies
+                .iter()
+                .map(|ve| ve)
+                .collect::<Vec<&VocabularyEntry>>()
+                .as_slice(),
             VocabularyQuantifier::KeyStroke(NonZeroUsize::new(3).unwrap()),
             VocabularySeparator::WhiteSpace,
             VocabularyOrder::Arbitrary(Box::new(|prev_vocabulary_index, vocabulary_entries| {
@@ -493,7 +509,11 @@ mod test {
         let vocabularies = vec![gen_vocabulary_entry!("イオン", ["い", "お", "ん"])];
 
         let qr = QueryRequest::new(
-            &vocabularies,
+            vocabularies
+                .iter()
+                .map(|ve| ve)
+                .collect::<Vec<&VocabularyEntry>>()
+                .as_slice(),
             VocabularyQuantifier::Vocabulary(NonZeroUsize::new(2).unwrap()),
             VocabularySeparator::WhiteSpace,
             VocabularyOrder::InOrder,
