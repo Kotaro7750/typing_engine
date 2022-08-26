@@ -42,6 +42,7 @@ pub struct ViewDisplayInfo {
     view: String,
     current_cursor_positions: Vec<usize>,
     missed_positions: Vec<usize>,
+    last_position: usize,
 }
 
 impl ViewDisplayInfo {
@@ -66,6 +67,7 @@ impl ViewDisplayInfo {
                     view_position_of_spell_position[*spell_missed_position]
                 })
                 .collect(),
+            last_position: view_position_of_spell_position[spell_display_info.last_position],
         }
     }
 

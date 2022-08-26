@@ -182,11 +182,17 @@ impl TypingEngine {
             let view_position_of_spell_position =
                 construct_view_position_of_spell_positions(self.vocabulary_infos.as_ref().unwrap());
 
-            let view_display_info = ViewDisplayInfo::new(
-                &spell_display_info,
-                "".to_string(),
-                view_position_of_spell_position,
-            );
+            let view = self
+                .vocabulary_infos
+                .as_ref()
+                .unwrap()
+                .iter()
+                .map(|vocabulary_info| vocabulary_info.view().to_string())
+                .reduce(|accum, item| accum + &item)
+                .unwrap();
+
+            let view_display_info =
+                ViewDisplayInfo::new(&spell_display_info, view, view_position_of_spell_position);
 
             Ok(DisplayInfo::new(
                 view_display_info,
