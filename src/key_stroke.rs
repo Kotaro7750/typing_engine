@@ -5,8 +5,7 @@ use std::time::Duration;
 
 use crate::utility::is_displayable_ascii;
 
-// キーストロークとして使用可能な文字
-// スペースを含む表示可能なASCII
+/// A type representing a character can be used as a key stroke.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct KeyStrokeChar(char);
 

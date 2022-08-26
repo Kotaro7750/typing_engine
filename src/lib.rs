@@ -3,6 +3,7 @@ pub use crate::query::{QueryRequest, VocabularyOrder, VocabularyQuantifier, Voca
 pub use crate::spell::{SpellString, SpellStringError};
 pub use crate::typing_engine::*;
 pub use crate::vocabulary::VocabularyEntry;
+pub use crate::key_stroke::{KeyStrokeChar,KeyStrokeCharError};
 
 mod chunk;
 mod chunk_key_stroke_dictionary;
