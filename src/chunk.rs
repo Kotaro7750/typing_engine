@@ -226,6 +226,10 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
     // ex. 次のチャンクが「た」だったときには [t] となる
     let mut key_strokes_can_represent_ltu_by_repeat: HashSet<KeyStrokeChar> = HashSet::new();
 
+    // 遅延確定候補を確定できるキーストローク群
+    // 次のチャンク先頭のキーストロークと同値
+    let mut key_strokes_can_confirm_delayed_candidate: Vec<KeyStrokeChar> = Vec::new();
+
     // キーストローク候補は次のチャンクに依存するので後ろから走査する
     for chunk in chunks.iter_mut().rev() {
         assert!(chunk.key_stroke_candidates.is_none());
@@ -237,6 +241,7 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
             ChunkSpell::DisplayableAscii(spell_string) => {
                 key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
                     vec![String::from(spell_string.clone()).try_into().unwrap()],
+                    None,
                     None,
                 ));
             }
@@ -251,11 +256,19 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                             "n" => allow_single_n_as_key_stroke(&next_chunk_spell),
                             _ => true,
                         })
-                        .for_each(|key_stroke| {
-                            key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
+                        .for_each(|key_stroke| match *key_stroke {
+                            "n" => key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
                                 vec![key_stroke.to_string().try_into().unwrap()],
                                 None,
-                            ));
+                                Some(DelayedConfirmedCandidateInfo::new(
+                                    key_strokes_can_confirm_delayed_candidate.clone(),
+                                )),
+                            )),
+                            _ => key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
+                                vec![key_stroke.to_string().try_into().unwrap()],
+                                None,
+                                None,
+                            )),
                         });
                 }
                 // 「っ」は単独で打つ以外にも次のチャンクの子音で済ませる(「った」なら「tta」)ことができる
@@ -269,20 +282,32 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                             key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
                                 vec![key_stroke.to_string().try_into().unwrap()],
                                 None,
-                            ));
+                                None,
+                            ))
                         });
 
                     // 子音の連続で打つ場合には次のチャンクへの制限をする
                     key_strokes_can_represent_ltu_by_repeat
                         .iter()
-                        .for_each(|key_stroke| {
-                            key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
+                        .for_each(|key_stroke| match char::from(key_stroke.clone()) {
+                            'l' | 'x' => key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
                                 vec![char::from(key_stroke.clone())
                                     .to_string()
                                     .try_into()
                                     .unwrap()],
                                 Some(key_stroke.clone()),
-                            ))
+                                Some(DelayedConfirmedCandidateInfo::new(
+                                    key_strokes_can_confirm_delayed_candidate.clone(),
+                                )),
+                            )),
+                            _ => key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
+                                vec![char::from(key_stroke.clone())
+                                    .to_string()
+                                    .try_into()
+                                    .unwrap()],
+                                Some(key_stroke.clone()),
+                                None,
+                            )),
                         });
                 }
                 _ => {
@@ -293,6 +318,7 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                         .for_each(|key_stroke| {
                             key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
                                 vec![key_stroke.to_string().try_into().unwrap()],
+                                None,
                                 None,
                             ));
                         });
@@ -308,6 +334,7 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                     .for_each(|key_stroke| {
                         key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
                             vec![key_stroke.to_string().try_into().unwrap()],
+                            None,
                             None,
                         ));
                     });
@@ -331,6 +358,7 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                                         second_key_stroke.to_string().try_into().unwrap(),
                                     ],
                                     None,
+                                    None,
                                 ));
                             });
                     });
@@ -348,7 +376,19 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
 
         next_chunk_spell.replace(chunk.spell.clone());
 
+        key_strokes_can_confirm_delayed_candidate.clear();
+
         key_strokes_can_represent_ltu_by_repeat.clear();
+        chunk
+            .key_stroke_candidates
+            .as_ref()
+            .unwrap()
+            .iter()
+            .for_each(|key_stroke_candidate| {
+                let first_char = key_stroke_candidate.key_stroke_char_at_position(0);
+                key_strokes_can_confirm_delayed_candidate.push(first_char);
+            });
+
         // 次に処理するチャンク（逆順で処理しているので一つ前のチャンク）が「っ」だった場合に備えて子音などのキーストロークを構築する
         match &chunk.spell {
             ChunkSpell::SingleChar(_) | ChunkSpell::DoubleChar(_) => chunk
@@ -417,16 +457,19 @@ pub struct ChunkKeyStrokeCandidate {
     key_stroke_elements: Vec<KeyStrokeString>,
     // 次のチャンクの先頭キーストロークに制限があるケースがある
     next_chunk_head_constraint: Option<KeyStrokeChar>,
+    delayed_confirmed_candidate_info: Option<DelayedConfirmedCandidateInfo>,
 }
 
 impl ChunkKeyStrokeCandidate {
-    pub fn new(
+    pub(crate) fn new(
         key_stroke_elements: Vec<KeyStrokeString>,
         next_chunk_head_constraint: Option<KeyStrokeChar>,
+        delayed_confirmed_candidate_info: Option<DelayedConfirmedCandidateInfo>,
     ) -> Self {
         Self {
             key_stroke_elements,
             next_chunk_head_constraint,
+            delayed_confirmed_candidate_info,
         }
     }
 
@@ -532,6 +575,46 @@ impl ChunkKeyStrokeCandidate {
     }
 }
 
+// 打ち終えてもチャンクを確定させてはいけない遅延確定候補の情報
+// ex. 「ん」というチャンクには「n」・「nn」・「xn」という候補があるが「n」というキーストロークの後に「n」と打った場合にもこのチャンクのキーストロークとして有効である
+// このようなケースにも適切にタイプを行うためには最初の「n」というキーストロークで完全に確定してはならない
+// 一方最初の「n」の後のチャンク先頭として有効なキーストロークが与えられた場合にはチャンクを確定させて次のチャンクの先頭を打ったことにする必要がある
+//
+// 一般的には
+// チャンク1のある候補Aのキーストローク列が他の候補Bの接頭辞となっている場合に候補Aはチャンク1の遅延確定候補となる
+// 候補Aを確定するのは次のチャンク2の先頭キーストロークが打たれた時
+// 図示すると
+//
+// チャンク1  -> チャンク2
+// -----------------------
+// 候補A(X)
+//            -> 候補C(Z)
+// 候補B(XxY)
+//
+// X,Y,Z := キーストローク列
+// x := キーストローク
+// ただしZの先頭キーストロークはxであってはいけない
+// もしZの先頭キーストロークがxだとすると候補Bを打とうとしているのかチャンク2の候補Cを打とうとしているのか1回のキーストロークで確定せず2回以上遅延する必要がある
+//
+// ただし実際には必ず1回のキーストロークで確定する
+// 遅延確定候補となるのは
+// 1. チャンク「ん」の「n」という候補（「nn」が候補B）
+// 2. チャンク「っ」を「l」「x」で打てるときの「l」「x」という候補（「ltu」「xtu」「ltsu」が候補B）
+// に限られるが(TODO たぶんそうだが確証はもてない)
+// 1. 次のチャンクが「n」で始まるときにはそもそも「n」は候補になることはない
+// 2. チャンク「っ」を「l」や「x」で打てるときには次のチャンク先頭のキーストロークは「t」ではない
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct DelayedConfirmedCandidateInfo {
+    // 次のチャンク先頭として有効なキーストローク列
+    next_chunk_head: Vec<KeyStrokeChar>,
+}
+
+impl DelayedConfirmedCandidateInfo {
+    pub(crate) fn new(next_chunk_head: Vec<KeyStrokeChar>) -> Self {
+        Self { next_chunk_head }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -623,7 +706,7 @@ mod test {
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"]),
+                        gen_candidate!(["n"], ['z', 'j']),
                         gen_candidate!(["nn"]),
                         gen_candidate!(["xn"])
                     ]
@@ -673,6 +756,25 @@ mod test {
         assert_eq!(
             chunk,
             gen_chunk!("じょ", vec![gen_candidate!(["j"]), gen_candidate!(["z"]),])
+        )
+    }
+
+    #[test]
+    fn strict_key_stroke_count_2() {
+        let mut chunk = gen_chunk!(
+            "ん",
+            vec![
+                gen_candidate!(["n"], ['j', 'z']),
+                gen_candidate!(["nn"]),
+                gen_candidate!(["xn"]),
+            ]
+        );
+
+        chunk.strict_key_stroke_count(1);
+
+        assert_eq!(
+            chunk,
+            gen_chunk!("ん", vec![gen_candidate!(["n"]), gen_candidate!(["x"])])
         )
     }
 }

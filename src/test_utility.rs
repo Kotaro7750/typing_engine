@@ -45,11 +45,14 @@ macro_rules! gen_vocabulary_info {
 
 #[macro_export]
 macro_rules! gen_candidate {
-        ([$($key_stroke:literal),*]$(, $constraint:literal)?) => {
+        ([$($key_stroke:literal),*]$(, $constraint:literal)?$(, [$($delayed:literal),*])?) => {
             {
                 let _constraint: Option<crate::key_stroke::KeyStrokeChar> = None;
                 $(let _constraint = Some($constraint.try_into().unwrap());)?
-                crate::chunk::ChunkKeyStrokeCandidate::new(vec![$($key_stroke.to_string().try_into().unwrap()),*],_constraint)
+
+                let _delayed: Option<crate::chunk::DelayedConfirmedCandidateInfo> = None;
+                $(let _delayed = Some(crate::chunk::DelayedConfirmedCandidateInfo::new(vec![$($delayed.try_into().unwrap()),*]));)?
+                crate::chunk::ChunkKeyStrokeCandidate::new(vec![$($key_stroke.to_string().try_into().unwrap()),*],_constraint,_delayed)
             }
         };
     }

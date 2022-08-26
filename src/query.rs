@@ -434,7 +434,7 @@ mod test {
                     gen_chunk!(
                         "ん",
                         vec![
-                            gen_candidate!(["n"]),
+                            gen_candidate!(["n"], ['k', 'c']),
                             gen_candidate!(["nn"]),
                             gen_candidate!(["xn"])
                         ]
@@ -533,6 +533,78 @@ mod test {
                     gen_chunk!("お", vec![gen_candidate!(["o"])]),
                     gen_chunk!("ん", vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])]),
                     gen_chunk!(" ", vec![gen_candidate!([" "])]),
+                ]
+            )
+        );
+    }
+
+    #[test]
+    fn construct_query_6() {
+        let vocabularies = vec![gen_vocabulary_entry!("印字", ["いん", "じ"])];
+
+        let qr = QueryRequest::new(
+            vocabularies
+                .iter()
+                .map(|ve| ve)
+                .collect::<Vec<&VocabularyEntry>>()
+                .as_slice(),
+            VocabularyQuantifier::KeyStroke(NonZeroUsize::new(3).unwrap()),
+            VocabularySeparator::WhiteSpace,
+            VocabularyOrder::InOrder,
+        );
+
+        let query = qr.construct_query();
+
+        assert_eq!(
+            query,
+            Query::new(
+                vec![gen_vocabulary_info!("印字", "いんじ", vec![0, 0, 1], 3),],
+                vec![
+                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
+                    gen_chunk!(
+                        "ん",
+                        vec![
+                            gen_candidate!(["n"], ['z', 'j']),
+                            gen_candidate!(["nn"]),
+                            gen_candidate!(["xn"])
+                        ]
+                    ),
+                    gen_chunk!("じ", vec![gen_candidate!(["z"]), gen_candidate!(["j"])]),
+                ]
+            )
+        );
+    }
+
+    #[test]
+    fn construct_query_7() {
+        let vocabularies = vec![gen_vocabulary_entry!("印字", ["いん", "じ"])];
+
+        let qr = QueryRequest::new(
+            vocabularies
+                .iter()
+                .map(|ve| ve)
+                .collect::<Vec<&VocabularyEntry>>()
+                .as_slice(),
+            VocabularyQuantifier::KeyStroke(NonZeroUsize::new(2).unwrap()),
+            VocabularySeparator::WhiteSpace,
+            VocabularyOrder::InOrder,
+        );
+
+        let query = qr.construct_query();
+
+        assert_eq!(
+            query,
+            Query::new(
+                vec![gen_vocabulary_info!("印字", "いんじ", vec![0, 0, 1], 2),],
+                vec![
+                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
+                    gen_chunk!(
+                        "ん",
+                        vec![
+                            gen_candidate!(["n"]),
+                            gen_candidate!(["x"])
+                        ]
+                    ),
                 ]
             )
         );

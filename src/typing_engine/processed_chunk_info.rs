@@ -458,7 +458,8 @@ mod test {
                         Duration::new(3, 0),
                         'w'.try_into().unwrap(),
                         true
-                    )]
+                    )],
+                    vec![]
                 )),
                 confirmed_chunks: vec![
                     ConfirmedChunk::new(
@@ -595,7 +596,7 @@ mod test {
             gen_chunk!(
                 "ん",
                 vec![
-                    gen_candidate!(["n"]),
+                    gen_candidate!(["n"], ['k']),
                     gen_candidate!(["nn"]),
                     gen_candidate!(["xn"])
                 ]
@@ -611,7 +612,7 @@ mod test {
                     gen_chunk!(
                         "ん",
                         vec![
-                            gen_candidate!(["n"]),
+                            gen_candidate!(["n"], ['k']),
                             gen_candidate!(["nn"]),
                             gen_candidate!(["xn"])
                         ]
@@ -633,7 +634,7 @@ mod test {
                     gen_chunk!(
                         "ん",
                         vec![
-                            gen_candidate!(["n"]),
+                            gen_candidate!(["n"], ['k']),
                             gen_candidate!(["nn"]),
                             gen_candidate!(["xn"])
                         ]
@@ -657,7 +658,7 @@ mod test {
                     gen_chunk!(
                         "ん",
                         vec![
-                            gen_candidate!(["n"]),
+                            gen_candidate!(["n"], ['k']),
                             gen_candidate!(["nn"]),
                             gen_candidate!(["xn"])
                         ]
@@ -672,7 +673,8 @@ mod test {
                         Duration::new(1, 0),
                         'k'.try_into().unwrap(),
                         true
-                    )]
+                    )],
+                    vec![]
                 )),
                 confirmed_chunks: vec![],
             }
@@ -683,12 +685,12 @@ mod test {
         assert_eq!(
             pci,
             ProcessedChunkInfo {
-                unprocessed_chunks: vec![gen_chunk!("き", vec![gen_candidate!(["ki"]),]),].into(),
+                unprocessed_chunks: vec![gen_chunk!("き", vec![gen_candidate!(["ki"])])].into(),
                 inflight_chunk: Some(
                     gen_chunk!(
                         "ん",
                         vec![
-                            gen_candidate!(["n"]),
+                            gen_candidate!(["n"], ['k']),
                             gen_candidate!(["nn"]),
                             gen_candidate!(["xn"])
                         ]
@@ -710,38 +712,69 @@ mod test {
         assert_eq!(
             pci,
             ProcessedChunkInfo {
-                unprocessed_chunks: vec![].into(),
-                inflight_chunk: Some(gen_chunk!("き", vec![gen_candidate!(["ki"])]).into()),
-                confirmed_chunks: vec![
-                    ConfirmedChunk::new(
-                        gen_chunk!("か", vec![gen_candidate!(["ka"]),]),
-                        vec![
-                            ActualKeyStroke::new(
-                                Duration::new(1, 0),
-                                'k'.try_into().unwrap(),
-                                true
-                            ),
-                            ActualKeyStroke::new(
-                                Duration::new(2, 0),
-                                'a'.try_into().unwrap(),
-                                true
-                            )
-                        ],
-                    ),
-                    ConfirmedChunk::new(
-                        gen_chunk!("n", vec![gen_candidate!(["n"]),]),
-                        vec![ActualKeyStroke::new(
-                            Duration::new(3, 0),
-                            'n'.try_into().unwrap(),
-                            true
-                        ),],
+                unprocessed_chunks: vec![gen_chunk!("き", vec![gen_candidate!(["ki"])])].into(),
+                inflight_chunk: Some(TypedChunk::new(
+                    gen_chunk!(
+                        "ん",
+                        vec![gen_candidate!(["n"], ['k']), gen_candidate!(["nn"]),]
                     )
-                ],
+                    .into(),
+                    vec![1, 1],
+                    vec![ActualKeyStroke::new(
+                        Duration::new(3, 0),
+                        'n'.try_into().unwrap(),
+                        true
+                    )],
+                    vec![]
+                )),
+                confirmed_chunks: vec![ConfirmedChunk::new(
+                    gen_chunk!("か", vec![gen_candidate!(["ka"]),]),
+                    vec![
+                        ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
+                        ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
+                    ],
+                ),],
             }
         );
 
-        // 5. 「k」と入力
-        pci.stroke_key('k'.try_into().unwrap(), Duration::new(4, 0));
+        // 5. 「j」と入力（ミスタイプ）
+        // 遅延確定候補が確定していないのでミスタイプはどのチャンクにも属さない
+        pci.stroke_key('j'.try_into().unwrap(), Duration::new(4, 0));
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![gen_chunk!("き", vec![gen_candidate!(["ki"])])].into(),
+                inflight_chunk: Some(TypedChunk::new(
+                    gen_chunk!(
+                        "ん",
+                        vec![gen_candidate!(["n"], ['k']), gen_candidate!(["nn"]),]
+                    )
+                    .into(),
+                    vec![1, 1],
+                    vec![ActualKeyStroke::new(
+                        Duration::new(3, 0),
+                        'n'.try_into().unwrap(),
+                        true
+                    )],
+                    vec![ActualKeyStroke::new(
+                        Duration::new(4, 0),
+                        'j'.try_into().unwrap(),
+                        false
+                    )]
+                )),
+                confirmed_chunks: vec![ConfirmedChunk::new(
+                    gen_chunk!("か", vec![gen_candidate!(["ka"]),]),
+                    vec![
+                        ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
+                        ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
+                    ],
+                ),],
+            }
+        );
+
+        // 6. 「k」と入力
+        // 遅延確定候補が確定したのでミスタイプは次のチャンクに属する
+        pci.stroke_key('k'.try_into().unwrap(), Duration::new(5, 0));
         assert_eq!(
             pci,
             ProcessedChunkInfo {
@@ -749,11 +782,11 @@ mod test {
                 inflight_chunk: Some(TypedChunk::new(
                     gen_chunk!("き", vec![gen_candidate!(["ki"])]),
                     vec![1],
-                    vec![ActualKeyStroke::new(
-                        Duration::new(4, 0),
-                        'k'.try_into().unwrap(),
-                        true
-                    ),]
+                    vec![
+                        ActualKeyStroke::new(Duration::new(4, 0), 'j'.try_into().unwrap(), false),
+                        ActualKeyStroke::new(Duration::new(5, 0), 'k'.try_into().unwrap(), true)
+                    ],
+                    vec![]
                 )),
                 confirmed_chunks: vec![
                     ConfirmedChunk::new(
@@ -772,7 +805,7 @@ mod test {
                         ],
                     ),
                     ConfirmedChunk::new(
-                        gen_chunk!("n", vec![gen_candidate!(["n"]),]),
+                        gen_chunk!("ん", vec![gen_candidate!(["n"], ['k']),]),
                         vec![ActualKeyStroke::new(
                             Duration::new(3, 0),
                             'n'.try_into().unwrap(),
@@ -783,8 +816,8 @@ mod test {
             }
         );
 
-        // 6. 「i」と入力
-        pci.stroke_key('i'.try_into().unwrap(), Duration::new(5, 0));
+        // 7. 「i」と入力
+        pci.stroke_key('i'.try_into().unwrap(), Duration::new(6, 0));
         assert_eq!(
             pci,
             ProcessedChunkInfo {
@@ -807,7 +840,7 @@ mod test {
                         ],
                     ),
                     ConfirmedChunk::new(
-                        gen_chunk!("ん", vec![gen_candidate!(["n"]),]),
+                        gen_chunk!("ん", vec![gen_candidate!(["n"], ['k']),]),
                         vec![ActualKeyStroke::new(
                             Duration::new(3, 0),
                             'n'.try_into().unwrap(),
@@ -819,14 +852,372 @@ mod test {
                         vec![
                             ActualKeyStroke::new(
                                 Duration::new(4, 0),
+                                'j'.try_into().unwrap(),
+                                false
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(5, 0),
                                 'k'.try_into().unwrap(),
                                 true
                             ),
                             ActualKeyStroke::new(
-                                Duration::new(5, 0),
+                                Duration::new(6, 0),
                                 'i'.try_into().unwrap(),
                                 true
+                            )
+                        ],
+                    ),
+                ],
+            }
+        );
+
+        assert!(pci.is_finished());
+    }
+
+    #[test]
+    fn stroke_key_3() {
+        // 1. 初期化
+        let mut pci = ProcessedChunkInfo::new(vec![
+            gen_chunk!("か", vec![gen_candidate!(["ka"]), gen_candidate!(["ca"]),]),
+            gen_chunk!(
+                "ん",
+                vec![
+                    gen_candidate!(["n"], ['k']),
+                    gen_candidate!(["nn"]),
+                    gen_candidate!(["xn"])
+                ]
+            ),
+            gen_chunk!("き", vec![gen_candidate!(["ki"]),]),
+        ]);
+
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![
+                    gen_chunk!("か", vec![gen_candidate!(["ka"]), gen_candidate!(["ca"]),]),
+                    gen_chunk!(
+                        "ん",
+                        vec![
+                            gen_candidate!(["n"], ['k']),
+                            gen_candidate!(["nn"]),
+                            gen_candidate!(["xn"])
+                        ]
+                    ),
+                    gen_chunk!("き", vec![gen_candidate!(["ki"]),]),
+                ]
+                .into(),
+                inflight_chunk: None,
+                confirmed_chunks: vec![],
+            }
+        );
+
+        // 2. タイピング開始
+        pci.move_next_chunk();
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![
+                    gen_chunk!(
+                        "ん",
+                        vec![
+                            gen_candidate!(["n"], ['k']),
+                            gen_candidate!(["nn"]),
+                            gen_candidate!(["xn"])
+                        ]
+                    ),
+                    gen_chunk!("き", vec![gen_candidate!(["ki"]),]),
+                ]
+                .into(),
+                inflight_chunk: Some(
+                    gen_chunk!("か", vec![gen_candidate!(["ka"]), gen_candidate!(["ca"]),]).into()
+                ),
+                confirmed_chunks: vec![],
+            }
+        );
+
+        // 3. 「k」と入力
+        pci.stroke_key('k'.try_into().unwrap(), Duration::new(1, 0));
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![
+                    gen_chunk!(
+                        "ん",
+                        vec![
+                            gen_candidate!(["n"], ['k']),
+                            gen_candidate!(["nn"]),
+                            gen_candidate!(["xn"])
+                        ]
+                    ),
+                    gen_chunk!("き", vec![gen_candidate!(["ki"]),]),
+                ]
+                .into(),
+                inflight_chunk: Some(TypedChunk::new(
+                    gen_chunk!("か", vec![gen_candidate!(["ka"])]),
+                    vec![1],
+                    vec![ActualKeyStroke::new(
+                        Duration::new(1, 0),
+                        'k'.try_into().unwrap(),
+                        true
+                    )],
+                    vec![]
+                )),
+                confirmed_chunks: vec![],
+            }
+        );
+
+        // 3. 「a」と入力
+        pci.stroke_key('a'.try_into().unwrap(), Duration::new(2, 0));
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![gen_chunk!("き", vec![gen_candidate!(["ki"])])].into(),
+                inflight_chunk: Some(
+                    gen_chunk!(
+                        "ん",
+                        vec![
+                            gen_candidate!(["n"], ['k']),
+                            gen_candidate!(["nn"]),
+                            gen_candidate!(["xn"])
+                        ]
+                    )
+                    .into()
+                ),
+                confirmed_chunks: vec![ConfirmedChunk::new(
+                    gen_chunk!("か", vec![gen_candidate!(["ka"]),]),
+                    vec![
+                        ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
+                        ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
+                    ],
+                )],
+            }
+        );
+
+        // 4. 「n」と入力
+        pci.stroke_key('n'.try_into().unwrap(), Duration::new(3, 0));
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![gen_chunk!("き", vec![gen_candidate!(["ki"])])].into(),
+                inflight_chunk: Some(TypedChunk::new(
+                    gen_chunk!(
+                        "ん",
+                        vec![gen_candidate!(["n"], ['k']), gen_candidate!(["nn"]),]
+                    )
+                    .into(),
+                    vec![1, 1],
+                    vec![ActualKeyStroke::new(
+                        Duration::new(3, 0),
+                        'n'.try_into().unwrap(),
+                        true
+                    )],
+                    vec![]
+                )),
+                confirmed_chunks: vec![ConfirmedChunk::new(
+                    gen_chunk!("か", vec![gen_candidate!(["ka"]),]),
+                    vec![
+                        ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
+                        ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
+                    ],
+                ),],
+            }
+        );
+
+        // 5. 「j」と入力（ミスタイプ）
+        // 遅延確定候補が確定していないのでミスタイプはどのチャンクにも属さない
+        pci.stroke_key('j'.try_into().unwrap(), Duration::new(4, 0));
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![gen_chunk!("き", vec![gen_candidate!(["ki"])])].into(),
+                inflight_chunk: Some(TypedChunk::new(
+                    gen_chunk!(
+                        "ん",
+                        vec![gen_candidate!(["n"], ['k']), gen_candidate!(["nn"]),]
+                    )
+                    .into(),
+                    vec![1, 1],
+                    vec![ActualKeyStroke::new(
+                        Duration::new(3, 0),
+                        'n'.try_into().unwrap(),
+                        true
+                    )],
+                    vec![ActualKeyStroke::new(
+                        Duration::new(4, 0),
+                        'j'.try_into().unwrap(),
+                        false
+                    )]
+                )),
+                confirmed_chunks: vec![ConfirmedChunk::new(
+                    gen_chunk!("か", vec![gen_candidate!(["ka"]),]),
+                    vec![
+                        ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
+                        ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
+                    ],
+                ),],
+            }
+        );
+
+        // 6. 「n」と入力
+        // 遅延確定候補でない候補で確定したのでミスタイプはそのチャンクに属する
+        pci.stroke_key('n'.try_into().unwrap(), Duration::new(5, 0));
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![].into(),
+                inflight_chunk: Some(gen_chunk!("き", vec![gen_candidate!(["ki"])]).into()),
+                confirmed_chunks: vec![
+                    ConfirmedChunk::new(
+                        gen_chunk!("か", vec![gen_candidate!(["ka"]),]),
+                        vec![
+                            ActualKeyStroke::new(
+                                Duration::new(1, 0),
+                                'k'.try_into().unwrap(),
+                                true
                             ),
+                            ActualKeyStroke::new(
+                                Duration::new(2, 0),
+                                'a'.try_into().unwrap(),
+                                true
+                            )
+                        ],
+                    ),
+                    ConfirmedChunk::new(
+                        gen_chunk!("ん", vec![gen_candidate!(["nn"]),]),
+                        vec![
+                            ActualKeyStroke::new(
+                                Duration::new(3, 0),
+                                'n'.try_into().unwrap(),
+                                true
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(4, 0),
+                                'j'.try_into().unwrap(),
+                                false
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(5, 0),
+                                'n'.try_into().unwrap(),
+                                true
+                            ),
+                        ],
+                    )
+                ],
+            }
+        );
+
+        // 7. 「k」と入力
+        pci.stroke_key('k'.try_into().unwrap(), Duration::new(6, 0));
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![].into(),
+                inflight_chunk: Some(TypedChunk::new(
+                    gen_chunk!("き", vec![gen_candidate!(["ki"])]),
+                    vec![1],
+                    vec![ActualKeyStroke::new(
+                        Duration::new(6, 0),
+                        'k'.try_into().unwrap(),
+                        true
+                    ),],
+                    vec![]
+                )),
+                confirmed_chunks: vec![
+                    ConfirmedChunk::new(
+                        gen_chunk!("か", vec![gen_candidate!(["ka"]),]),
+                        vec![
+                            ActualKeyStroke::new(
+                                Duration::new(1, 0),
+                                'k'.try_into().unwrap(),
+                                true
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(2, 0),
+                                'a'.try_into().unwrap(),
+                                true
+                            )
+                        ],
+                    ),
+                    ConfirmedChunk::new(
+                        gen_chunk!("ん", vec![gen_candidate!(["nn"]),]),
+                        vec![
+                            ActualKeyStroke::new(
+                                Duration::new(3, 0),
+                                'n'.try_into().unwrap(),
+                                true
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(4, 0),
+                                'j'.try_into().unwrap(),
+                                false
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(5, 0),
+                                'n'.try_into().unwrap(),
+                                true
+                            ),
+                        ],
+                    )
+                ],
+            }
+        );
+
+        // 8. 「i」と入力
+        pci.stroke_key('i'.try_into().unwrap(), Duration::new(7, 0));
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![].into(),
+                inflight_chunk: None,
+                confirmed_chunks: vec![
+                    ConfirmedChunk::new(
+                        gen_chunk!("か", vec![gen_candidate!(["ka"])]),
+                        vec![
+                            ActualKeyStroke::new(
+                                Duration::new(1, 0),
+                                'k'.try_into().unwrap(),
+                                true
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(2, 0),
+                                'a'.try_into().unwrap(),
+                                true
+                            )
+                        ],
+                    ),
+                    ConfirmedChunk::new(
+                        gen_chunk!("ん", vec![gen_candidate!(["nn"])]),
+                        vec![
+                            ActualKeyStroke::new(
+                                Duration::new(3, 0),
+                                'n'.try_into().unwrap(),
+                                true
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(4, 0),
+                                'j'.try_into().unwrap(),
+                                false
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(5, 0),
+                                'n'.try_into().unwrap(),
+                                true
+                            ),
+                        ],
+                    ),
+                    ConfirmedChunk::new(
+                        gen_chunk!("き", vec![gen_candidate!(["ki"]),]),
+                        vec![
+                            ActualKeyStroke::new(
+                                Duration::new(6, 0),
+                                'k'.try_into().unwrap(),
+                                true
+                            ),
+                            ActualKeyStroke::new(
+                                Duration::new(7, 0),
+                                'i'.try_into().unwrap(),
+                                true
+                            )
                         ],
                     ),
                 ],
@@ -908,7 +1299,8 @@ mod test {
                     vec![
                         ActualKeyStroke::new(Duration::new(11, 0), 'c'.try_into().unwrap(), false),
                         ActualKeyStroke::new(Duration::new(12, 0), 'k'.try_into().unwrap(), true),
-                    ]
+                    ],
+                    vec![]
                 )),
                 confirmed_chunks: vec![
                     ConfirmedChunk::new(
