@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::num::NonZeroUsize;
 
 use crate::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
 use crate::key_stroke::{KeyStrokeChar, KeyStrokeString};
@@ -167,20 +168,25 @@ impl Chunk {
         self.key_stroke_candidates.as_ref().map(|v| v.len())
     }
 
-    // チャンクをcount_striction回のキーストロークで終わるように制限する
-    // 最後のチャンクに使うことを想定している
-    // ex. 「し」というチャンクには「si」「shi」「ci」という候補があるがこれを1回のキーストロークに制限すると「s」「c」となる
-    pub fn strict_key_stroke_count(&mut self, count_striction: usize) {
-        // 制限によってキーストロークが0回になったり必要キーストローク数が増えてはいけない
-        assert!(count_striction != 0 && count_striction <= self.calc_min_key_stroke_count());
+    /// チャンクをkey_stroke_count_striction回のキーストロークで終わるように制限する
+    /// ex. 「し」というチャンクには「si」「shi」「ci」という候補があるがこれを1回のキーストロークに制限すると「s」「c」となる
+    ///
+    /// 最後のチャンクに使うことを想定している
+    pub(crate) fn strict_key_stroke_count(&mut self, key_stroke_count_striction: NonZeroUsize) {
+        // 制限によって必要キーストローク数が増えてはいけない
+        assert!(key_stroke_count_striction.get() <= self.calc_min_key_stroke_count());
 
         let mut new_key_stroke_candidates = self.key_stroke_candidates.as_ref().unwrap().clone();
 
         new_key_stroke_candidates
             .iter_mut()
             // 変更するのは制限よりも長い候補のみでいい
-            .filter(|candidate| candidate.calc_key_stroke_count() > count_striction)
-            .for_each(|candidate| candidate.strict_key_stroke_count(count_striction));
+            .filter(|candidate| {
+                candidate.calc_key_stroke_count() > key_stroke_count_striction.get()
+            })
+            .for_each(|candidate| {
+                candidate.strict_key_stroke_count(key_stroke_count_striction.get())
+            });
 
         // 制限の結果重複するキーストロークが生じる可能性があるので縮退させる
         let mut exists_in_candidates: HashSet<String> = HashSet::new();
@@ -751,7 +757,7 @@ mod test {
             ]
         );
 
-        chunk.strict_key_stroke_count(1);
+        chunk.strict_key_stroke_count(NonZeroUsize::new(1).unwrap());
 
         assert_eq!(
             chunk,
@@ -770,7 +776,7 @@ mod test {
             ]
         );
 
-        chunk.strict_key_stroke_count(1);
+        chunk.strict_key_stroke_count(NonZeroUsize::new(1).unwrap());
 
         assert_eq!(
             chunk,

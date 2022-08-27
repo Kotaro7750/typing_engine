@@ -185,7 +185,8 @@ impl<'vocabulary> QueryRequest<'vocabulary> {
         let last_chunk = query_chunks.last_mut().unwrap();
         let over_key_stroke_count = actual_key_stroke_count - key_stroke_threshold.get();
         last_chunk.strict_key_stroke_count(
-            last_chunk.calc_min_key_stroke_count() - over_key_stroke_count,
+            NonZeroUsize::new(last_chunk.calc_min_key_stroke_count() - over_key_stroke_count)
+                .unwrap(),
         );
 
         // チャンクの削除によって語彙も削除される可能性がある
@@ -598,13 +599,7 @@ mod test {
                 vec![gen_vocabulary_info!("印字", "いんじ", vec![0, 0, 1], 2),],
                 vec![
                     gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
-                    gen_chunk!(
-                        "ん",
-                        vec![
-                            gen_candidate!(["n"]),
-                            gen_candidate!(["x"])
-                        ]
-                    ),
+                    gen_chunk!("ん", vec![gen_candidate!(["n"]), gen_candidate!(["x"])]),
                 ]
             )
         );
