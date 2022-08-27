@@ -180,13 +180,14 @@ impl Chunk {
 
         new_key_stroke_candidates
             .iter_mut()
-            // 変更するのは制限よりも長い候補のみでいい
+            // 変更するのは基本的には制限よりも長い候補のみでいい
+            // 遅延確定候補は制限と同じタイプ数であっても通常の候補にする必要がある
+            // 通常の候補にしないと制限だけタイプしても確定しなくなってしまう
             .filter(|candidate| {
                 candidate.calc_key_stroke_count() > key_stroke_count_striction.get()
+                    || candidate.is_delayed_confirmed_candidate()
             })
-            .for_each(|candidate| {
-                candidate.strict_key_stroke_count(key_stroke_count_striction.get())
-            });
+            .for_each(|candidate| candidate.strict_key_stroke_count(key_stroke_count_striction));
 
         // 制限の結果重複するキーストロークが生じる可能性があるので縮退させる
         let mut exists_in_candidates: HashSet<String> = HashSet::new();
@@ -489,6 +490,10 @@ impl ChunkKeyStrokeCandidate {
         self.key_stroke_elements.len() == 2
     }
 
+    pub(crate) fn is_delayed_confirmed_candidate(&self) -> bool {
+        self.delayed_confirmed_candidate_info.is_some()
+    }
+
     // 候補の中の特定のキーストロークがどちらの要素に属しているか
     // 基本的には0だが複数文字を個別で入力するような候補では1にもなりうる
     pub(crate) fn element_index_at_key_stroke_index(&self, key_stroke_index: usize) -> usize {
@@ -545,10 +550,14 @@ impl ChunkKeyStrokeCandidate {
         s.chars().count()
     }
 
-    // この候補のキーストローク回数をstrict_count回に制限する
-    // この候補の属するチャンクが最後のチャンクであることを想定している
-    fn strict_key_stroke_count(&mut self, strict_count: usize) {
-        assert!(strict_count < self.calc_key_stroke_count());
+    /// この候補のキーストローク回数をkey_stroke_count_striction回に制限する
+    ///
+    /// この候補の属するチャンクが最後のチャンクであることを想定している
+    fn strict_key_stroke_count(&mut self, key_stroke_count_striction: NonZeroUsize) {
+        assert!(
+            key_stroke_count_striction.get() < self.calc_key_stroke_count()
+                || self.is_delayed_confirmed_candidate()
+        );
 
         let mut new_key_stroke_elements: Vec<KeyStrokeString> = Vec::new();
 
@@ -556,9 +565,8 @@ impl ChunkKeyStrokeCandidate {
         for key_stroke_element in &self.key_stroke_elements {
             let count_of_element = key_stroke_element.chars().count();
 
-            if count + count_of_element >= strict_count {
-                let count_after_truncate = strict_count - count;
-                assert!(count_after_truncate > 0);
+            if count + count_of_element > key_stroke_count_striction.get() {
+                let count_after_truncate = key_stroke_count_striction.get() - count;
 
                 let mut truncated = String::new();
                 for (i, c) in key_stroke_element.chars().enumerate() {
@@ -578,6 +586,8 @@ impl ChunkKeyStrokeCandidate {
         self.key_stroke_elements = new_key_stroke_elements;
         // この候補の属するチャンクが最後のチャンクであることを想定しているので次のチャンクへの制限はなくてもよい
         self.next_chunk_head_constraint.take();
+        // 遅延確定候補は普通の候補にする必要がある
+        self.delayed_confirmed_candidate_info.take();
     }
 }
 

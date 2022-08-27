@@ -367,6 +367,7 @@ mod test {
         );
 
         assert!(!typed_chunk.is_confirmed());
+        assert!(typed_chunk.is_delayed_confirmable());
 
         let stroke_result = typed_chunk.stroke_key('m'.try_into().unwrap(), Duration::new(2, 0));
         assert_eq!(stroke_result, KeyStrokeResult::Wrong);
@@ -449,6 +450,7 @@ mod test {
         );
 
         assert!(!typed_chunk.is_confirmed());
+        assert!(typed_chunk.is_delayed_confirmable());
 
         let stroke_result = typed_chunk.stroke_key('m'.try_into().unwrap(), Duration::new(2, 0));
         assert_eq!(stroke_result, KeyStrokeResult::Wrong);
