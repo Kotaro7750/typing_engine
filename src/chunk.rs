@@ -484,6 +484,10 @@ impl ChunkKeyStrokeCandidate {
         &self.next_chunk_head_constraint
     }
 
+    pub(crate) fn delayed_confirmed_candiate_info(&self) -> &Option<DelayedConfirmedCandidateInfo> {
+        &self.delayed_confirmed_candidate_info
+    }
+
     // この候補が複数文字チャンクを分けて打つ候補か
     // ex. 「きょ」というチャンクには「き」と「ょ」に分けて打つケースもある
     pub(crate) fn is_splitted(&self) -> bool {
@@ -628,6 +632,11 @@ pub(crate) struct DelayedConfirmedCandidateInfo {
 impl DelayedConfirmedCandidateInfo {
     pub(crate) fn new(next_chunk_head: Vec<KeyStrokeChar>) -> Self {
         Self { next_chunk_head }
+    }
+
+    /// 次のチャンク先頭のキーストロークとして与えられたキーストロークが有効かどうか
+    pub(crate) fn is_valid_key_stroke(&self, key_stroke: KeyStrokeChar) -> bool {
+        self.next_chunk_head.contains(&key_stroke)
     }
 }
 

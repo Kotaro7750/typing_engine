@@ -33,9 +33,19 @@ impl TypedChunk {
         }
     }
 
+    /// チャンクが確定したか
+    /// 遅延確定候補自体を打ち終えても確定自体はまだのとき確定としてはいけない
     pub(crate) fn is_confirmed(&mut self) -> bool {
         assert!(self.chunk.key_stroke_candidates().is_some());
         let key_stroke_candidates = self.chunk.key_stroke_candidates().as_ref().unwrap();
+
+        // 確定している条件は
+        // * 候補が1つである
+        // * その候補を打ち終えている
+
+        if key_stroke_candidates.len() != 1 {
+            return false;
+        }
 
         let mut is_confirmed = false;
 
@@ -43,10 +53,9 @@ impl TypedChunk {
             .iter()
             .zip(&self.cursor_positions_of_candidates)
             .for_each(|(candidate, cursor_position)| {
-                // 同時に２つの候補が終了することはないはずである
-                assert!(!is_confirmed);
-
                 if *cursor_position >= candidate.calc_key_stroke_count() {
+                    assert!(!is_confirmed);
+
                     is_confirmed = true;
                 }
             });
@@ -54,13 +63,68 @@ impl TypedChunk {
         is_confirmed
     }
 
-    // 現在タイピング中のチャンクに対して1キーストロークのタイプを行う
+    /// 遅延確定候補があるとしたらそれを打ち終えているかどうか
+    /// ないときには常にfalseを返す
+    pub(crate) fn is_delayed_confirmable(&self) -> bool {
+        assert!(self.chunk.key_stroke_candidates().is_some());
+        let key_stroke_candidates = self.chunk.key_stroke_candidates().as_ref().unwrap();
+
+        let mut is_delayed_confirmable = false;
+
+        key_stroke_candidates
+            .iter()
+            .zip(&self.cursor_positions_of_candidates)
+            .filter(|(candidate, _)| candidate.is_delayed_confirmed_candidate())
+            .for_each(|(candidate, cursor_position)| {
+                if *cursor_position >= candidate.calc_key_stroke_count() {
+                    // 同時に２つの遅延確定候補が終了することはないはずである
+                    assert!(!is_delayed_confirmable);
+
+                    is_delayed_confirmable = true;
+                }
+            });
+
+        is_delayed_confirmable
+    }
+
+    /// 現在タイピング中のチャンクに対して1キーストロークのタイプを行う
     pub(crate) fn stroke_key(
         &mut self,
         key_stroke: KeyStrokeChar,
         elapsed_time: Duration,
     ) -> KeyStrokeResult {
         assert!(!self.is_confirmed());
+
+        // 前回のキーストロークよりも時間的に後でなくてはならない
+        if let Some(last_key_stroke) = self.key_strokes.last() {
+            assert!(&elapsed_time >= last_key_stroke.elapsed_time());
+        }
+
+        // 打ち終えた遅延確定候補がある場合とそうでない場合で処理を分ける
+        let key_stroke_result = if self.is_delayed_confirmable() {
+            self.stroke_key_to_delayed_confirmable(key_stroke, elapsed_time)
+        } else {
+            self.stroke_key_to_no_delayed_confirmable(key_stroke, elapsed_time)
+        };
+
+        // 遅延確定候補以外の候補で確定した場合にはpendingしていたキーストロークを加える必要がある
+        if self.is_confirmed() && !self.is_delayed_confirmable() {
+            self.pending_key_strokes
+                .drain(..)
+                .for_each(|key_stroke| self.key_strokes.push(key_stroke));
+        }
+
+        key_stroke_result
+    }
+
+    /// 遅延確定候補ではないかそうであってもまだ打ち終えていないチャンクを対象にキーストロークを行う
+    fn stroke_key_to_no_delayed_confirmable(
+        &mut self,
+        key_stroke: KeyStrokeChar,
+        elapsed_time: Duration,
+    ) -> KeyStrokeResult {
+        assert!(!self.is_confirmed());
+        assert!(!self.is_delayed_confirmable());
 
         assert!(self.chunk.key_stroke_candidates().is_some());
         let key_stroke_candidates = self.chunk.key_stroke_candidates().as_ref().unwrap();
@@ -69,11 +133,6 @@ impl TypedChunk {
             key_stroke_candidates.len(),
             self.cursor_positions_of_candidates.len()
         );
-
-        // 前回のキーストロークよりも時間的に後でなくてはならない
-        if let Some(last_key_stroke) = self.key_strokes.last() {
-            assert!(&elapsed_time >= last_key_stroke.elapsed_time());
-        }
 
         // それぞれの候補においてタイプされたキーストロークが有効かどうか
         let candidate_hit_miss: Vec<bool> = key_stroke_candidates
@@ -110,6 +169,107 @@ impl TypedChunk {
         } else {
             KeyStrokeResult::Wrong
         }
+    }
+
+    /// 遅延確定候補を持つその候補を打ち終えたチャンクに対してキーストロークを行う
+    fn stroke_key_to_delayed_confirmable(
+        &mut self,
+        key_stroke: KeyStrokeChar,
+        elapsed_time: Duration,
+    ) -> KeyStrokeResult {
+        assert!(!self.is_confirmed());
+        assert!(self.is_delayed_confirmable());
+
+        assert!(self.chunk.key_stroke_candidates().is_some());
+        let key_stroke_candidates = self.chunk.key_stroke_candidates().as_ref().unwrap();
+
+        assert_eq!(
+            key_stroke_candidates.len(),
+            self.cursor_positions_of_candidates.len()
+        );
+
+        // 打ち終えている遅延確定候補がある場合にはキーストロークが有効かの比較は遅延確定候補とそうでない候補で比較の仕方が異なる
+        // 遅延確定候補の比較は次のチャンク先頭との比較で行う
+        // そうでない候補の比較は通常のやり方と同じである
+
+        let delayed_confirmed_candidate_index = key_stroke_candidates
+            .iter()
+            .position(|candidate| candidate.is_delayed_confirmed_candidate())
+            .unwrap();
+
+        // 次のチャンク先頭にヒットするなら遅延確定候補で確定する
+        if key_stroke_candidates
+            .get(delayed_confirmed_candidate_index)
+            .unwrap()
+            .delayed_confirmed_candiate_info()
+            .as_ref()
+            .unwrap()
+            .is_valid_key_stroke(key_stroke.clone())
+        {
+            // 遅延確定候補以外の候補を削除する
+            let mut candidate_reduce_vec = vec![false; key_stroke_candidates.len()];
+            candidate_reduce_vec[delayed_confirmed_candidate_index] = true;
+
+            self.chunk.reduce_candidate(&candidate_reduce_vec);
+
+            // 遅延確定候補以外のカーソル位置も削除する
+            let mut index = 0;
+            self.cursor_positions_of_candidates.retain(|_| {
+                let is_hit = *candidate_reduce_vec.get(index).unwrap();
+                index += 1;
+                is_hit
+            });
+
+            self.pending_key_strokes
+                .push(ActualKeyStroke::new(elapsed_time, key_stroke, true));
+
+            return KeyStrokeResult::Correct;
+        }
+
+        // それぞれの候補においてタイプされたキーストロークが有効かどうか
+        let candidate_hit_miss: Vec<bool> = key_stroke_candidates
+            .iter()
+            .zip(self.cursor_positions_of_candidates.iter())
+            .map(|(candidate, cursor_position)| {
+                // 遅延確定候補は既にミスであることが確定している
+                if candidate.is_delayed_confirmed_candidate() {
+                    false
+                } else {
+                    candidate.key_stroke_char_at_position(*cursor_position) == key_stroke
+                }
+            })
+            .collect();
+
+        let is_hit = candidate_hit_miss.contains(&true);
+
+        // 何かしらの候補についてキーストロークが有効だったらそれらの候補のみを残しカーソル位置を進める
+        if is_hit {
+            self.chunk.reduce_candidate(&candidate_hit_miss);
+
+            let mut index = 0;
+            self.cursor_positions_of_candidates.retain(|_| {
+                let is_hit = *candidate_hit_miss.get(index).unwrap();
+                index += 1;
+                is_hit
+            });
+
+            self.cursor_positions_of_candidates
+                .iter_mut()
+                .for_each(|cursor_position| *cursor_position += 1);
+        }
+
+        self.pending_key_strokes
+            .push(ActualKeyStroke::new(elapsed_time, key_stroke, is_hit));
+
+        if is_hit {
+            KeyStrokeResult::Correct
+        } else {
+            KeyStrokeResult::Wrong
+        }
+    }
+
+    pub(crate) fn take_pending_key_strokes(&mut self) -> Vec<ActualKeyStroke> {
+        self.pending_key_strokes.drain(..).collect()
     }
 
     // チャンクの綴りのそれぞれ（基本的には1つだが複数文字を個別で打った場合には2つ）でミスタイプがあったかどうか
@@ -472,7 +632,7 @@ mod test {
                     Duration::new(2, 0),
                     'm'.try_into().unwrap(),
                     false
-                )]
+                ),]
             }
         );
 
@@ -489,7 +649,10 @@ mod test {
                     'n'.try_into().unwrap(),
                     true
                 ),],
-                pending_key_strokes: vec![]
+                pending_key_strokes: vec![
+                    ActualKeyStroke::new(Duration::new(2, 0), 'm'.try_into().unwrap(), false),
+                    ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), true)
+                ]
             }
         );
 

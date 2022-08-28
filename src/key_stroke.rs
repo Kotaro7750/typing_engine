@@ -116,6 +116,10 @@ impl ActualKeyStroke {
         &self.elapsed_time
     }
 
+    pub(crate) fn key_stroke(&self) -> &KeyStrokeChar {
+        &self.key_stroke
+    }
+
     pub(crate) fn is_correct(&self) -> bool {
         self.is_correct
     }

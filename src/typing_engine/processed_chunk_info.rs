@@ -81,7 +81,24 @@ impl ProcessedChunkInfo {
 
         // このキーストロークでチャンクが確定したら次のチャンクの処理に移る
         if inflight_chunk.is_confirmed() {
+            let pending_key_strokes = inflight_chunk.take_pending_key_strokes();
+            let is_delayed_confirmable = inflight_chunk.is_delayed_confirmable();
+
             self.move_next_chunk();
+
+            // 遅延確定候補で確定した場合にはpendingしていたキーストロークを次のチャンクに入力する必要がある
+            if is_delayed_confirmable {
+                assert!(self.inflight_chunk.is_some());
+
+                pending_key_strokes.iter().for_each(|actual_key_stroke| {
+                    self.inflight_chunk.as_mut().unwrap().stroke_key(
+                        actual_key_stroke.key_stroke().clone(),
+                        actual_key_stroke.elapsed_time().clone(),
+                    );
+                });
+            } else {
+                assert!(pending_key_strokes.is_empty());
+            }
         }
 
         result
