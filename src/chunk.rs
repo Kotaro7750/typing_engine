@@ -231,7 +231,7 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
     // このチャンクが「っ」としたときにキーストロークの連続によって表現できるキーストローク群
     // 次のチャンク先頭の子音などのキーストロークともいえる
     // ex. 次のチャンクが「た」だったときには [t] となる
-    let mut key_strokes_can_represent_ltu_by_repeat: HashSet<KeyStrokeChar> = HashSet::new();
+    let mut key_strokes_can_represent_ltu_by_repeat: Vec<KeyStrokeChar> = Vec::new();
 
     // 遅延確定候補を確定できるキーストローク群
     // 次のチャンク先頭のキーストロークと同値
@@ -397,6 +397,9 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
             });
 
         // 次に処理するチャンク（逆順で処理しているので一つ前のチャンク）が「っ」だった場合に備えて子音などのキーストロークを構築する
+
+        let mut already_pushed_key_strokes_can_represent_ltu_by_repeat =
+            HashSet::<KeyStrokeChar>::new();
         match &chunk.spell {
             ChunkSpell::SingleChar(_) | ChunkSpell::DoubleChar(_) => chunk
                 .key_stroke_candidates
@@ -414,7 +417,13 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                         && head_key_stroke_char != 'o'
                         && head_key_stroke_char != 'n'
                     {
-                        key_strokes_can_represent_ltu_by_repeat.insert(head_key_stroke_char);
+                        if !already_pushed_key_strokes_can_represent_ltu_by_repeat
+                            .contains(&head_key_stroke_char)
+                        {
+                            already_pushed_key_strokes_can_represent_ltu_by_repeat
+                                .insert(head_key_stroke_char.clone());
+                            key_strokes_can_represent_ltu_by_repeat.push(head_key_stroke_char);
+                        }
                     }
                 }),
             // 直後のチャンクがASCIIだったら子音の連続で表すことはできない
