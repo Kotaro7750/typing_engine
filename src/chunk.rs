@@ -762,6 +762,61 @@ mod test {
     }
 
     #[test]
+    fn append_key_stroke_to_chunks_5() {
+        let mut chunks = vec![gen_unprocessed_chunk!("っ"), gen_unprocessed_chunk!("っ")];
+
+        append_key_stroke_to_chunks(&mut chunks);
+
+        assert_eq!(
+            chunks,
+            vec![
+                gen_chunk!(
+                    "っ",
+                    vec![
+                        gen_candidate!(["l"], 'l', ['l']),
+                        gen_candidate!(["x"], 'x', ['x']),
+                        gen_candidate!(["ltu"]),
+                        gen_candidate!(["xtu"]),
+                        gen_candidate!(["ltsu"]),
+                    ]
+                ),
+                gen_chunk!(
+                    "っ",
+                    vec![
+                        gen_candidate!(["ltu"]),
+                        gen_candidate!(["xtu"]),
+                        gen_candidate!(["ltsu"]),
+                    ]
+                ),
+            ]
+        );
+    }
+
+    #[test]
+    fn append_key_stroke_to_chunks_6() {
+        let mut chunks = vec![gen_unprocessed_chunk!("っ"), gen_unprocessed_chunk!("か")];
+
+        append_key_stroke_to_chunks(&mut chunks);
+
+        assert_eq!(
+            chunks,
+            vec![
+                gen_chunk!(
+                    "っ",
+                    vec![
+                        gen_candidate!(["k"], 'k'),
+                        gen_candidate!(["c"], 'c'),
+                        gen_candidate!(["ltu"]),
+                        gen_candidate!(["xtu"]),
+                        gen_candidate!(["ltsu"]),
+                    ]
+                ),
+                gen_chunk!("か", vec![gen_candidate!(["ka"]), gen_candidate!(["ca"]),]),
+            ]
+        );
+    }
+
+    #[test]
     fn strict_key_stroke_count_1() {
         let mut chunk = gen_chunk!(
             "じょ",
