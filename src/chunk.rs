@@ -297,16 +297,23 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                     key_strokes_can_represent_ltu_by_repeat
                         .iter()
                         .for_each(|key_stroke| match char::from(key_stroke.clone()) {
-                            'l' | 'x' => key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
-                                vec![char::from(key_stroke.clone())
-                                    .to_string()
-                                    .try_into()
-                                    .unwrap()],
-                                Some(key_stroke.clone()),
-                                Some(DelayedConfirmedCandidateInfo::new(
-                                    key_strokes_can_confirm_delayed_candidate.clone(),
-                                )),
-                            )),
+                            'l' | 'x' => {
+                                key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
+                                    vec![char::from(key_stroke.clone())
+                                        .to_string()
+                                        .try_into()
+                                        .unwrap()],
+                                    Some(key_stroke.clone()),
+                                    // 次のチャンクへの制限があるときには遅延確定候補を確定できるのはその制限だけである
+                                    Some(DelayedConfirmedCandidateInfo::new(
+                                        key_strokes_can_confirm_delayed_candidate
+                                            .iter()
+                                            .filter(|ks| *ks == key_stroke)
+                                            .map(|ks| ks.clone())
+                                            .collect(),
+                                    )),
+                                ))
+                            }
                             _ => key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
                                 vec![char::from(key_stroke.clone())
                                     .to_string()
@@ -385,7 +392,8 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
 
         key_strokes_can_confirm_delayed_candidate.clear();
 
-        key_strokes_can_represent_ltu_by_repeat.clear();
+        let mut already_pushed_key_strokes_can_confirm_delayed_candidate =
+            HashSet::<KeyStrokeChar>::new();
         chunk
             .key_stroke_candidates
             .as_ref()
@@ -393,10 +401,15 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
             .iter()
             .for_each(|key_stroke_candidate| {
                 let first_char = key_stroke_candidate.key_stroke_char_at_position(0);
-                key_strokes_can_confirm_delayed_candidate.push(first_char);
+                if !already_pushed_key_strokes_can_confirm_delayed_candidate.contains(&first_char) {
+                    already_pushed_key_strokes_can_confirm_delayed_candidate
+                        .insert(first_char.clone());
+                    key_strokes_can_confirm_delayed_candidate.push(first_char);
+                }
             });
 
         // 次に処理するチャンク（逆順で処理しているので一つ前のチャンク）が「っ」だった場合に備えて子音などのキーストロークを構築する
+        key_strokes_can_represent_ltu_by_repeat.clear();
 
         let mut already_pushed_key_strokes_can_represent_ltu_by_repeat =
             HashSet::<KeyStrokeChar>::new();
