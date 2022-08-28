@@ -87,6 +87,15 @@ impl TypedChunk {
         is_delayed_confirmable
     }
 
+    /// 遅延確定候補のために保持しているキーストロークの中にミスタイプがあるかどうか
+    pub(crate) fn has_wrong_stroke_in_pending_key_strokes(&self) -> bool {
+        self.pending_key_strokes
+            .iter()
+            .map(|actual_key_stroke| !actual_key_stroke.is_correct())
+            .reduce(|accum, is_correct| accum || is_correct)
+            .map_or(false, |r| r)
+    }
+
     /// 現在タイピング中のチャンクに対して1キーストロークのタイプを行う
     pub(crate) fn stroke_key(
         &mut self,

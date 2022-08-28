@@ -107,7 +107,7 @@ impl ProcessedChunkInfo {
     pub(crate) fn construct_display_info(&self) -> (SpellDisplayInfo, KeyStrokeDisplayInfo) {
         let mut spell = String::new();
         let mut spell_head_position = 0;
-        let spell_cursor_positions;
+        let mut spell_cursor_positions;
         let mut spell_wrong_positions: Vec<usize> = vec![];
 
         let mut key_stroke = String::new();
@@ -172,10 +172,9 @@ impl ProcessedChunkInfo {
         } else {
             let inflight_chunk = self.inflight_chunk.as_ref().unwrap();
 
-            // キーストローク
+            let is_delayed_confirmable = inflight_chunk.is_delayed_confirmable();
 
-            let in_chunk_current_key_stroke_cursor_position =
-                inflight_chunk.current_key_stroke_cursor_position();
+            // キーストローク
 
             inflight_chunk
                 .construct_wrong_key_stroke_vector()
@@ -188,7 +187,17 @@ impl ProcessedChunkInfo {
                 });
 
             // この時点ではカーソル位置はこのチャンクの先頭を指しているので単純に足すだけで良い
-            key_stroke_cursor_position += in_chunk_current_key_stroke_cursor_position;
+            key_stroke_cursor_position += inflight_chunk.current_key_stroke_cursor_position();
+
+            // 遅延確定候補を打ち終えている場合にはミスタイプは次のチャンク先頭に属するとみなす
+            //
+            // カーソル位置は特殊な処理をする必要はない
+            // 遅延確定候補の候補内カーソル位置は次のチャンク先頭を指す位置にあるため
+            if is_delayed_confirmable {
+                if inflight_chunk.has_wrong_stroke_in_pending_key_strokes() {
+                    key_stroke_wrong_positions.push(key_stroke_cursor_position);
+                }
+            }
 
             key_stroke.push_str(
                 &inflight_chunk
@@ -234,6 +243,17 @@ impl ProcessedChunkInfo {
 
                     spell_head_position += 1;
                 });
+
+            // 遅延確定候補を打ち終えている場合にはカーソルは次のチャンク先頭を指し保留中のミスタイプは次のチャンクのミスタイプとみなす
+            if is_delayed_confirmable {
+                spell_cursor_positions.clear();
+                // この時点でspell_head_positionは次のチャンク先頭の綴りの位置を指している
+                spell_cursor_positions.push(spell_head_position);
+
+                if inflight_chunk.has_wrong_stroke_in_pending_key_strokes() {
+                    spell_wrong_positions.push(spell_head_position);
+                }
+            }
 
             spell.push_str(inflight_chunk.as_ref().spell().as_ref());
         }
