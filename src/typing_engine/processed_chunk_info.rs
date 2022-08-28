@@ -263,7 +263,7 @@ impl ProcessedChunkInfo {
 
         // 3. 未処理のチャンク
 
-        let next_chunk_head_constraint = if self.inflight_chunk.is_some() {
+        let mut next_chunk_head_constraint = if self.inflight_chunk.is_some() {
             self.inflight_chunk
                 .as_ref()
                 .unwrap()
@@ -286,6 +286,12 @@ impl ProcessedChunkInfo {
                 // 綴り
                 spell.push_str(unprocessed_chunk.spell().as_ref());
                 spell_head_position += unprocessed_chunk.spell().count();
+
+                // 次のチャンクへの制限を更新
+                match candidate.next_chunk_head_constraint().clone() {
+                    Some(constraint) => next_chunk_head_constraint.replace(constraint),
+                    None => next_chunk_head_constraint.take(),
+                };
             });
 
         (
@@ -303,4 +309,3 @@ impl ProcessedChunkInfo {
         )
     }
 }
-
