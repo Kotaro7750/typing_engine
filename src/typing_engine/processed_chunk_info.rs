@@ -1401,4 +1401,213 @@ mod test {
             KeyStrokeDisplayInfo::new("kyokixyokyoky".to_string(), 9, vec![1, 5, 8])
         );
     }
+
+    #[test]
+    fn construct_display_info_2() {
+        // 1. 初期化
+        let mut pci = ProcessedChunkInfo::new(vec![
+            gen_chunk!(
+                "ん",
+                vec![
+                    gen_candidate!(["n"], ['z', 'j']),
+                    gen_candidate!(["nn"]),
+                    gen_candidate!(["xn"])
+                ]
+            ),
+            gen_chunk!("じ", vec![gen_candidate!(["zi"]), gen_candidate!(["ji"]),]),
+        ]);
+
+        // 2. タイピング開始
+        pci.move_next_chunk();
+
+        // 3. n -> m(ミスタイプ) と入力
+        pci.stroke_key('n'.try_into().unwrap(), Duration::new(1, 0));
+        pci.stroke_key('m'.try_into().unwrap(), Duration::new(2, 0));
+
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![gen_chunk!(
+                    "じ",
+                    vec![gen_candidate!(["zi"]), gen_candidate!(["ji"]),]
+                ),]
+                .into(),
+                inflight_chunk: Some(TypedChunk::new(
+                    gen_chunk!(
+                        "ん",
+                        vec![gen_candidate!(["n"], ['z', 'j']), gen_candidate!(["nn"]),]
+                    ),
+                    vec![1, 1],
+                    vec![ActualKeyStroke::new(
+                        Duration::new(1, 0),
+                        'n'.try_into().unwrap(),
+                        true
+                    ),],
+                    vec![ActualKeyStroke::new(
+                        Duration::new(2, 0),
+                        'm'.try_into().unwrap(),
+                        false
+                    ),]
+                )),
+                confirmed_chunks: vec![],
+            }
+        );
+
+        let (sdi, ksdi) = pci.construct_display_info();
+
+        // 入力を終えた遅延確定候補は表示の上では確定したとみなす
+        // pendingにあるミスタイプは表示状は次のチャンクに帰属させる
+        assert_eq!(
+            sdi,
+            SpellDisplayInfo::new("んじ".to_string(), vec![1], vec![1], 1)
+        );
+
+        assert_eq!(
+            ksdi,
+            KeyStrokeDisplayInfo::new("nzi".to_string(), 1, vec![1])
+        );
+
+        // 4. jと入力
+        pci.stroke_key('j'.try_into().unwrap(), Duration::new(3, 0));
+
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![].into(),
+                inflight_chunk: Some(TypedChunk::new(
+                    gen_chunk!("じ", vec![gen_candidate!(["ji"]),]),
+                    vec![1],
+                    vec![
+                        ActualKeyStroke::new(Duration::new(2, 0), 'm'.try_into().unwrap(), false),
+                        ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), true),
+                    ],
+                    vec![]
+                )),
+                confirmed_chunks: vec![ConfirmedChunk::new(
+                    gen_chunk!("ん", vec![gen_candidate!(["n"], ['z', 'j'])]),
+                    vec![ActualKeyStroke::new(
+                        Duration::new(1, 0),
+                        'n'.try_into().unwrap(),
+                        true
+                    ),],
+                )],
+            }
+        );
+
+        let (sdi, ksdi) = pci.construct_display_info();
+
+        // 遅延確定候補で確定したのでミスタイプは引き続き次のチャンクに属する
+        assert_eq!(
+            sdi,
+            SpellDisplayInfo::new("んじ".to_string(), vec![1], vec![1], 1)
+        );
+
+        assert_eq!(
+            ksdi,
+            KeyStrokeDisplayInfo::new("nji".to_string(), 2, vec![1])
+        );
+    }
+
+    #[test]
+    fn construct_display_info_3() {
+        // 1. 初期化
+        let mut pci = ProcessedChunkInfo::new(vec![
+            gen_chunk!(
+                "ん",
+                vec![
+                    gen_candidate!(["n"], ['z', 'j']),
+                    gen_candidate!(["nn"]),
+                    gen_candidate!(["xn"])
+                ]
+            ),
+            gen_chunk!("じ", vec![gen_candidate!(["zi"]), gen_candidate!(["ji"]),]),
+        ]);
+
+        // 2. タイピング開始
+        pci.move_next_chunk();
+
+        // 3. n -> m(ミスタイプ) と入力
+        pci.stroke_key('n'.try_into().unwrap(), Duration::new(1, 0));
+        pci.stroke_key('m'.try_into().unwrap(), Duration::new(2, 0));
+
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![gen_chunk!(
+                    "じ",
+                    vec![gen_candidate!(["zi"]), gen_candidate!(["ji"]),]
+                ),]
+                .into(),
+                inflight_chunk: Some(TypedChunk::new(
+                    gen_chunk!(
+                        "ん",
+                        vec![gen_candidate!(["n"], ['z', 'j']), gen_candidate!(["nn"]),]
+                    ),
+                    vec![1, 1],
+                    vec![ActualKeyStroke::new(
+                        Duration::new(1, 0),
+                        'n'.try_into().unwrap(),
+                        true
+                    ),],
+                    vec![ActualKeyStroke::new(
+                        Duration::new(2, 0),
+                        'm'.try_into().unwrap(),
+                        false
+                    ),]
+                )),
+                confirmed_chunks: vec![],
+            }
+        );
+
+        let (sdi, ksdi) = pci.construct_display_info();
+
+        // 入力を終えた遅延確定候補は表示の上では確定したとみなす
+        // pendingにあるミスタイプは表示状は次のチャンクに帰属させる
+        assert_eq!(
+            sdi,
+            SpellDisplayInfo::new("んじ".to_string(), vec![1], vec![1], 1)
+        );
+
+        assert_eq!(
+            ksdi,
+            KeyStrokeDisplayInfo::new("nzi".to_string(), 1, vec![1])
+        );
+
+        // 4. nと入力
+        pci.stroke_key('n'.try_into().unwrap(), Duration::new(3, 0));
+
+        assert_eq!(
+            pci,
+            ProcessedChunkInfo {
+                unprocessed_chunks: vec![].into(),
+                inflight_chunk: Some(TypedChunk::new(
+                    gen_chunk!("じ", vec![gen_candidate!(["zi"]), gen_candidate!(["ji"])]),
+                    vec![0, 0],
+                    vec![],
+                    vec![]
+                )),
+                confirmed_chunks: vec![ConfirmedChunk::new(
+                    gen_chunk!("ん", vec![gen_candidate!(["nn"])]),
+                    vec![
+                        ActualKeyStroke::new(Duration::new(1, 0), 'n'.try_into().unwrap(), true),
+                        ActualKeyStroke::new(Duration::new(2, 0), 'm'.try_into().unwrap(), false),
+                        ActualKeyStroke::new(Duration::new(3, 0), 'n'.try_into().unwrap(), true),
+                    ],
+                )],
+            }
+        );
+
+        let (sdi, ksdi) = pci.construct_display_info();
+
+        // 遅延確定候補ではない候補で確定したのでミスタイプはその候補に属する
+        assert_eq!(
+            sdi,
+            SpellDisplayInfo::new("んじ".to_string(), vec![1], vec![0], 1)
+        );
+
+        assert_eq!(
+            ksdi,
+            KeyStrokeDisplayInfo::new("nnzi".to_string(), 2, vec![1])
+        );
+    }
 }
