@@ -108,7 +108,7 @@ impl VocabularyEntry {
                 .try_into()
                 .unwrap();
 
-            chunks.push(Chunk::new(spell, None));
+            chunks.push(Chunk::new(spell, None, None));
         }
 
         chunks

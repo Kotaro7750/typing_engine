@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! gen_unprocessed_chunk {
     ($chunk_spell:literal) => {
-        crate::chunk::Chunk::new($chunk_spell.to_string().try_into().unwrap(), None)
+        crate::chunk::Chunk::new($chunk_spell.to_string().try_into().unwrap(), None, None)
     };
 }
 
@@ -10,11 +10,18 @@ macro_rules! gen_chunk {
     (
             $chunk_spell:literal,
             $key_stroke_candidates:expr
+            $(,$ideal_candidate:expr)?
         ) => {
-        crate::chunk::Chunk::new(
-            $chunk_spell.to_string().try_into().unwrap(),
-            Some($key_stroke_candidates),
-        )
+        {
+            let _ideal_candidate: Option<crate::chunk::ChunkKeyStrokeCandidate> = None;
+            $(let _ideal_candidate = $ideal_candidate;)?
+
+            crate::chunk::Chunk::new(
+                $chunk_spell.to_string().try_into().unwrap(),
+                Some($key_stroke_candidates),
+                _ideal_candidate
+            )
+        }
     };
 }
 

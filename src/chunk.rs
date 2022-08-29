@@ -79,16 +79,21 @@ pub struct Chunk {
     // チャンクを入力するためのキーストロークは複数の候補がありえる
     // ex. 「きょ」というチャンクには「kyo」・「kilyo」といったキーストロークがある
     key_stroke_candidates: Option<Vec<ChunkKeyStrokeCandidate>>,
+    // 最短で打ったときの候補
+    // キーストローク付与時に決められるためキーストローク系列によってはこの候補を打つことができない場合もある
+    ideal_candidate: Option<ChunkKeyStrokeCandidate>,
 }
 
 impl Chunk {
     pub fn new(
         spell: SpellString,
         key_stroke_candidates: Option<Vec<ChunkKeyStrokeCandidate>>,
+        ideal_candidate: Option<ChunkKeyStrokeCandidate>,
     ) -> Self {
         Self {
             spell: ChunkSpell::new(spell),
             key_stroke_candidates,
+            ideal_candidate,
         }
     }
 
@@ -200,6 +205,9 @@ impl Chunk {
                 true
             }
         });
+
+        self.ideal_candidate
+            .replace(new_key_stroke_candidates.get(0).unwrap().clone());
 
         self.key_stroke_candidates
             .replace(new_key_stroke_candidates);
@@ -385,6 +393,10 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                 .partial_cmp(&(b.calc_key_stroke_count()))
                 .unwrap()
         });
+
+        chunk
+            .ideal_candidate
+            .replace(key_stroke_candidates.get(0).unwrap().clone());
 
         chunk.key_stroke_candidates.replace(key_stroke_candidates);
 
