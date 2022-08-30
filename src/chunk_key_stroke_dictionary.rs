@@ -2,6 +2,7 @@ use once_cell::sync::Lazy;
 use std::collections::HashMap;
 
 pub static CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY: Lazy<HashMap<&'static str, Vec<&'static str>>> =
+    // XXX どの規格に従うのかを一貫させておいたほうがよい
     Lazy::new(|| {
         let mut m = HashMap::new();
         // あ行

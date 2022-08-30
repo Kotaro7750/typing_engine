@@ -467,6 +467,7 @@ fn allow_single_n_as_key_stroke(next_chunk_spell: &Option<ChunkSpell>) -> bool {
     let next_chunk_spell = next_chunk_spell.as_ref().unwrap();
 
     // 次のチャンクがASCII・母音・な行・「ゃ」「ゅ」「ょ」を除くや行の場合には許容しない
+    // XXX 「んう」を「nwu」で打つことができるIMEもあるのでどの規格に沿うのか一貫させておいたほうがよい
     match next_chunk_spell {
         ChunkSpell::DisplayableAscii(_) => false,
         ChunkSpell::SingleChar(spell_string) => !matches!(
