@@ -425,7 +425,8 @@ mod test {
                     gen_candidate!(["zi", "xyo"]),
                     gen_candidate!(["ji", "lyo"]),
                     gen_candidate!(["ji", "xyo"]),
-                ]
+                ],
+                gen_candidate!(["jo"])
             ),
             cursor_positions_of_candidates: vec![0; 7],
             key_strokes: vec![],
@@ -445,7 +446,8 @@ mod test {
                         gen_candidate!(["jyo"]),
                         gen_candidate!(["ji", "lyo"]),
                         gen_candidate!(["ji", "xyo"]),
-                    ]
+                    ],
+                    gen_candidate!(["jo"])
                 ),
                 cursor_positions_of_candidates: vec![1; 4],
                 key_strokes: vec![ActualKeyStroke::new(
@@ -470,7 +472,8 @@ mod test {
                         gen_candidate!(["jyo"]),
                         gen_candidate!(["ji", "lyo"]),
                         gen_candidate!(["ji", "xyo"]),
-                    ]
+                    ],
+                    gen_candidate!(["jo"])
                 ),
                 cursor_positions_of_candidates: vec![1; 4],
                 key_strokes: vec![
@@ -487,7 +490,7 @@ mod test {
         assert_eq!(
             typed_chunk,
             TypedChunk {
-                chunk: gen_chunk!("じょ", vec![gen_candidate!(["jo"]),]),
+                chunk: gen_chunk!("じょ", vec![gen_candidate!(["jo"])], gen_candidate!(["jo"])),
                 cursor_positions_of_candidates: vec![2],
                 key_strokes: vec![
                     ActualKeyStroke::new(Duration::new(1, 0), 'j'.try_into().unwrap(), true),
@@ -508,7 +511,8 @@ mod test {
                     gen_candidate!(["n"], ['j']),
                     gen_candidate!(["nn"]),
                     gen_candidate!(["xn"]),
-                ]
+                ],
+                gen_candidate!(["n"], ['j'])
             ),
             cursor_positions_of_candidates: vec![0; 3],
             key_strokes: vec![],
@@ -523,7 +527,8 @@ mod test {
             TypedChunk {
                 chunk: gen_chunk!(
                     "ん",
-                    vec![gen_candidate!(["n"], ['j']), gen_candidate!(["nn"])]
+                    vec![gen_candidate!(["n"], ['j']), gen_candidate!(["nn"])],
+                    gen_candidate!(["n"], ['j'])
                 ),
                 cursor_positions_of_candidates: vec![1, 1],
                 key_strokes: vec![ActualKeyStroke::new(
@@ -546,7 +551,8 @@ mod test {
             TypedChunk {
                 chunk: gen_chunk!(
                     "ん",
-                    vec![gen_candidate!(["n"], ['j']), gen_candidate!(["nn"])]
+                    vec![gen_candidate!(["n"], ['j']), gen_candidate!(["nn"])],
+                    gen_candidate!(["n"], ['j'])
                 ),
                 cursor_positions_of_candidates: vec![1, 1],
                 key_strokes: vec![ActualKeyStroke::new(
@@ -568,7 +574,11 @@ mod test {
         assert_eq!(
             typed_chunk,
             TypedChunk {
-                chunk: gen_chunk!("ん", vec![gen_candidate!(["nn"])]),
+                chunk: gen_chunk!(
+                    "ん",
+                    vec![gen_candidate!(["nn"])],
+                    gen_candidate!(["n"], ['j'])
+                ),
                 cursor_positions_of_candidates: vec![2],
                 key_strokes: vec![
                     ActualKeyStroke::new(Duration::new(1, 0), 'n'.try_into().unwrap(), true),
@@ -591,7 +601,8 @@ mod test {
                     gen_candidate!(["n"], ['j']),
                     gen_candidate!(["nn"]),
                     gen_candidate!(["xn"]),
-                ]
+                ],
+                gen_candidate!(["n"], ['j'])
             ),
             cursor_positions_of_candidates: vec![0; 3],
             key_strokes: vec![],
@@ -606,7 +617,8 @@ mod test {
             TypedChunk {
                 chunk: gen_chunk!(
                     "ん",
-                    vec![gen_candidate!(["n"], ['j']), gen_candidate!(["nn"])]
+                    vec![gen_candidate!(["n"], ['j']), gen_candidate!(["nn"])],
+                    gen_candidate!(["n"], ['j'])
                 ),
                 cursor_positions_of_candidates: vec![1, 1],
                 key_strokes: vec![ActualKeyStroke::new(
@@ -629,7 +641,8 @@ mod test {
             TypedChunk {
                 chunk: gen_chunk!(
                     "ん",
-                    vec![gen_candidate!(["n"], ['j']), gen_candidate!(["nn"])]
+                    vec![gen_candidate!(["n"], ['j']), gen_candidate!(["nn"])],
+                    gen_candidate!(["n"], ['j'])
                 ),
                 cursor_positions_of_candidates: vec![1, 1],
                 key_strokes: vec![ActualKeyStroke::new(
@@ -651,7 +664,11 @@ mod test {
         assert_eq!(
             typed_chunk,
             TypedChunk {
-                chunk: gen_chunk!("ん", vec![gen_candidate!(["n"], ['j'])]),
+                chunk: gen_chunk!(
+                    "ん",
+                    vec![gen_candidate!(["n"], ['j'])],
+                    gen_candidate!(["n"], ['j'])
+                ),
                 cursor_positions_of_candidates: vec![1],
                 key_strokes: vec![ActualKeyStroke::new(
                     Duration::new(1, 0),

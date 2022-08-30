@@ -14,7 +14,7 @@ macro_rules! gen_chunk {
         ) => {
         {
             let _ideal_candidate: Option<crate::chunk::ChunkKeyStrokeCandidate> = None;
-            $(let _ideal_candidate = $ideal_candidate;)?
+            $(let _ideal_candidate = Some($ideal_candidate);)?
 
             crate::chunk::Chunk::new(
                 $chunk_spell.to_string().try_into().unwrap(),

@@ -699,9 +699,14 @@ mod test {
                         gen_candidate!(["zi", "xyo"]),
                         gen_candidate!(["ji", "lyo"]),
                         gen_candidate!(["ji", "xyo"]),
-                    ]
+                    ],
+                    gen_candidate!(["jo"])
                 ),
-                gen_chunk!("ん", vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])])
+                gen_chunk!(
+                    "ん",
+                    vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])],
+                    gen_candidate!(["nn"])
+                )
             ]
         );
     }
@@ -725,7 +730,8 @@ mod test {
                         gen_candidate!(["u"]),
                         gen_candidate!(["wu"]),
                         gen_candidate!(["whu"])
-                    ]
+                    ],
+                    gen_candidate!(["u"])
                 ),
                 gen_chunk!(
                     "っ",
@@ -734,7 +740,8 @@ mod test {
                         gen_candidate!(["ltu"]),
                         gen_candidate!(["xtu"]),
                         gen_candidate!(["ltsu"])
-                    ]
+                    ],
+                    gen_candidate!(["w"], 'w')
                 ),
                 gen_chunk!(
                     "う",
@@ -742,7 +749,8 @@ mod test {
                         gen_candidate!(["u"]),
                         gen_candidate!(["wu"]),
                         gen_candidate!(["whu"])
-                    ]
+                    ],
+                    gen_candidate!(["wu"])
                 ),
             ]
         );
@@ -761,16 +769,25 @@ mod test {
         assert_eq!(
             chunks,
             vec![
-                gen_chunk!("か", vec![gen_candidate!(["ka"]), gen_candidate!(["ca"])]),
+                gen_chunk!(
+                    "か",
+                    vec![gen_candidate!(["ka"]), gen_candidate!(["ca"])],
+                    gen_candidate!(["ka"])
+                ),
                 gen_chunk!(
                     "ん",
                     vec![
                         gen_candidate!(["n"], ['z', 'j']),
                         gen_candidate!(["nn"]),
                         gen_candidate!(["xn"])
-                    ]
+                    ],
+                    gen_candidate!(["n"], ['z', 'j'])
                 ),
-                gen_chunk!("じ", vec![gen_candidate!(["zi"]), gen_candidate!(["ji"])]),
+                gen_chunk!(
+                    "じ",
+                    vec![gen_candidate!(["zi"]), gen_candidate!(["ji"])],
+                    gen_candidate!(["zi"])
+                ),
             ]
         );
     }
@@ -788,9 +805,9 @@ mod test {
         assert_eq!(
             chunks,
             vec![
-                gen_chunk!("B", vec![gen_candidate!(["B"])]),
-                gen_chunk!("i", vec![gen_candidate!(["i"])]),
-                gen_chunk!("g", vec![gen_candidate!(["g"])]),
+                gen_chunk!("B", vec![gen_candidate!(["B"])], gen_candidate!(["B"])),
+                gen_chunk!("i", vec![gen_candidate!(["i"])], gen_candidate!(["i"])),
+                gen_chunk!("g", vec![gen_candidate!(["g"])], gen_candidate!(["g"])),
             ]
         );
     }
@@ -812,7 +829,8 @@ mod test {
                         gen_candidate!(["ltu"]),
                         gen_candidate!(["xtu"]),
                         gen_candidate!(["ltsu"]),
-                    ]
+                    ],
+                    gen_candidate!(["l"], 'l', ['l'])
                 ),
                 gen_chunk!(
                     "っ",
@@ -820,7 +838,8 @@ mod test {
                         gen_candidate!(["ltu"]),
                         gen_candidate!(["xtu"]),
                         gen_candidate!(["ltsu"]),
-                    ]
+                    ],
+                    gen_candidate!(["ltu"])
                 ),
             ]
         );
@@ -843,9 +862,14 @@ mod test {
                         gen_candidate!(["ltu"]),
                         gen_candidate!(["xtu"]),
                         gen_candidate!(["ltsu"]),
-                    ]
+                    ],
+                    gen_candidate!(["k"], 'k')
                 ),
-                gen_chunk!("か", vec![gen_candidate!(["ka"]), gen_candidate!(["ca"]),]),
+                gen_chunk!(
+                    "か",
+                    vec![gen_candidate!(["ka"]), gen_candidate!(["ca"]),],
+                    gen_candidate!(["ka"])
+                ),
             ]
         );
     }
@@ -862,14 +886,19 @@ mod test {
                 gen_candidate!(["zi", "xyo"]),
                 gen_candidate!(["ji", "lyo"]),
                 gen_candidate!(["ji", "xyo"]),
-            ]
+            ],
+            gen_candidate!(["jo"])
         );
 
         chunk.strict_key_stroke_count(NonZeroUsize::new(1).unwrap());
 
         assert_eq!(
             chunk,
-            gen_chunk!("じょ", vec![gen_candidate!(["j"]), gen_candidate!(["z"]),])
+            gen_chunk!(
+                "じょ",
+                vec![gen_candidate!(["j"]), gen_candidate!(["z"]),],
+                gen_candidate!(["j"])
+            )
         )
     }
 
@@ -881,14 +910,19 @@ mod test {
                 gen_candidate!(["n"], ['j', 'z']),
                 gen_candidate!(["nn"]),
                 gen_candidate!(["xn"]),
-            ]
+            ],
+            gen_candidate!(["n"], ['j', 'z'])
         );
 
         chunk.strict_key_stroke_count(NonZeroUsize::new(1).unwrap());
 
         assert_eq!(
             chunk,
-            gen_chunk!("ん", vec![gen_candidate!(["n"]), gen_candidate!(["x"])])
+            gen_chunk!(
+                "ん",
+                vec![gen_candidate!(["n"]), gen_candidate!(["x"])],
+                gen_candidate!(["n"])
+            )
         )
     }
 }

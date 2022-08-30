@@ -356,10 +356,18 @@ mod test {
                     gen_vocabulary_info!(" ", " ", vec![0], 1)
                 ],
                 vec![
-                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
-                    gen_chunk!("お", vec![gen_candidate!(["o"])]),
-                    gen_chunk!("ん", vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])]),
-                    gen_chunk!(" ", vec![gen_candidate!([" "])]),
+                    gen_chunk!(
+                        "い",
+                        vec![gen_candidate!(["i"]), gen_candidate!(["yi"])],
+                        gen_candidate!(["i"])
+                    ),
+                    gen_chunk!("お", vec![gen_candidate!(["o"])], gen_candidate!(["o"])),
+                    gen_chunk!(
+                        "ん",
+                        vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])],
+                        gen_candidate!(["nn"])
+                    ),
+                    gen_chunk!(" ", vec![gen_candidate!([" "])], gen_candidate!([" "])),
                 ]
             )
         );
@@ -390,10 +398,22 @@ mod test {
                     gen_vocabulary_info!("イオン", "いおん", vec![0, 1, 2], 1)
                 ],
                 vec![
-                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
-                    gen_chunk!("お", vec![gen_candidate!(["o"])]),
-                    gen_chunk!("ん", vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])]),
-                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["y"])]),
+                    gen_chunk!(
+                        "い",
+                        vec![gen_candidate!(["i"]), gen_candidate!(["yi"])],
+                        gen_candidate!(["i"])
+                    ),
+                    gen_chunk!("お", vec![gen_candidate!(["o"])], gen_candidate!(["o"])),
+                    gen_chunk!(
+                        "ん",
+                        vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])],
+                        gen_candidate!(["nn"])
+                    ),
+                    gen_chunk!(
+                        "い",
+                        vec![gen_candidate!(["i"]), gen_candidate!(["y"])],
+                        gen_candidate!(["i"])
+                    ),
                 ]
             )
         );
@@ -430,17 +450,26 @@ mod test {
                     gen_vocabulary_info!("イオン", "いおん", vec![0, 1, 2], 2),
                 ],
                 vec![
-                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
-                    gen_chunk!("お", vec![gen_candidate!(["o"])]),
+                    gen_chunk!(
+                        "い",
+                        vec![gen_candidate!(["i"]), gen_candidate!(["yi"])],
+                        gen_candidate!(["i"])
+                    ),
+                    gen_chunk!("お", vec![gen_candidate!(["o"])], gen_candidate!(["o"])),
                     gen_chunk!(
                         "ん",
                         vec![
                             gen_candidate!(["n"], ['k', 'c']),
                             gen_candidate!(["nn"]),
                             gen_candidate!(["xn"])
-                        ]
+                        ],
+                        gen_candidate!(["n"], ['k', 'c'])
                     ),
-                    gen_chunk!("か", vec![gen_candidate!(["ka"]), gen_candidate!(["ca"])]),
+                    gen_chunk!(
+                        "か",
+                        vec![gen_candidate!(["ka"]), gen_candidate!(["ca"])],
+                        gen_candidate!(["ka"])
+                    ),
                     gen_chunk!(
                         "っ",
                         vec![
@@ -448,11 +477,16 @@ mod test {
                             gen_candidate!(["ltu"]),
                             gen_candidate!(["xtu"]),
                             gen_candidate!(["ltsu"]),
-                        ]
+                        ],
+                        gen_candidate!(["t"], 't')
                     ),
-                    gen_chunk!("た", vec![gen_candidate!(["ta"])]),
-                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
-                    gen_chunk!("お", vec![gen_candidate!(["o"])]),
+                    gen_chunk!("た", vec![gen_candidate!(["ta"])], gen_candidate!(["ta"])),
+                    gen_chunk!(
+                        "い",
+                        vec![gen_candidate!(["i"]), gen_candidate!(["yi"])],
+                        gen_candidate!(["i"])
+                    ),
+                    gen_chunk!("お", vec![gen_candidate!(["o"])], gen_candidate!(["o"])),
                 ]
             )
         );
@@ -497,9 +531,9 @@ mod test {
                     gen_vocabulary_info!("1", "1", vec![0], 1),
                 ],
                 vec![
-                    gen_chunk!("2", vec![gen_candidate!(["2"])]),
-                    gen_chunk!(" ", vec![gen_candidate!([" "])]),
-                    gen_chunk!("1", vec![gen_candidate!(["1"])]),
+                    gen_chunk!("2", vec![gen_candidate!(["2"])], gen_candidate!(["2"])),
+                    gen_chunk!(" ", vec![gen_candidate!([" "])], gen_candidate!([" "])),
+                    gen_chunk!("1", vec![gen_candidate!(["1"])], gen_candidate!(["1"])),
                 ]
             )
         );
@@ -530,10 +564,18 @@ mod test {
                     gen_vocabulary_info!(" ", " ", vec![0], 1)
                 ],
                 vec![
-                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
-                    gen_chunk!("お", vec![gen_candidate!(["o"])]),
-                    gen_chunk!("ん", vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])]),
-                    gen_chunk!(" ", vec![gen_candidate!([" "])]),
+                    gen_chunk!(
+                        "い",
+                        vec![gen_candidate!(["i"]), gen_candidate!(["yi"])],
+                        gen_candidate!(["i"])
+                    ),
+                    gen_chunk!("お", vec![gen_candidate!(["o"])], gen_candidate!(["o"])),
+                    gen_chunk!(
+                        "ん",
+                        vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])],
+                        gen_candidate!(["nn"])
+                    ),
+                    gen_chunk!(" ", vec![gen_candidate!([" "])], gen_candidate!([" "])),
                 ]
             )
         );
@@ -561,16 +603,25 @@ mod test {
             Query::new(
                 vec![gen_vocabulary_info!("印字", "いんじ", vec![0, 0, 1], 3),],
                 vec![
-                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
+                    gen_chunk!(
+                        "い",
+                        vec![gen_candidate!(["i"]), gen_candidate!(["yi"])],
+                        gen_candidate!(["i"])
+                    ),
                     gen_chunk!(
                         "ん",
                         vec![
                             gen_candidate!(["n"], ['z', 'j']),
                             gen_candidate!(["nn"]),
                             gen_candidate!(["xn"])
-                        ]
+                        ],
+                        gen_candidate!(["n"], ['z', 'j'])
                     ),
-                    gen_chunk!("じ", vec![gen_candidate!(["z"]), gen_candidate!(["j"])]),
+                    gen_chunk!(
+                        "じ",
+                        vec![gen_candidate!(["z"]), gen_candidate!(["j"])],
+                        gen_candidate!(["z"])
+                    ),
                 ]
             )
         );
@@ -598,8 +649,16 @@ mod test {
             Query::new(
                 vec![gen_vocabulary_info!("印字", "いんじ", vec![0, 0, 1], 2),],
                 vec![
-                    gen_chunk!("い", vec![gen_candidate!(["i"]), gen_candidate!(["yi"])]),
-                    gen_chunk!("ん", vec![gen_candidate!(["n"]), gen_candidate!(["x"])]),
+                    gen_chunk!(
+                        "い",
+                        vec![gen_candidate!(["i"]), gen_candidate!(["yi"])],
+                        gen_candidate!(["i"])
+                    ),
+                    gen_chunk!(
+                        "ん",
+                        vec![gen_candidate!(["n"]), gen_candidate!(["x"])],
+                        gen_candidate!(["n"])
+                    ),
                 ]
             )
         );
