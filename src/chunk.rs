@@ -394,10 +394,6 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                 .unwrap()
         });
 
-        chunk
-            .ideal_candidate
-            .replace(key_stroke_candidates.get(0).unwrap().clone());
-
         chunk.key_stroke_candidates.replace(key_stroke_candidates);
 
         next_chunk_spell.replace(chunk.spell.clone());
@@ -455,6 +451,35 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
             ChunkSpell::DisplayableAscii(_) => {}
         }
     }
+
+    append_ideal_candidates_to_chunks(chunks);
+}
+
+/// 理想的なキーストローク候補をチャンク列に付与する
+/// 候補が削減されていないことを前提とする
+fn append_ideal_candidates_to_chunks(chunks: &mut [Chunk]) {
+    // 本来なら理想的なキーストローク候補は全探索によって付与されるべきであるが計算量の観点から前のチャンクから貪欲に行うことで付与している
+    // このことによって理想的ではないキーストローク候補が付与されてしまう可能性は以下の理由からないと言える
+    //
+    // チャンク列を処理していったときに次チャンクへの制限がない場合にはチャンク内で最短となる候補が理想的である
+    // 次チャンクへの制限を持つ候補があるチャンクに遭遇したときにはそのチャンク内で最短となる候補が理想的であり
+    // もしその候補が次チャンクへの制限があった場合には次のチャンクで選択の対象とする候補は制限によって削減する必要がある
+    //
+    // 次チャンクへの制限を持つ候補があるチャンクの次のチャンクでは制限によって削減される候補群（A）とそうでない候補（B）がある
+    // このときAの最短キーストローク数がBの最短キーストローク数と比べて「制限を持つ候補によって短縮することのできるキーストローク数」分より大きい場合には前から貪欲にやってはならない
+    //
+    // XXX 現在の実装では「ん」には制限を持つ候補はない
+    // しかし次チャンクへの制限を持つ候補がある「っ」「ん」の次のチャンクでAとB両方の候補を持つのはそれぞれ「い(AがiでBがyi)」「う(AがuでBがwuなど)」と「う」だけであり
+    // これらのAとBの最短キーストローク数の差は制限を持つ候補による短縮分以下である
+
+    let mut next_chunk_head_constraint: Option<KeyStrokeChar> = None;
+
+    chunks.iter_mut().for_each(|chunk| {
+        let ideal_candidate = chunk.min_candidate(next_chunk_head_constraint.clone());
+        next_chunk_head_constraint = ideal_candidate.next_chunk_head_constraint.clone();
+
+        chunk.ideal_candidate = Some(ideal_candidate.clone());
+    });
 }
 
 // 「ん」のキーストロークとして「n」を使っていいか判定する
