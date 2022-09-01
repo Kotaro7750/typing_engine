@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::statistics::OnTypingStatisticsDynamicTarget;
+
 /// A type for composing typing game UI.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct DisplayInfo {
@@ -162,6 +164,7 @@ pub struct KeyStrokeDisplayInfo {
     key_stroke: String,
     current_cursor_position: usize,
     missed_positions: Vec<usize>,
+    on_typing_statistics: OnTypingStatisticsDynamicTarget,
 }
 
 impl KeyStrokeDisplayInfo {
@@ -169,11 +172,13 @@ impl KeyStrokeDisplayInfo {
         key_stroke: String,
         current_cursor_position: usize,
         missed_positions: Vec<usize>,
+        on_typing_statistics: OnTypingStatisticsDynamicTarget,
     ) -> Self {
         Self {
             key_stroke,
             current_cursor_position,
             missed_positions,
+            on_typing_statistics,
         }
     }
 

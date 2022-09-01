@@ -3,6 +3,7 @@ use super::*;
 use std::time::Duration;
 
 use crate::key_stroke::ActualKeyStroke;
+use crate::statistics::OnTypingStatisticsDynamicTarget;
 use crate::typing_engine::processed_chunk_info::ConfirmedChunk;
 use crate::typing_engine::processed_chunk_info::KeyStrokeDisplayInfo;
 use crate::typing_engine::processed_chunk_info::SpellDisplayInfo;
@@ -1112,7 +1113,12 @@ fn construct_display_info_1() {
 
     assert_eq!(
         ksdi,
-        KeyStrokeDisplayInfo::new("kyokixyokyoky".to_string(), 9, vec![1, 5, 8])
+        KeyStrokeDisplayInfo::new(
+            "kyokixyokyoky".to_string(),
+            9,
+            vec![1, 5, 8],
+            OnTypingStatisticsDynamicTarget::new(9, 11, 13, 6, 3)
+        )
     );
 }
 
@@ -1185,7 +1191,12 @@ fn construct_display_info_2() {
 
     assert_eq!(
         ksdi,
-        KeyStrokeDisplayInfo::new("nzi".to_string(), 1, vec![1])
+        KeyStrokeDisplayInfo::new(
+            "nzi".to_string(),
+            1,
+            vec![1],
+            OnTypingStatisticsDynamicTarget::new(1, 3, 3, 1, 1)
+        )
     );
 
     // 4. jと入力
@@ -1229,7 +1240,12 @@ fn construct_display_info_2() {
 
     assert_eq!(
         ksdi,
-        KeyStrokeDisplayInfo::new("nji".to_string(), 2, vec![1])
+        KeyStrokeDisplayInfo::new(
+            "nji".to_string(),
+            2,
+            vec![1],
+            OnTypingStatisticsDynamicTarget::new(2, 3, 3, 1, 1)
+        )
     );
 }
 
@@ -1302,7 +1318,12 @@ fn construct_display_info_3() {
 
     assert_eq!(
         ksdi,
-        KeyStrokeDisplayInfo::new("nzi".to_string(), 1, vec![1])
+        KeyStrokeDisplayInfo::new(
+            "nzi".to_string(),
+            1,
+            vec![1],
+            OnTypingStatisticsDynamicTarget::new(1, 3, 3, 1, 1)
+        )
     );
 
     // 4. nと入力
@@ -1347,7 +1368,12 @@ fn construct_display_info_3() {
 
     assert_eq!(
         ksdi,
-        KeyStrokeDisplayInfo::new("nnzi".to_string(), 2, vec![1])
+        KeyStrokeDisplayInfo::new(
+            "nnzi".to_string(),
+            2,
+            vec![1],
+            OnTypingStatisticsDynamicTarget::new(2, 4, 3, 0, 1)
+        )
     );
 }
 
@@ -1470,6 +1496,11 @@ fn construct_display_info_4() {
 
     assert_eq!(
         ksdi,
-        KeyStrokeDisplayInfo::new("akkann".to_string(), 1, vec![])
+        KeyStrokeDisplayInfo::new(
+            "akkann".to_string(),
+            1,
+            vec![],
+            OnTypingStatisticsDynamicTarget::new(1, 6, 6, 1, 0)
+        )
     );
 }
