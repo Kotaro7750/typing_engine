@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 // キーストローク・綴り・表示文字列・語彙といった対象に関するタイピング中に使われることを意図した統計情報
-pub(crate) trait OnTypingStatistics {
+trait OnTypingStatistics {
     /// 対象を打ち終えた時に呼ぶ
     /// completely_correctはその対象を1回もミスタイプなしで打ち終えたかどうかを表す
     fn on_finished(&mut self, delta: usize, completely_correct: bool);
@@ -93,7 +93,7 @@ impl OnTypingStatisticsDynamicTarget {
         }
     }
 
-    pub(crate) fn on_target_add_not_ideal_only(&mut self, delta: usize) {
+    fn on_ideal_target_add(&mut self, delta: usize) {
         self.whole_count += delta;
     }
 }
@@ -109,11 +109,83 @@ impl OnTypingStatistics for OnTypingStatisticsDynamicTarget {
     }
 
     fn on_target_add(&mut self, delta: usize) {
-        self.on_target_add_not_ideal_only(delta);
         self.ideal_whole_count += delta;
     }
 
     fn on_wrong(&mut self, delta: usize) {
         self.wrong_count += delta;
+    }
+}
+
+/// タイピング中の各対象の統計情報を管理する
+pub(crate) struct OnTypingStatisticsManager {
+    key_stroke: OnTypingStatisticsDynamicTarget,
+    spell: OnTypingStatisticsStaticTarget,
+    chunk: OnTypingStatisticsStaticTarget,
+    this_key_stroke_wrong: bool,
+    this_spell_wrong: bool,
+    this_chunk_wrong: bool,
+}
+
+impl OnTypingStatisticsManager {
+    pub(crate) fn new() -> Self {
+        Self {
+            key_stroke: OnTypingStatisticsDynamicTarget::new(0, 0, 0, 0, 0),
+            spell: OnTypingStatisticsStaticTarget::new(0, 0, 0, 0),
+            chunk: OnTypingStatisticsStaticTarget::new(0, 0, 0, 0),
+            this_key_stroke_wrong: false,
+            this_spell_wrong: false,
+            this_chunk_wrong: false,
+        }
+    }
+
+    /// 実際のキーストロークをしたときに呼ぶ
+    /// TODO 将来的に経過時間を与える
+    pub(crate) fn on_actual_key_stroke(&mut self, is_correct: bool) {
+        if is_correct {
+            self.key_stroke.on_finished(1, !self.this_key_stroke_wrong);
+        } else {
+            self.key_stroke.on_wrong(1);
+            self.spell.on_wrong(1);
+            self.chunk.on_wrong(1);
+
+            self.this_spell_wrong = true;
+            self.this_chunk_wrong = true;
+        }
+
+        self.this_key_stroke_wrong = !is_correct;
+    }
+
+    /// 綴りが打ち終えたときに呼ぶ
+    pub(crate) fn finish_spell(&mut self) {
+        self.spell.on_finished(1, !self.this_spell_wrong);
+        self.this_spell_wrong = false;
+    }
+
+    /// 打ち終えていない綴りをカウントする時に呼ぶ
+    pub(crate) fn add_unfinished_spell(&mut self) {
+        self.spell.on_target_add(1);
+        self.this_spell_wrong = false;
+    }
+
+    /// チャンクが終了したときに呼び理想的な場合の候補のキーストローク数をセットする
+    pub(crate) fn finish_chunk(&mut self, ideal_whole_count: usize) {
+        self.key_stroke.on_ideal_target_add(ideal_whole_count);
+        self.chunk.on_finished(1, !self.this_chunk_wrong);
+    }
+
+    /// 打ち終えていないチャンクをカウントする時に呼ぶ
+    pub(crate) fn add_unfinished_chunk(&mut self) {
+        self.chunk.on_target_add(1);
+    }
+
+    pub(crate) fn emit(
+        self,
+    ) -> (
+        OnTypingStatisticsDynamicTarget,
+        OnTypingStatisticsStaticTarget,
+        OnTypingStatisticsStaticTarget,
+    ) {
+        (self.key_stroke, self.spell, self.chunk)
     }
 }

@@ -6,7 +6,7 @@ use crate::chunk::typed::{KeyStrokeResult, TypedChunk};
 use crate::chunk::Chunk;
 use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
 use crate::key_stroke::KeyStrokeChar;
-use crate::statistics::OnTypingStatisticsDynamicTarget;
+use crate::statistics::{OnTypingStatisticsDynamicTarget, OnTypingStatisticsManager};
 
 #[cfg(test)]
 mod test;
@@ -117,8 +117,7 @@ impl ProcessedChunkInfo {
         let mut key_stroke = String::new();
         let mut key_stroke_cursor_position = 0;
         let mut key_stroke_wrong_positions: Vec<usize> = vec![];
-        let mut key_stroke_on_typing_statistics =
-            OnTypingStatisticsDynamicTarget::new(0, 0, 0, 0, 0);
+        let mut on_typing_stat_manager = OnTypingStatisticsManager::new();
 
         // 1. 確定したチャンク
         // 2. タイプ中のチャンク
@@ -296,6 +295,8 @@ impl ProcessedChunkInfo {
                     None => next_chunk_head_constraint.take(),
                 };
             });
+
+        let (key_stroke_on_typing_statistics, _, _) = on_typing_stat_manager.emit();
 
         (
             SpellDisplayInfo::new(
