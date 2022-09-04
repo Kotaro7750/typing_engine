@@ -46,7 +46,7 @@ impl OnTypingStatisticsStaticTarget {
 impl OnTypingStatistics for OnTypingStatisticsStaticTarget {
     fn on_finished(&mut self, delta: usize, completely_correct: bool) {
         self.finished_count += delta;
-        self.on_target_add(delta);
+        //self.on_target_add(delta);
 
         if completely_correct {
             self.completely_correct_count += delta;
@@ -101,7 +101,7 @@ impl OnTypingStatisticsDynamicTarget {
 impl OnTypingStatistics for OnTypingStatisticsDynamicTarget {
     fn on_finished(&mut self, delta: usize, completely_correct: bool) {
         self.finished_count += delta;
-        self.on_target_add(delta);
+        //self.on_target_add(delta);
 
         if completely_correct {
             self.completely_correct_count += delta;
@@ -163,19 +163,22 @@ impl OnTypingStatisticsManager {
     }
 
     /// 打ち終えていない綴りをカウントする時に呼ぶ
-    pub(crate) fn add_unfinished_spell(&mut self) {
-        self.spell.on_target_add(1);
+    pub(crate) fn add_unfinished_spell(&mut self, spell_count: usize) {
+        self.spell.on_target_add(spell_count);
         self.this_spell_wrong = false;
     }
 
     /// チャンクが終了したときに呼び理想的な場合の候補のキーストローク数をセットする
-    pub(crate) fn finish_chunk(&mut self, ideal_whole_count: usize) {
+    pub(crate) fn finish_chunk(&mut self, whole_count: usize, ideal_whole_count: usize) {
+        self.key_stroke.on_target_add(whole_count);
         self.key_stroke.on_ideal_target_add(ideal_whole_count);
         self.chunk.on_finished(1, !self.this_chunk_wrong);
     }
 
     /// 打ち終えていないチャンクをカウントする時に呼ぶ
-    pub(crate) fn add_unfinished_chunk(&mut self) {
+    pub(crate) fn add_unfinished_chunk(&mut self, whole_count: usize, ideal_whole_count: usize) {
+        self.key_stroke.on_target_add(whole_count);
+        self.key_stroke.on_ideal_target_add(ideal_whole_count);
         self.chunk.on_target_add(1);
     }
 

@@ -33,6 +33,14 @@ impl TypedChunk {
         }
     }
 
+    pub(crate) fn actual_key_strokes(&self) -> &[ActualKeyStroke] {
+        &self.key_strokes
+    }
+
+    pub(crate) fn pending_key_strokes(&self) -> &[ActualKeyStroke] {
+        &self.pending_key_strokes
+    }
+
     /// チャンクが確定したか
     /// 遅延確定候補自体を打ち終えても確定自体はまだのとき確定としてはいけない
     pub(crate) fn is_confirmed(&mut self) -> bool {
@@ -327,6 +335,35 @@ impl TypedChunk {
         });
 
         wrong_key_stroke_vector
+    }
+
+    // 確定したキーストロークのそれぞれの位置は綴り末尾かどうか
+    // もし末尾だったとしたら何個の綴りの末尾かどうか
+    pub(crate) fn construct_spell_end_vector(&self) -> Vec<Option<usize>> {
+        let mut spell_end_vector = vec![None; self.key_strokes.len()];
+        let confirmed_candidate = self.chunk.min_candidate(None);
+
+        let mut correct_key_stroke_index = 0;
+
+        self.key_strokes
+            .iter()
+            .enumerate()
+            .for_each(|(i, key_stroke)| {
+                if key_stroke.is_correct() {
+                    if confirmed_candidate
+                        .is_element_end_at_key_stroke_index(correct_key_stroke_index)
+                    {
+                        if !confirmed_candidate.is_splitted() {
+                            spell_end_vector[i] = Some(self.chunk.spell().count());
+                        } else {
+                            spell_end_vector[i] = Some(1);
+                        }
+                    }
+                    correct_key_stroke_index += 1;
+                }
+            });
+
+        spell_end_vector
     }
 
     // チャンクのキーストロークのどこにカーソルを当てるべきか

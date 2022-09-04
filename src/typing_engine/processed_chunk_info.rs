@@ -6,7 +6,7 @@ use crate::chunk::typed::{KeyStrokeResult, TypedChunk};
 use crate::chunk::Chunk;
 use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
 use crate::key_stroke::KeyStrokeChar;
-use crate::statistics::{OnTypingStatisticsDynamicTarget, OnTypingStatisticsManager};
+use crate::statistics::OnTypingStatisticsManager;
 
 #[cfg(test)]
 mod test;
@@ -206,6 +206,12 @@ impl ProcessedChunkInfo {
             on_typing_stat_manager.finish_chunk(
                 confirmed_chunk
                     .as_ref()
+                    .min_candidate(None)
+                    .whole_key_stroke()
+                    .chars()
+                    .count(),
+                confirmed_chunk
+                    .as_ref()
                     .ideal_key_stroke_candidate()
                     .as_ref()
                     .unwrap()
@@ -216,6 +222,7 @@ impl ProcessedChunkInfo {
         });
 
         // 2. タイプ中のチャンク
+
         if self.inflight_chunk.is_none() {
             spell_cursor_positions = vec![spell_head_position];
             assert!(self.is_finished());
@@ -224,15 +231,36 @@ impl ProcessedChunkInfo {
 
             let is_delayed_confirmable = inflight_chunk.is_delayed_confirmable();
 
-            // キーストローク
+            let spell_count = if inflight_chunk.as_ref().min_candidate(None).is_splitted() {
+                1
+            } else {
+                inflight_chunk.as_ref().spell().count()
+            };
 
+            let mut in_candidate_cursor_position = 0;
+
+            // キーストローク
             inflight_chunk
-                .construct_wrong_key_stroke_vector()
+                .actual_key_strokes()
                 .iter()
-                .enumerate()
-                .for_each(|(i, is_key_stroke_wrong)| {
-                    if *is_key_stroke_wrong {
-                        key_stroke_wrong_positions.push(key_stroke_cursor_position + i);
+                .zip(inflight_chunk.construct_spell_end_vector().iter())
+                .for_each(|(actual_key_stroke, spell_end)| {
+                    on_typing_stat_manager
+                        .on_actual_key_stroke(actual_key_stroke.is_correct(), spell_count);
+
+                    if actual_key_stroke.is_correct() {
+                        in_candidate_cursor_position += 1;
+
+                        if let Some(delta) = spell_end {
+                            on_typing_stat_manager.finish_spell(*delta);
+                        }
+                    } else {
+                        if key_stroke_wrong_positions.last().map_or(true, |e| {
+                            *e != (key_stroke_cursor_position + in_candidate_cursor_position)
+                        }) {
+                            key_stroke_wrong_positions
+                                .push(key_stroke_cursor_position + in_candidate_cursor_position);
+                        }
                     }
                 });
 
@@ -306,6 +334,23 @@ impl ProcessedChunkInfo {
             }
 
             spell.push_str(inflight_chunk.as_ref().spell().as_ref());
+
+            on_typing_stat_manager.add_unfinished_chunk(
+                inflight_chunk
+                    .as_ref()
+                    .min_candidate(None)
+                    .whole_key_stroke()
+                    .chars()
+                    .count(),
+                inflight_chunk
+                    .as_ref()
+                    .ideal_key_stroke_candidate()
+                    .as_ref()
+                    .unwrap()
+                    .whole_key_stroke()
+                    .chars()
+                    .count(),
+            );
         }
 
         // 3. 未処理のチャンク
@@ -324,7 +369,8 @@ impl ProcessedChunkInfo {
 
         self.unprocessed_chunks
             .iter()
-            .for_each(|unprocessed_chunk| {
+            .enumerate()
+            .for_each(|(i, unprocessed_chunk)| {
                 // キーストローク
                 let candidate = unprocessed_chunk.min_candidate(next_chunk_head_constraint.clone());
 
@@ -332,7 +378,36 @@ impl ProcessedChunkInfo {
 
                 // 綴り
                 spell.push_str(unprocessed_chunk.spell().as_ref());
-                spell_head_position += unprocessed_chunk.spell().count();
+
+                let spell_count = unprocessed_chunk.spell().count();
+                spell_head_position += spell_count;
+
+                // 現在打っているチャンクの遅延確定候補の間違いは未確定のチャンクの一番最初に帰属させる
+                if i == 0 {
+                    if let Some(inflight_chunk) = self.inflight_chunk.as_ref() {
+                        if inflight_chunk.is_delayed_confirmable() {
+                            inflight_chunk.pending_key_strokes().iter().for_each(
+                                |actual_key_stroke| {
+                                    on_typing_stat_manager.on_actual_key_stroke(
+                                        actual_key_stroke.is_correct(),
+                                        spell_count,
+                                    );
+                                },
+                            );
+                        }
+                    }
+                }
+
+                on_typing_stat_manager.add_unfinished_spell(unprocessed_chunk.spell().count());
+                let key_stroke_count = unprocessed_chunk
+                    .ideal_key_stroke_candidate()
+                    .as_ref()
+                    .unwrap()
+                    .whole_key_stroke()
+                    .chars()
+                    .count();
+
+                on_typing_stat_manager.add_unfinished_chunk(key_stroke_count, key_stroke_count);
 
                 // 次のチャンクへの制限を更新
                 match candidate.next_chunk_head_constraint().clone() {
