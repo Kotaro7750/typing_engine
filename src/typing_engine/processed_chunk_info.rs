@@ -218,6 +218,7 @@ impl ProcessedChunkInfo {
                     .whole_key_stroke()
                     .chars()
                     .count(),
+                confirmed_chunk.as_ref().spell().count(),
             );
         });
 
@@ -350,6 +351,7 @@ impl ProcessedChunkInfo {
                     .whole_key_stroke()
                     .chars()
                     .count(),
+                inflight_chunk.as_ref().spell().count(),
             );
         }
 
@@ -398,7 +400,6 @@ impl ProcessedChunkInfo {
                     }
                 }
 
-                on_typing_stat_manager.add_unfinished_spell(unprocessed_chunk.spell().count());
                 let key_stroke_count = unprocessed_chunk
                     .ideal_key_stroke_candidate()
                     .as_ref()
@@ -407,7 +408,11 @@ impl ProcessedChunkInfo {
                     .chars()
                     .count();
 
-                on_typing_stat_manager.add_unfinished_chunk(key_stroke_count, key_stroke_count);
+                on_typing_stat_manager.add_unfinished_chunk(
+                    key_stroke_count,
+                    key_stroke_count,
+                    unprocessed_chunk.spell().count(),
+                );
 
                 // 次のチャンクへの制限を更新
                 match candidate.next_chunk_head_constraint().clone() {

@@ -162,23 +162,31 @@ impl OnTypingStatisticsManager {
         self.this_spell_wrong = false;
     }
 
-    /// 打ち終えていない綴りをカウントする時に呼ぶ
-    pub(crate) fn add_unfinished_spell(&mut self, spell_count: usize) {
-        self.spell.on_target_add(spell_count);
-        self.this_spell_wrong = false;
-    }
-
     /// チャンクが終了したときに呼び理想的な場合の候補のキーストローク数をセットする
-    pub(crate) fn finish_chunk(&mut self, whole_count: usize, ideal_whole_count: usize) {
-        self.key_stroke.on_target_add(whole_count);
-        self.key_stroke.on_ideal_target_add(ideal_whole_count);
+    pub(crate) fn finish_chunk(
+        &mut self,
+        key_stroke_whole_count: usize,
+        key_stroke_ideal_whole_count: usize,
+        spell_count: usize,
+    ) {
+        self.key_stroke.on_target_add(key_stroke_whole_count);
+        self.key_stroke
+            .on_ideal_target_add(key_stroke_ideal_whole_count);
+        self.spell.on_target_add(spell_count);
         self.chunk.on_finished(1, !self.this_chunk_wrong);
     }
 
     /// 打ち終えていないチャンクをカウントする時に呼ぶ
-    pub(crate) fn add_unfinished_chunk(&mut self, whole_count: usize, ideal_whole_count: usize) {
-        self.key_stroke.on_target_add(whole_count);
-        self.key_stroke.on_ideal_target_add(ideal_whole_count);
+    pub(crate) fn add_unfinished_chunk(
+        &mut self,
+        key_stroke_whole_count: usize,
+        key_stroke_ideal_whole_count: usize,
+        spell_count: usize,
+    ) {
+        self.key_stroke.on_target_add(key_stroke_whole_count);
+        self.key_stroke
+            .on_ideal_target_add(key_stroke_ideal_whole_count);
+        self.spell.on_target_add(spell_count);
         self.chunk.on_target_add(1);
     }
 
