@@ -141,12 +141,12 @@ impl OnTypingStatisticsManager {
 
     /// 実際のキーストロークをしたときに呼ぶ
     /// TODO 将来的に経過時間を与える
-    pub(crate) fn on_actual_key_stroke(&mut self, is_correct: bool) {
+    pub(crate) fn on_actual_key_stroke(&mut self, is_correct: bool, spell_count: usize) {
         if is_correct {
             self.key_stroke.on_finished(1, !self.this_key_stroke_wrong);
         } else {
             self.key_stroke.on_wrong(1);
-            self.spell.on_wrong(1);
+            self.spell.on_wrong(spell_count);
             self.chunk.on_wrong(1);
 
             self.this_spell_wrong = true;
@@ -157,8 +157,8 @@ impl OnTypingStatisticsManager {
     }
 
     /// 綴りが打ち終えたときに呼ぶ
-    pub(crate) fn finish_spell(&mut self) {
-        self.spell.on_finished(1, !self.this_spell_wrong);
+    pub(crate) fn finish_spell(&mut self, spell_count: usize) {
+        self.spell.on_finished(spell_count, !self.this_spell_wrong);
         self.this_spell_wrong = false;
     }
 

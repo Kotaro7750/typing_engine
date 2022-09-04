@@ -105,6 +105,10 @@ impl Chunk {
         &self.key_stroke_candidates
     }
 
+    pub(crate) fn ideal_key_stroke_candidate(&self) -> &Option<ChunkKeyStrokeCandidate> {
+        &self.ideal_candidate
+    }
+
     // このチャンクを打つのに必要な最小のキーストローク数を推測する
     // キーストロークをまだ付与していないチャンクに対して行うため推測である
     pub fn estimate_min_key_stroke_count(&self) -> usize {
@@ -578,6 +582,24 @@ impl ChunkKeyStrokeCandidate {
         element_index
     }
 
+    // 候補の中の特定のキーストロークが要素の末尾であるか
+    pub(crate) fn is_element_end_at_key_stroke_index(&self, key_stroke_index: usize) -> bool {
+        assert!(key_stroke_index < self.calc_key_stroke_count());
+
+        let mut element_head_key_stroke_index_index = 0;
+
+        for element in &self.key_stroke_elements {
+            let element_len = element.chars().count();
+
+            if key_stroke_index == (element_head_key_stroke_index_index + element_len - 1) {
+                return true;
+            }
+            element_head_key_stroke_index_index += element_len;
+        }
+
+        false
+    }
+
     // キーストローク全体の文字列を生成する
     pub(crate) fn whole_key_stroke(&self) -> KeyStrokeString {
         let mut s = String::new();
@@ -950,5 +972,16 @@ mod test {
                 gen_candidate!(["n"])
             )
         )
+    }
+
+    #[test]
+    fn is_element_end_at_key_stroke_index_1() {
+        let c = gen_candidate!(["ki", "xyo"]);
+
+        assert!(!c.is_element_end_at_key_stroke_index(0));
+        assert!(c.is_element_end_at_key_stroke_index(1));
+        assert!(!c.is_element_end_at_key_stroke_index(2));
+        assert!(!c.is_element_end_at_key_stroke_index(3));
+        assert!(c.is_element_end_at_key_stroke_index(4));
     }
 }

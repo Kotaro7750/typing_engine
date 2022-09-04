@@ -28,6 +28,10 @@ impl ConfirmedChunk {
             .unwrap()
     }
 
+    pub(crate) fn actual_key_strokes(&self) -> &[ActualKeyStroke] {
+        &self.key_strokes
+    }
+
     // 確定した候補について次のチャンク先頭への制限を生成する
     pub(crate) fn next_chunk_head_constraint(&mut self) -> Option<KeyStrokeChar> {
         self.confirmed_candidate()
@@ -81,10 +85,93 @@ impl ConfirmedChunk {
 
         key_stroke_wrong_vector
     }
+
+    // 確定したキーストロークのそれぞれの位置は綴り末尾かどうか
+    // もし末尾だったとしたら何個の綴りの末尾かどうか
+    pub(crate) fn construct_spell_end_vector(&self) -> Vec<Option<usize>> {
+        let mut spell_end_vector = vec![None; self.key_strokes.len()];
+        let confirmed_candidate = self.confirmed_candidate();
+
+        let mut correct_key_stroke_index = 0;
+
+        self.key_strokes
+            .iter()
+            .enumerate()
+            .for_each(|(i, key_stroke)| {
+                if key_stroke.is_correct() {
+                    if confirmed_candidate
+                        .is_element_end_at_key_stroke_index(correct_key_stroke_index)
+                    {
+                        if !confirmed_candidate.is_splitted() {
+                            spell_end_vector[i] = Some(self.chunk.spell().count());
+                        } else {
+                            spell_end_vector[i] = Some(1);
+                        }
+                    }
+                    correct_key_stroke_index += 1;
+                }
+            });
+
+        spell_end_vector
+    }
 }
 
 impl AsRef<Chunk> for ConfirmedChunk {
     fn as_ref(&self) -> &Chunk {
         &self.chunk
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{gen_candidate, gen_chunk};
+    use std::time::Duration;
+
+    #[test]
+    fn construct_spell_end_vector_1() {
+        let cc = ConfirmedChunk::new(
+            gen_chunk!(
+                "きょ",
+                vec![gen_candidate!(["ki", "xyo"]),],
+                gen_candidate!(["kyo"])
+            ),
+            vec![
+                ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(2, 0), 'i'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(4, 0), 'x'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(5, 0), 'y'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(6, 0), 'o'.try_into().unwrap(), true),
+            ],
+        );
+
+        let spell_end_vector = cc.construct_spell_end_vector();
+
+        assert_eq!(
+            spell_end_vector,
+            vec![None, Some(1), None, None, None, Some(1)]
+        );
+    }
+
+    #[test]
+    fn construct_spell_end_vector_2() {
+        let cc = ConfirmedChunk::new(
+            gen_chunk!(
+                "きょ",
+                vec![gen_candidate!(["kyo"]),],
+                gen_candidate!(["kyo"])
+            ),
+            vec![
+                ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(3, 0), 'y'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(4, 0), 'o'.try_into().unwrap(), true),
+            ],
+        );
+
+        let spell_end_vector = cc.construct_spell_end_vector();
+
+        assert_eq!(spell_end_vector, vec![None, None, None, Some(2)]);
     }
 }

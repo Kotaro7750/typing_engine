@@ -127,22 +127,55 @@ impl ProcessedChunkInfo {
 
         // 1. 確定したチャンク
         self.confirmed_chunks.iter().for_each(|confirmed_chunk| {
-            // キーストロークのそれぞれがタイプミスかどうか
-            confirmed_chunk
-                .construct_key_stroke_wrong_vector()
-                .iter()
-                .for_each(|is_key_stroke_wrong| {
-                    if *is_key_stroke_wrong {
-                        key_stroke_wrong_positions.push(key_stroke_cursor_position);
-                    }
+            // 複数文字の綴りをまとめて打つ場合には綴りの統計は2文字分カウントする必要がある
+            let spell_count = if confirmed_chunk.confirmed_candidate().is_splitted() {
+                1
+            } else {
+                confirmed_chunk.as_ref().spell().count()
+            };
 
-                    key_stroke_cursor_position += 1;
+            let mut wrong_spell_element_vector = vec![
+                false;
+                if confirmed_chunk.confirmed_candidate().is_splitted() {
+                    2
+                } else {
+                    1
+                }
+            ];
+
+            let mut in_candidate_cursor_position = 0;
+
+            confirmed_chunk
+                .actual_key_strokes()
+                .iter()
+                .zip(confirmed_chunk.construct_spell_end_vector().iter())
+                .for_each(|(actual_key_stroke, spell_end)| {
+                    on_typing_stat_manager
+                        .on_actual_key_stroke(actual_key_stroke.is_correct(), spell_count);
+
+                    if actual_key_stroke.is_correct() {
+                        in_candidate_cursor_position += 1;
+
+                        if let Some(delta) = spell_end {
+                            //spell_head_position += *delta;
+                            on_typing_stat_manager.finish_spell(*delta);
+                        }
+                    } else {
+                        if key_stroke_wrong_positions.last().map_or(true, |e| {
+                            *e != (key_stroke_cursor_position + in_candidate_cursor_position)
+                        }) {
+                            key_stroke_wrong_positions
+                                .push(key_stroke_cursor_position + in_candidate_cursor_position);
+                        }
+
+                        wrong_spell_element_vector[confirmed_chunk
+                            .confirmed_candidate()
+                            .element_index_at_key_stroke_index(in_candidate_cursor_position)] =
+                            true;
+                    }
                 });
 
-            key_stroke.push_str(&confirmed_chunk.confirmed_candidate().whole_key_stroke());
-
-            // 綴り要素のそれぞれがタイプミスかどうか
-            let wrong_spell_element_vector = confirmed_chunk.construct_wrong_spell_element_vector();
+            key_stroke_cursor_position += in_candidate_cursor_position;
 
             // 複数文字チャンクを個別に入力した場合はそれぞれの綴りについて
             // それ以外ではチャンク全体の綴りについて
@@ -167,7 +200,19 @@ impl ProcessedChunkInfo {
                     spell_head_position += 1;
                 });
 
+            key_stroke.push_str(&confirmed_chunk.confirmed_candidate().whole_key_stroke());
             spell.push_str(confirmed_chunk.as_ref().spell().as_ref());
+
+            on_typing_stat_manager.finish_chunk(
+                confirmed_chunk
+                    .as_ref()
+                    .ideal_key_stroke_candidate()
+                    .as_ref()
+                    .unwrap()
+                    .whole_key_stroke()
+                    .chars()
+                    .count(),
+            );
         });
 
         // 2. タイプ中のチャンク
