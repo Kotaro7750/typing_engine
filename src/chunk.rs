@@ -979,6 +979,37 @@ mod test {
     }
 
     #[test]
+    fn append_key_stroke_to_chunks_8() {
+        let mut chunks = vec![gen_unprocessed_chunk!("ん"), gen_unprocessed_chunk!("う")];
+
+        append_key_stroke_to_chunks(&mut chunks);
+
+        assert_eq!(
+            chunks,
+            vec![
+                gen_chunk!(
+                    "ん",
+                    vec![
+                        gen_candidate!(["n"], 'w', ['w']),
+                        gen_candidate!(["nn"]),
+                        gen_candidate!(["xn"]),
+                    ],
+                    gen_candidate!(["n"], 'w', ['w'])
+                ),
+                gen_chunk!(
+                    "う",
+                    vec![
+                        gen_candidate!(["u"]),
+                        gen_candidate!(["wu"]),
+                        gen_candidate!(["whu"])
+                    ],
+                    gen_candidate!(["wu"])
+                ),
+            ]
+        );
+    }
+
+    #[test]
     fn strict_key_stroke_count_1() {
         let mut chunk = gen_chunk!(
             "じょ",
