@@ -1372,7 +1372,7 @@ fn construct_display_info_3() {
             "nnzi".to_string(),
             2,
             vec![1],
-            OnTypingStatisticsDynamicTarget::new(2, 4, 3, 0, 1)
+            OnTypingStatisticsDynamicTarget::new(2, 4, 3, 1, 1)
         )
     );
 }
