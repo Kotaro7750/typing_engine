@@ -4,6 +4,7 @@ use std::time::Duration;
 
 use crate::key_stroke::ActualKeyStroke;
 use crate::statistics::OnTypingStatisticsDynamicTarget;
+use crate::statistics::OnTypingStatisticsStaticTarget;
 use crate::typing_engine::processed_chunk_info::ConfirmedChunk;
 use crate::typing_engine::processed_chunk_info::KeyStrokeDisplayInfo;
 use crate::typing_engine::processed_chunk_info::SpellDisplayInfo;
@@ -1107,7 +1108,8 @@ fn construct_display_info_1() {
             "きょきょきょきょ".to_string(),
             vec![4, 5],
             vec![0, 1, 3, 4, 5],
-            7
+            7,
+            OnTypingStatisticsStaticTarget::new(4, 8, 1, 5)
         )
     );
 
@@ -1186,7 +1188,13 @@ fn construct_display_info_2() {
     // pendingにあるミスタイプは表示状は次のチャンクに帰属させる
     assert_eq!(
         sdi,
-        SpellDisplayInfo::new("んじ".to_string(), vec![1], vec![1], 1)
+        SpellDisplayInfo::new(
+            "んじ".to_string(),
+            vec![1],
+            vec![1],
+            1,
+            OnTypingStatisticsStaticTarget::new(1, 2, 1, 1)
+        )
     );
 
     assert_eq!(
@@ -1235,7 +1243,13 @@ fn construct_display_info_2() {
     // 遅延確定候補で確定したのでミスタイプは引き続き次のチャンクに属する
     assert_eq!(
         sdi,
-        SpellDisplayInfo::new("んじ".to_string(), vec![1], vec![1], 1)
+        SpellDisplayInfo::new(
+            "んじ".to_string(),
+            vec![1],
+            vec![1],
+            1,
+            OnTypingStatisticsStaticTarget::new(1, 2, 1, 1)
+        )
     );
 
     assert_eq!(
@@ -1313,7 +1327,13 @@ fn construct_display_info_3() {
     // pendingにあるミスタイプは表示状は次のチャンクに帰属させる
     assert_eq!(
         sdi,
-        SpellDisplayInfo::new("んじ".to_string(), vec![1], vec![1], 1)
+        SpellDisplayInfo::new(
+            "んじ".to_string(),
+            vec![1],
+            vec![1],
+            1,
+            OnTypingStatisticsStaticTarget::new(1, 2, 1, 1)
+        )
     );
 
     assert_eq!(
@@ -1363,7 +1383,13 @@ fn construct_display_info_3() {
     // 遅延確定候補ではない候補で確定したのでミスタイプはその候補に属する
     assert_eq!(
         sdi,
-        SpellDisplayInfo::new("んじ".to_string(), vec![1], vec![0], 1)
+        SpellDisplayInfo::new(
+            "んじ".to_string(),
+            vec![1],
+            vec![0],
+            1,
+            OnTypingStatisticsStaticTarget::new(1, 2, 0, 1)
+        )
     );
 
     assert_eq!(
@@ -1491,7 +1517,13 @@ fn construct_display_info_4() {
 
     assert_eq!(
         sdi,
-        SpellDisplayInfo::new("あっかん".to_string(), vec![1], vec![], 3)
+        SpellDisplayInfo::new(
+            "あっかん".to_string(),
+            vec![1],
+            vec![],
+            3,
+            OnTypingStatisticsStaticTarget::new(1, 4, 1, 0)
+        )
     );
 
     assert_eq!(

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::statistics::OnTypingStatisticsDynamicTarget;
+use crate::statistics::{OnTypingStatisticsDynamicTarget, OnTypingStatisticsStaticTarget};
 
 /// A type for composing typing game UI.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -108,6 +108,7 @@ pub struct SpellDisplayInfo {
     // タイプすべき最後のチャンクの綴りの末尾の位置
     // クエリをタイプ数で指定する場合には語彙の途中のチャンクで切れている可能性がある
     last_position: usize,
+    on_typing_statistics: OnTypingStatisticsStaticTarget,
 }
 
 impl SpellDisplayInfo {
@@ -116,12 +117,14 @@ impl SpellDisplayInfo {
         current_cursor_positions: Vec<usize>,
         missed_positions: Vec<usize>,
         last_position: usize,
+        on_typing_statistics: OnTypingStatisticsStaticTarget,
     ) -> Self {
         Self {
             spell,
             current_cursor_positions,
             missed_positions,
             last_position,
+            on_typing_statistics,
         }
     }
 

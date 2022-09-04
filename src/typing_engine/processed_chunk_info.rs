@@ -416,7 +416,8 @@ impl ProcessedChunkInfo {
                 };
             });
 
-        let (key_stroke_on_typing_statistics, _, _) = on_typing_stat_manager.emit();
+        let (key_stroke_on_typing_statistics, spell_on_typing_statistics, _) =
+            on_typing_stat_manager.emit();
 
         (
             SpellDisplayInfo::new(
@@ -424,6 +425,7 @@ impl ProcessedChunkInfo {
                 spell_cursor_positions,
                 spell_wrong_positions,
                 spell_head_position - 1,
+                spell_on_typing_statistics,
             ),
             KeyStrokeDisplayInfo::new(
                 key_stroke,
