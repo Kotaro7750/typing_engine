@@ -94,7 +94,7 @@ impl OnTypingStatisticsDynamicTarget {
     }
 
     fn on_ideal_target_add(&mut self, delta: usize) {
-        self.whole_count += delta;
+        self.ideal_whole_count += delta;
     }
 }
 
@@ -109,7 +109,7 @@ impl OnTypingStatistics for OnTypingStatisticsDynamicTarget {
     }
 
     fn on_target_add(&mut self, delta: usize) {
-        self.ideal_whole_count += delta;
+        self.whole_count += delta;
     }
 
     fn on_wrong(&mut self, delta: usize) {
