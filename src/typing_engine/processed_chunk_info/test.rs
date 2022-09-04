@@ -1117,7 +1117,7 @@ fn construct_display_info_1() {
             "kyokixyokyoky".to_string(),
             9,
             vec![1, 5, 8],
-            OnTypingStatisticsDynamicTarget::new(9, 11, 13, 6, 3)
+            OnTypingStatisticsDynamicTarget::new(9, 13, 11, 6, 3)
         )
     );
 }
