@@ -6,6 +6,7 @@ use crate::key_stroke::{KeyStrokeChar, KeyStrokeString};
 use crate::spell::SpellString;
 
 pub(crate) mod confirmed;
+pub(crate) mod has_actual_key_strokes;
 pub(crate) mod typed;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

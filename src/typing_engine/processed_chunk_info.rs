@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 use std::time::Duration;
 
 use crate::chunk::confirmed::ConfirmedChunk;
+use crate::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use crate::chunk::typed::{KeyStrokeResult, TypedChunk};
 use crate::chunk::Chunk;
 use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};

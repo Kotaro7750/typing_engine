@@ -1,4 +1,4 @@
-use crate::chunk::Chunk;
+use crate::chunk::{has_actual_key_strokes::ChunkHasActualKeyStrokes, Chunk};
 use crate::key_stroke::ActualKeyStroke;
 use crate::key_stroke::KeyStrokeChar;
 
@@ -28,91 +28,21 @@ impl ConfirmedChunk {
             .unwrap()
     }
 
-    pub(crate) fn actual_key_strokes(&self) -> &[ActualKeyStroke] {
-        &self.key_strokes
-    }
-
     // 確定した候補について次のチャンク先頭への制限を生成する
     pub(crate) fn next_chunk_head_constraint(&mut self) -> Option<KeyStrokeChar> {
         self.confirmed_candidate()
             .next_chunk_head_constraint()
             .clone()
     }
+}
 
-    // チャンクのそれぞれの綴り（基本的には1つだが複数文字を個別で打った場合には2つ）でミスタイプがあったかどうか
-    pub(crate) fn construct_wrong_spell_element_vector(&self) -> Vec<bool> {
-        let element_count = if self.confirmed_candidate().is_splitted() {
-            2
-        } else {
-            1
-        };
-
-        // 複数文字のチャンクを個別で打った場合には要素数は2になる
-        let mut wrong_stroke_vector: Vec<bool> = vec![false; element_count];
-
-        // 打たれたキーストロークではなく候補中のインデックス
-        let mut current_key_stroke_index = 0;
-
-        self.key_strokes.iter().for_each(|actual_key_stroke| {
-            if actual_key_stroke.is_correct() {
-                current_key_stroke_index += 1;
-            } else {
-                wrong_stroke_vector[self
-                    .confirmed_candidate()
-                    // キーストロークに対応する位置に変換する
-                    .element_index_at_key_stroke_index(current_key_stroke_index)] = true;
-            }
-        });
-
-        wrong_stroke_vector
+impl ChunkHasActualKeyStrokes for ConfirmedChunk {
+    fn actual_key_strokes(&self) -> &[ActualKeyStroke] {
+        &self.key_strokes
     }
 
-    // 確定したキーストロークのそれぞれの位置でミスタイプがあったかどうか
-    pub(crate) fn construct_key_stroke_wrong_vector(&self) -> Vec<bool> {
-        let mut key_stroke_wrong_vector =
-            vec![false; self.confirmed_candidate().calc_key_stroke_count()];
-
-        // 打たれたキーストロークではなく候補中のインデックス
-        let mut current_key_stroke_index = 0;
-
-        self.key_strokes.iter().for_each(|actual_key_stroke| {
-            if actual_key_stroke.is_correct() {
-                current_key_stroke_index += 1;
-            } else {
-                key_stroke_wrong_vector[current_key_stroke_index] = true;
-            }
-        });
-
-        key_stroke_wrong_vector
-    }
-
-    // 確定したキーストロークのそれぞれの位置は綴り末尾かどうか
-    // もし末尾だったとしたら何個の綴りの末尾かどうか
-    pub(crate) fn construct_spell_end_vector(&self) -> Vec<Option<usize>> {
-        let mut spell_end_vector = vec![None; self.key_strokes.len()];
-        let confirmed_candidate = self.confirmed_candidate();
-
-        let mut correct_key_stroke_index = 0;
-
-        self.key_strokes
-            .iter()
-            .enumerate()
-            .for_each(|(i, key_stroke)| {
-                if key_stroke.is_correct() {
-                    if confirmed_candidate
-                        .is_element_end_at_key_stroke_index(correct_key_stroke_index)
-                    {
-                        if !confirmed_candidate.is_splitted() {
-                            spell_end_vector[i] = Some(self.chunk.spell().count());
-                        } else {
-                            spell_end_vector[i] = Some(1);
-                        }
-                    }
-                    correct_key_stroke_index += 1;
-                }
-            });
-
-        spell_end_vector
+    fn effective_candidate(&self) -> &ChunkKeyStrokeCandidate {
+        self.confirmed_candidate()
     }
 }
 
