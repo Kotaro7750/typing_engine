@@ -515,7 +515,7 @@ fn allow_single_n_as_key_stroke(next_chunk_spell: &Option<ChunkSpell>) -> bool {
                 | "よ"
                 | "ん"
         ),
-        ChunkSpell::DoubleChar(spell_string) => matches!(
+        ChunkSpell::DoubleChar(spell_string) => !matches!(
             spell_string.as_str(),
             "にゃ" | "にぃ" | "にゅ" | "にぇ" | "にょ"
         ),
@@ -917,6 +917,61 @@ mod test {
                     "か",
                     vec![gen_candidate!(["ka"]), gen_candidate!(["ca"]),],
                     gen_candidate!(["ka"])
+                ),
+            ]
+        );
+    }
+
+    #[test]
+    fn append_key_stroke_to_chunks_7() {
+        let mut chunks = vec![
+            gen_unprocessed_chunk!("い"),
+            gen_unprocessed_chunk!("ん"),
+            gen_unprocessed_chunk!("しょ"),
+            gen_unprocessed_chunk!("う"),
+        ];
+
+        append_key_stroke_to_chunks(&mut chunks);
+
+        assert_eq!(
+            chunks,
+            vec![
+                gen_chunk!(
+                    "い",
+                    vec![gen_candidate!(["i"]), gen_candidate!(["yi"]),],
+                    gen_candidate!(["i"])
+                ),
+                gen_chunk!(
+                    "ん",
+                    vec![
+                        gen_candidate!(["n"], ['s', 'c']),
+                        gen_candidate!(["nn"]),
+                        gen_candidate!(["xn"])
+                    ],
+                    gen_candidate!(["n"], ['s', 'c'])
+                ),
+                gen_chunk!(
+                    "しょ",
+                    vec![
+                        gen_candidate!(["syo"]),
+                        gen_candidate!(["sho"]),
+                        gen_candidate!(["si", "lyo"]),
+                        gen_candidate!(["si", "xyo"]),
+                        gen_candidate!(["ci", "lyo"]),
+                        gen_candidate!(["ci", "xyo"]),
+                        gen_candidate!(["shi", "lyo"]),
+                        gen_candidate!(["shi", "xyo"]),
+                    ],
+                    gen_candidate!(["syo"])
+                ),
+                gen_chunk!(
+                    "う",
+                    vec![
+                        gen_candidate!(["u"]),
+                        gen_candidate!(["wu"]),
+                        gen_candidate!(["whu"])
+                    ],
+                    gen_candidate!(["u"])
                 ),
             ]
         );
