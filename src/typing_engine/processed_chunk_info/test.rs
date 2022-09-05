@@ -1,5 +1,6 @@
 use super::*;
 
+use std::num::NonZeroUsize;
 use std::time::Duration;
 
 use crate::key_stroke::ActualKeyStroke;
@@ -1100,7 +1101,8 @@ fn construct_display_info_1() {
         }
     );
 
-    let (sdi, ksdi) = pci.construct_display_info();
+    let (sdi, ksdi) =
+        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
 
     assert_eq!(
         sdi,
@@ -1109,7 +1111,7 @@ fn construct_display_info_1() {
             vec![4, 5],
             vec![0, 1, 3, 4, 5],
             7,
-            OnTypingStatisticsStaticTarget::new(4, 8, 1, 5)
+            OnTypingStatisticsStaticTarget::new(4, 8, 1, 5, None, None)
         )
     );
 
@@ -1119,7 +1121,20 @@ fn construct_display_info_1() {
             "kyokixyokyoky".to_string(),
             9,
             vec![1, 5, 8],
-            OnTypingStatisticsDynamicTarget::new(9, 13, 11, 6, 3)
+            OnTypingStatisticsDynamicTarget::new(
+                9,
+                13,
+                11,
+                6,
+                3,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![
+                    Duration::new(3, 0),
+                    Duration::new(5, 0),
+                    Duration::new(8, 0),
+                    Duration::new(10, 0)
+                ])
+            )
         )
     );
 }
@@ -1182,7 +1197,8 @@ fn construct_display_info_2() {
         }
     );
 
-    let (sdi, ksdi) = pci.construct_display_info();
+    let (sdi, ksdi) =
+        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
 
     // 入力を終えた遅延確定候補は表示の上では確定したとみなす
     // pendingにあるミスタイプは表示状は次のチャンクに帰属させる
@@ -1193,7 +1209,7 @@ fn construct_display_info_2() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsStaticTarget::new(1, 2, 1, 1)
+            OnTypingStatisticsStaticTarget::new(1, 2, 1, 1, None, None)
         )
     );
 
@@ -1203,7 +1219,15 @@ fn construct_display_info_2() {
             "nzi".to_string(),
             1,
             vec![1],
-            OnTypingStatisticsDynamicTarget::new(1, 3, 3, 1, 1)
+            OnTypingStatisticsDynamicTarget::new(
+                1,
+                3,
+                3,
+                1,
+                1,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![])
+            )
         )
     );
 
@@ -1238,7 +1262,8 @@ fn construct_display_info_2() {
         }
     );
 
-    let (sdi, ksdi) = pci.construct_display_info();
+    let (sdi, ksdi) =
+        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
 
     // 遅延確定候補で確定したのでミスタイプは引き続き次のチャンクに属する
     assert_eq!(
@@ -1248,7 +1273,7 @@ fn construct_display_info_2() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsStaticTarget::new(1, 2, 1, 1)
+            OnTypingStatisticsStaticTarget::new(1, 2, 1, 1, None, None)
         )
     );
 
@@ -1258,7 +1283,15 @@ fn construct_display_info_2() {
             "nji".to_string(),
             2,
             vec![1],
-            OnTypingStatisticsDynamicTarget::new(2, 3, 3, 1, 1)
+            OnTypingStatisticsDynamicTarget::new(
+                2,
+                3,
+                3,
+                1,
+                1,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![Duration::new(3, 0)])
+            )
         )
     );
 }
@@ -1321,7 +1354,8 @@ fn construct_display_info_3() {
         }
     );
 
-    let (sdi, ksdi) = pci.construct_display_info();
+    let (sdi, ksdi) =
+        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
 
     // 入力を終えた遅延確定候補は表示の上では確定したとみなす
     // pendingにあるミスタイプは表示状は次のチャンクに帰属させる
@@ -1332,7 +1366,7 @@ fn construct_display_info_3() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsStaticTarget::new(1, 2, 1, 1)
+            OnTypingStatisticsStaticTarget::new(1, 2, 1, 1, None, None)
         )
     );
 
@@ -1342,7 +1376,15 @@ fn construct_display_info_3() {
             "nzi".to_string(),
             1,
             vec![1],
-            OnTypingStatisticsDynamicTarget::new(1, 3, 3, 1, 1)
+            OnTypingStatisticsDynamicTarget::new(
+                1,
+                3,
+                3,
+                1,
+                1,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![])
+            )
         )
     );
 
@@ -1378,7 +1420,8 @@ fn construct_display_info_3() {
         }
     );
 
-    let (sdi, ksdi) = pci.construct_display_info();
+    let (sdi, ksdi) =
+        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
 
     // 遅延確定候補ではない候補で確定したのでミスタイプはその候補に属する
     assert_eq!(
@@ -1388,7 +1431,7 @@ fn construct_display_info_3() {
             vec![1],
             vec![0],
             1,
-            OnTypingStatisticsStaticTarget::new(1, 2, 0, 1)
+            OnTypingStatisticsStaticTarget::new(1, 2, 0, 1, None, None)
         )
     );
 
@@ -1398,7 +1441,15 @@ fn construct_display_info_3() {
             "nnzi".to_string(),
             2,
             vec![1],
-            OnTypingStatisticsDynamicTarget::new(2, 4, 3, 1, 1)
+            OnTypingStatisticsDynamicTarget::new(
+                2,
+                4,
+                3,
+                1,
+                1,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![Duration::new(3, 0)])
+            )
         )
     );
 }
@@ -1513,7 +1564,8 @@ fn construct_display_info_4() {
         }
     );
 
-    let (sdi, ksdi) = pci.construct_display_info();
+    let (sdi, ksdi) =
+        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
 
     assert_eq!(
         sdi,
@@ -1522,7 +1574,7 @@ fn construct_display_info_4() {
             vec![1],
             vec![],
             3,
-            OnTypingStatisticsStaticTarget::new(1, 4, 1, 0)
+            OnTypingStatisticsStaticTarget::new(1, 4, 1, 0, None, None)
         )
     );
 
@@ -1532,7 +1584,15 @@ fn construct_display_info_4() {
             "akkann".to_string(),
             1,
             vec![],
-            OnTypingStatisticsDynamicTarget::new(1, 6, 6, 1, 0)
+            OnTypingStatisticsDynamicTarget::new(
+                1,
+                6,
+                6,
+                1,
+                0,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![])
+            )
         )
     );
 }

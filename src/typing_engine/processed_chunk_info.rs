@@ -7,7 +7,7 @@ use crate::chunk::typed::{KeyStrokeResult, TypedChunk};
 use crate::chunk::Chunk;
 use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
 use crate::key_stroke::KeyStrokeChar;
-use crate::statistics::OnTypingStatisticsManager;
+use crate::statistics::{LapRequest, OnTypingStatisticsManager};
 
 #[cfg(test)]
 mod test;
@@ -109,7 +109,10 @@ impl ProcessedChunkInfo {
         result
     }
 
-    pub(crate) fn construct_display_info(&self) -> (SpellDisplayInfo, KeyStrokeDisplayInfo) {
+    pub(crate) fn construct_display_info(
+        &self,
+        lap_request: LapRequest,
+    ) -> (SpellDisplayInfo, KeyStrokeDisplayInfo) {
         let mut spell = String::new();
         let mut spell_head_position = 0;
         let mut spell_cursor_positions;
@@ -118,7 +121,7 @@ impl ProcessedChunkInfo {
         let mut key_stroke = String::new();
         let mut key_stroke_cursor_position = 0;
         let mut key_stroke_wrong_positions: Vec<usize> = vec![];
-        let mut on_typing_stat_manager = OnTypingStatisticsManager::new();
+        let mut on_typing_stat_manager = OnTypingStatisticsManager::new(lap_request);
 
         // 1. 確定したチャンク
         // 2. タイプ中のチャンク
@@ -141,8 +144,11 @@ impl ProcessedChunkInfo {
                 .iter()
                 .zip(confirmed_chunk.construct_spell_end_vector().iter())
                 .for_each(|(actual_key_stroke, spell_end)| {
-                    on_typing_stat_manager
-                        .on_actual_key_stroke(actual_key_stroke.is_correct(), spell_count);
+                    on_typing_stat_manager.on_actual_key_stroke(
+                        actual_key_stroke.is_correct(),
+                        spell_count,
+                        *actual_key_stroke.elapsed_time(),
+                    );
 
                     if actual_key_stroke.is_correct() {
                         in_candidate_cursor_position += 1;
@@ -238,8 +244,11 @@ impl ProcessedChunkInfo {
                 .iter()
                 .zip(inflight_chunk.construct_spell_end_vector().iter())
                 .for_each(|(actual_key_stroke, spell_end)| {
-                    on_typing_stat_manager
-                        .on_actual_key_stroke(actual_key_stroke.is_correct(), spell_count);
+                    on_typing_stat_manager.on_actual_key_stroke(
+                        actual_key_stroke.is_correct(),
+                        spell_count,
+                        *actual_key_stroke.elapsed_time(),
+                    );
 
                     if actual_key_stroke.is_correct() {
                         in_candidate_cursor_position += 1;
@@ -387,6 +396,7 @@ impl ProcessedChunkInfo {
                                     on_typing_stat_manager.on_actual_key_stroke(
                                         actual_key_stroke.is_correct(),
                                         spell_count,
+                                        *actual_key_stroke.elapsed_time(),
                                     );
                                 },
                             );
