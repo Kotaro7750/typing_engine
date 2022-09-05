@@ -46,7 +46,6 @@ impl OnTypingStatisticsStaticTarget {
 impl OnTypingStatistics for OnTypingStatisticsStaticTarget {
     fn on_finished(&mut self, delta: usize, completely_correct: bool) {
         self.finished_count += delta;
-        //self.on_target_add(delta);
 
         if completely_correct {
             self.completely_correct_count += delta;
@@ -101,7 +100,6 @@ impl OnTypingStatisticsDynamicTarget {
 impl OnTypingStatistics for OnTypingStatisticsDynamicTarget {
     fn on_finished(&mut self, delta: usize, completely_correct: bool) {
         self.finished_count += delta;
-        //self.on_target_add(delta);
 
         if completely_correct {
             self.completely_correct_count += delta;
@@ -156,13 +154,13 @@ impl OnTypingStatisticsManager {
         self.this_key_stroke_wrong = !is_correct;
     }
 
-    /// 綴りが打ち終えたときに呼ぶ
+    /// 綴りを打ち終えたときに呼ぶ
     pub(crate) fn finish_spell(&mut self, spell_count: usize) {
         self.spell.on_finished(spell_count, !self.this_spell_wrong);
         self.this_spell_wrong = false;
     }
 
-    /// チャンクが終了したときに呼び理想的な場合の候補のキーストローク数をセットする
+    /// チャンクを打ち終えたときに呼ぶ
     pub(crate) fn finish_chunk(
         &mut self,
         key_stroke_whole_count: usize,
