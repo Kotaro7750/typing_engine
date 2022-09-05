@@ -68,14 +68,16 @@ impl OnTypingStatistics for OnTypingStatisticsStaticTarget {
         completely_correct: bool,
         elapsed_time: Duration,
     ) -> bool {
-        let is_lap_end = if let Some(tpl) = &self.targets_per_lap {
-            (self.finished_count / tpl.get()) != ((self.finished_count + delta) / tpl.get())
+        let lap_finish_num = if let Some(tpl) = &self.targets_per_lap {
+            ((self.finished_count + delta) / tpl.get()) - (self.finished_count / tpl.get())
         } else {
-            false
+            0
         };
 
-        if is_lap_end {
-            self.lap_end_time.as_mut().unwrap().push(elapsed_time);
+        if lap_finish_num != 0 {
+            for _ in 0..lap_finish_num {
+                self.lap_end_time.as_mut().unwrap().push(elapsed_time);
+            }
         }
 
         self.finished_count += delta;
@@ -84,7 +86,7 @@ impl OnTypingStatistics for OnTypingStatisticsStaticTarget {
             self.completely_correct_count += delta;
         }
 
-        is_lap_end
+        lap_finish_num != 0
     }
 
     fn on_target_add(&mut self, delta: usize) {
@@ -149,14 +151,16 @@ impl OnTypingStatistics for OnTypingStatisticsDynamicTarget {
         completely_correct: bool,
         elapsed_time: Duration,
     ) -> bool {
-        let is_lap_end = if let Some(tpl) = &self.targets_per_lap {
-            (self.finished_count / tpl.get()) != ((self.finished_count + delta) / tpl.get())
+        let lap_finish_num = if let Some(tpl) = &self.targets_per_lap {
+            ((self.finished_count + delta) / tpl.get()) - (self.finished_count / tpl.get())
         } else {
-            false
+            0
         };
 
-        if is_lap_end {
-            self.lap_end_time.as_mut().unwrap().push(elapsed_time);
+        if lap_finish_num != 0 {
+            for _ in 0..lap_finish_num {
+                self.lap_end_time.as_mut().unwrap().push(elapsed_time);
+            }
         }
 
         self.finished_count += delta;
@@ -165,7 +169,7 @@ impl OnTypingStatistics for OnTypingStatisticsDynamicTarget {
             self.completely_correct_count += delta;
         }
 
-        is_lap_end
+        lap_finish_num != 0
     }
 
     fn on_target_add(&mut self, delta: usize) {
