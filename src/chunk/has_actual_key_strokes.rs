@@ -36,33 +36,31 @@ pub(crate) trait ChunkHasActualKeyStrokes: AsRef<Chunk> {
         spell_end_vector
     }
 
-    /// チャンクの綴りのそれぞれ（基本的には1つだが複数文字を個別で打った場合には2つ）でミスタイプがあったかどうか
-    fn construct_wrong_spell_element_vector(&self) -> Vec<bool> {
-        let element_count = if self.effective_candidate().is_splitted() {
-            2
-        } else {
+    /// チャンクの綴り要素のそれぞれ（基本的には1つだが複数文字を個別で打った場合には2つ）の初期化済みboolベクタを構築する
+    fn initialized_spell_element_vector(&self) -> Vec<bool> {
+        vec![
+            false;
+            if self.effective_candidate().is_splitted() {
+                2
+            } else {
+                1
+            }
+        ]
+    }
+
+    /// チャンクのキーストロークのそれぞれの初期化済みboolベクタを構築する
+    fn initialized_key_strokes_vector(&self) -> Vec<bool> {
+        vec![false; self.effective_candidate().calc_key_stroke_count()]
+    }
+
+    /// キーストロークが何個の綴りに対するものなのか
+    /// 基本的には1だが複数文字の綴りをまとめて打つ場合には2となる
+    fn effective_spell_count(&self) -> usize {
+        // 複数文字の綴りをまとめて打つ場合には綴りの統計は2文字分カウントする必要がある
+        if self.effective_candidate().is_splitted() {
             1
-        };
-
-        // 複数文字のチャンクを個別で打った場合には要素数は2になる
-        let mut wrong_spell_element_vector: Vec<bool> = vec![false; element_count];
-
-        // 打たれたキーストロークではなく候補中のインデックス
-        let mut current_key_stroke_index = 0;
-
-        self.actual_key_strokes()
-            .iter()
-            .for_each(|actual_key_stroke| {
-                if actual_key_stroke.is_correct() {
-                    current_key_stroke_index += 1;
-                } else {
-                    wrong_spell_element_vector[self
-                        .effective_candidate()
-                        // キーストロークに対応する位置に変換する
-                        .element_index_at_key_stroke_index(current_key_stroke_index)] = true;
-                }
-            });
-
-        wrong_spell_element_vector
+        } else {
+            self.as_ref().spell().count()
+        }
     }
 }
