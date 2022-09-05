@@ -68,13 +68,23 @@ impl OnTypingStatistics for OnTypingStatisticsStaticTarget {
         completely_correct: bool,
         elapsed_time: Duration,
     ) -> bool {
+        let is_lap_end = if let Some(tpl) = &self.targets_per_lap {
+            (self.finished_count / tpl.get()) != ((self.finished_count + delta) / tpl.get())
+        } else {
+            false
+        };
+
+        if is_lap_end {
+            self.lap_end_time.as_mut().unwrap().push(elapsed_time);
+        }
+
         self.finished_count += delta;
 
         if completely_correct {
             self.completely_correct_count += delta;
         }
 
-        false
+        is_lap_end
     }
 
     fn on_target_add(&mut self, delta: usize) {
@@ -139,13 +149,23 @@ impl OnTypingStatistics for OnTypingStatisticsDynamicTarget {
         completely_correct: bool,
         elapsed_time: Duration,
     ) -> bool {
+        let is_lap_end = if let Some(tpl) = &self.targets_per_lap {
+            (self.finished_count / tpl.get()) != ((self.finished_count + delta) / tpl.get())
+        } else {
+            false
+        };
+
+        if is_lap_end {
+            self.lap_end_time.as_mut().unwrap().push(elapsed_time);
+        }
+
         self.finished_count += delta;
 
         if completely_correct {
             self.completely_correct_count += delta;
         }
 
-        false
+        is_lap_end
     }
 
     fn on_target_add(&mut self, delta: usize) {
@@ -239,8 +259,11 @@ impl OnTypingStatisticsManager {
         spell_count: usize,
         elapsed_time: Duration,
     ) -> bool {
+        let mut is_lap_end = false;
+
         if is_correct {
-            self.key_stroke
+            is_lap_end = self
+                .key_stroke
                 .on_finished(1, !self.this_key_stroke_wrong, elapsed_time);
         } else {
             self.key_stroke.on_wrong(1);
@@ -254,19 +277,19 @@ impl OnTypingStatisticsManager {
         self.this_key_stroke_wrong = !is_correct;
         self.last_key_stroke_elapsed_time.replace(elapsed_time);
 
-        false
+        is_lap_end
     }
 
     /// 綴りを打ち終えたときに呼ぶ
     pub(crate) fn finish_spell(&mut self, spell_count: usize) -> bool {
-        self.spell.on_finished(
+        let is_lap_end = self.spell.on_finished(
             spell_count,
             !self.this_spell_wrong,
             self.last_key_stroke_elapsed_time.unwrap(),
         );
         self.this_spell_wrong = false;
 
-        false
+        is_lap_end
     }
 
     /// チャンクを打ち終えたときに呼ぶ
@@ -284,9 +307,7 @@ impl OnTypingStatisticsManager {
             1,
             !self.this_chunk_wrong,
             self.last_key_stroke_elapsed_time.unwrap(),
-        );
-
-        false
+        )
     }
 
     /// 打ち終えていないチャンクをカウントする時に呼ぶ
