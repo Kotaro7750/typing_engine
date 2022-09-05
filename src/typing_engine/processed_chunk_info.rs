@@ -225,7 +225,6 @@ impl ProcessedChunkInfo {
             assert!(self.is_finished());
         } else {
             let inflight_chunk = self.inflight_chunk.as_ref().unwrap();
-            let is_delayed_confirmable = inflight_chunk.is_delayed_confirmable();
 
             let spell_count = inflight_chunk.effective_spell_count();
             let mut wrong_spell_element_vector = inflight_chunk.initialized_spell_element_vector();
@@ -306,22 +305,6 @@ impl ProcessedChunkInfo {
                     spell_head_position += 1;
                 });
 
-            // 次に遅延確定候補を打ち終えている場合のカーソル位置・ミスタイプ位置の処理をする
-
-            if is_delayed_confirmable {
-                // キーストロークのカーソル位置は特に何も処理しなくて良い
-                // 遅延確定候補の候補内カーソル位置は次のチャンク先頭を指す位置にあるため
-                // 綴りのカーソルは次のチャンク先頭を指す
-                spell_cursor_positions.clear();
-                spell_cursor_positions.push(spell_head_position);
-
-                // 保留中のミスタイプは次のチャンク先頭のミスタイプとみなす
-                if inflight_chunk.has_wrong_stroke_in_pending_key_strokes() {
-                    key_stroke_wrong_positions.push(key_stroke_cursor_position);
-                    spell_wrong_positions.push(spell_head_position);
-                }
-            }
-
             // 最後にチャンクの統計情報と表示用の文字列を更新する
 
             key_stroke.push_str(
@@ -371,12 +354,34 @@ impl ProcessedChunkInfo {
             .for_each(|(i, unprocessed_chunk)| {
                 // 未処理のチャンクの内最初のチャンクのみタイピング中のチャンクの遅延確定候補の補正をする
 
-                let spell_count = unprocessed_chunk.spell().count();
+                let candidate = unprocessed_chunk.min_candidate(next_chunk_head_constraint.clone());
+                let spell_count = if candidate.is_splitted() {
+                    2
+                } else {
+                    unprocessed_chunk.spell().count()
+                };
 
-                // 現在打っているチャンクの遅延確定候補の間違いは未確定のチャンクの一番最初に帰属させる
+                // 未確定のチャンクの一番最初のみ現在打っているチャンクの遅延確定候補によって補正をする
                 if i == 0 {
                     if let Some(inflight_chunk) = self.inflight_chunk.as_ref() {
                         if inflight_chunk.is_delayed_confirmable() {
+                            // キーストロークのカーソル位置は特に何も処理しなくて良い
+                            // 遅延確定候補の候補内カーソル位置は次のチャンク先頭を指す位置にあるため
+                            //
+                            // 綴りのカーソルは次のチャンク先頭を指す
+                            spell_cursor_positions.clear();
+                            for i in 0..spell_count {
+                                spell_cursor_positions.push(spell_head_position + i);
+                            }
+
+                            // 保留中のミスタイプは次のチャンクのミスタイプとみなす
+                            if inflight_chunk.has_wrong_stroke_in_pending_key_strokes() {
+                                key_stroke_wrong_positions.push(key_stroke_cursor_position);
+                                for i in 0..spell_count {
+                                    spell_wrong_positions.push(spell_head_position + i);
+                                }
+                            }
+
                             inflight_chunk.pending_key_strokes().iter().for_each(
                                 |actual_key_stroke| {
                                     on_typing_stat_manager.on_actual_key_stroke(
@@ -389,13 +394,11 @@ impl ProcessedChunkInfo {
                     }
                 }
 
-                spell_head_position += spell_count;
-
                 // 表示用の文字列を更新する
-                let candidate = unprocessed_chunk.min_candidate(next_chunk_head_constraint.clone());
                 key_stroke.push_str(&candidate.whole_key_stroke());
 
                 spell.push_str(unprocessed_chunk.spell().as_ref());
+                spell_head_position += unprocessed_chunk.spell().count();
 
                 // チャンクの統計情報を更新する
 
