@@ -1137,6 +1137,41 @@ fn construct_display_info_1() {
             )
         )
     );
+
+    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+
+    assert_eq!(
+        sdi,
+        SpellDisplayInfo::new(
+            "きょきょきょきょ".to_string(),
+            vec![4, 5],
+            vec![0, 1, 3, 4, 5],
+            7,
+            OnTypingStatisticsStaticTarget::new(
+                4,
+                8,
+                1,
+                5,
+                Some(NonZeroUsize::new(1).unwrap()),
+                Some(vec![
+                    Duration::new(4, 0),
+                    Duration::new(4, 0),
+                    Duration::new(6, 0),
+                    Duration::new(10, 0)
+                ])
+            )
+        )
+    );
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "kyokixyokyoky".to_string(),
+            9,
+            vec![1, 5, 8],
+            OnTypingStatisticsDynamicTarget::new(9, 13, 11, 6, 3, None, None)
+        )
+    );
 }
 
 #[test]
@@ -1231,6 +1266,36 @@ fn construct_display_info_2() {
         )
     );
 
+    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+
+    assert_eq!(
+        sdi,
+        SpellDisplayInfo::new(
+            "んじ".to_string(),
+            vec![1],
+            vec![1],
+            1,
+            OnTypingStatisticsStaticTarget::new(
+                1,
+                2,
+                1,
+                1,
+                Some(NonZeroUsize::new(1).unwrap()),
+                Some(vec![Duration::new(1, 0)])
+            )
+        )
+    );
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "nzi".to_string(),
+            1,
+            vec![1],
+            OnTypingStatisticsDynamicTarget::new(1, 3, 3, 1, 1, None, None)
+        )
+    );
+
     // 4. jと入力
     pci.stroke_key('j'.try_into().unwrap(), Duration::new(3, 0));
 
@@ -1292,6 +1357,36 @@ fn construct_display_info_2() {
                 Some(NonZeroUsize::new(2).unwrap()),
                 Some(vec![Duration::new(3, 0)])
             )
+        )
+    );
+
+    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+
+    assert_eq!(
+        sdi,
+        SpellDisplayInfo::new(
+            "んじ".to_string(),
+            vec![1],
+            vec![1],
+            1,
+            OnTypingStatisticsStaticTarget::new(
+                1,
+                2,
+                1,
+                1,
+                Some(NonZeroUsize::new(1).unwrap()),
+                Some(vec![Duration::new(1, 0)])
+            )
+        )
+    );
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "nji".to_string(),
+            2,
+            vec![1],
+            OnTypingStatisticsDynamicTarget::new(2, 3, 3, 1, 1, None, None)
         )
     );
 }
@@ -1388,6 +1483,36 @@ fn construct_display_info_3() {
         )
     );
 
+    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+
+    assert_eq!(
+        sdi,
+        SpellDisplayInfo::new(
+            "んじ".to_string(),
+            vec![1],
+            vec![1],
+            1,
+            OnTypingStatisticsStaticTarget::new(
+                1,
+                2,
+                1,
+                1,
+                Some(NonZeroUsize::new(1).unwrap()),
+                Some(vec![Duration::new(1, 0)])
+            )
+        )
+    );
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "nzi".to_string(),
+            1,
+            vec![1],
+            OnTypingStatisticsDynamicTarget::new(1, 3, 3, 1, 1, None, None,)
+        )
+    );
+
     // 4. nと入力
     pci.stroke_key('n'.try_into().unwrap(), Duration::new(3, 0));
 
@@ -1450,6 +1575,37 @@ fn construct_display_info_3() {
                 Some(NonZeroUsize::new(2).unwrap()),
                 Some(vec![Duration::new(3, 0)])
             )
+        )
+    );
+
+    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+
+    // 遅延確定候補ではない候補で確定したのでミスタイプはその候補に属する
+    assert_eq!(
+        sdi,
+        SpellDisplayInfo::new(
+            "んじ".to_string(),
+            vec![1],
+            vec![0],
+            1,
+            OnTypingStatisticsStaticTarget::new(
+                1,
+                2,
+                0,
+                1,
+                Some(NonZeroUsize::new(1).unwrap()),
+                Some(vec![Duration::new(3, 0)])
+            )
+        )
+    );
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "nnzi".to_string(),
+            2,
+            vec![1],
+            OnTypingStatisticsDynamicTarget::new(2, 4, 3, 1, 1, None, None)
         )
     );
 }
@@ -1593,6 +1749,36 @@ fn construct_display_info_4() {
                 Some(NonZeroUsize::new(2).unwrap()),
                 Some(vec![])
             )
+        )
+    );
+
+    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+
+    assert_eq!(
+        sdi,
+        SpellDisplayInfo::new(
+            "あっかん".to_string(),
+            vec![1],
+            vec![],
+            3,
+            OnTypingStatisticsStaticTarget::new(
+                1,
+                4,
+                1,
+                0,
+                Some(NonZeroUsize::new(1).unwrap()),
+                Some(vec![Duration::new(1, 0)])
+            )
+        )
+    );
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "akkann".to_string(),
+            1,
+            vec![],
+            OnTypingStatisticsDynamicTarget::new(1, 6, 6, 1, 0, None, None)
         )
     );
 }
