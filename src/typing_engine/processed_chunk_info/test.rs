@@ -4,8 +4,7 @@ use std::num::NonZeroUsize;
 use std::time::Duration;
 
 use crate::key_stroke::ActualKeyStroke;
-use crate::statistics::OnTypingStatisticsDynamicTarget;
-use crate::statistics::OnTypingStatisticsStaticTarget;
+use crate::statistics::OnTypingStatisticsTarget;
 use crate::typing_engine::processed_chunk_info::ConfirmedChunk;
 use crate::typing_engine::processed_chunk_info::KeyStrokeDisplayInfo;
 use crate::typing_engine::processed_chunk_info::SpellDisplayInfo;
@@ -1111,7 +1110,7 @@ fn construct_display_info_1() {
             vec![4, 5],
             vec![0, 1, 3, 4, 5],
             7,
-            OnTypingStatisticsStaticTarget::new(4, 8, 1, 5, None, None)
+            OnTypingStatisticsTarget::new(4, 8, 1, 5, None, None)
         )
     );
 
@@ -1121,10 +1120,9 @@ fn construct_display_info_1() {
             "kyokixyokyoky".to_string(),
             9,
             vec![1, 5, 8],
-            OnTypingStatisticsDynamicTarget::new(
+            OnTypingStatisticsTarget::new(
                 9,
                 13,
-                11,
                 6,
                 3,
                 Some(NonZeroUsize::new(2).unwrap()),
@@ -1132,6 +1130,40 @@ fn construct_display_info_1() {
                     Duration::new(3, 0),
                     Duration::new(5, 0),
                     Duration::new(8, 0),
+                    Duration::new(10, 0)
+                ])
+            ),
+            // kixyoという系列は理想的な系列がkyoと長さの比率が5:3なので
+            // 実際のiキーストローク目は理想的な系列でのceil(3 * i / 5)キーストローク目に対応する
+            // つまり
+            // k -> k
+            // i -> y
+            // x -> y
+            // y -> o
+            // o -> o
+            OnTypingStatisticsTarget::new(7, 11, 4, 3, None, None)
+        )
+    );
+
+    let (_, ksdi) =
+        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "kyokixyokyoky".to_string(),
+            9,
+            vec![1, 5, 8],
+            OnTypingStatisticsTarget::new(9, 13, 6, 3, None, None),
+            OnTypingStatisticsTarget::new(
+                7,
+                11,
+                4,
+                3,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![
+                    Duration::new(3, 0),
+                    Duration::new(5, 0),
                     Duration::new(10, 0)
                 ])
             )
@@ -1147,7 +1179,7 @@ fn construct_display_info_1() {
             vec![4, 5],
             vec![0, 1, 3, 4, 5],
             7,
-            OnTypingStatisticsStaticTarget::new(
+            OnTypingStatisticsTarget::new(
                 4,
                 8,
                 1,
@@ -1169,7 +1201,8 @@ fn construct_display_info_1() {
             "kyokixyokyoky".to_string(),
             9,
             vec![1, 5, 8],
-            OnTypingStatisticsDynamicTarget::new(9, 13, 11, 6, 3, None, None)
+            OnTypingStatisticsTarget::new(9, 13, 6, 3, None, None),
+            OnTypingStatisticsTarget::new(7, 11, 4, 3, None, None)
         )
     );
 }
@@ -1244,7 +1277,7 @@ fn construct_display_info_2() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsStaticTarget::new(1, 2, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(1, 2, 1, 1, None, None)
         )
     );
 
@@ -1254,9 +1287,30 @@ fn construct_display_info_2() {
             "nzi".to_string(),
             1,
             vec![1],
-            OnTypingStatisticsDynamicTarget::new(
+            OnTypingStatisticsTarget::new(
                 1,
                 3,
+                1,
+                1,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![])
+            ),
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None)
+        )
+    );
+
+    let (_, ksdi) =
+        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "nzi".to_string(),
+            1,
+            vec![1],
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None),
+            OnTypingStatisticsTarget::new(
+                1,
                 3,
                 1,
                 1,
@@ -1275,7 +1329,7 @@ fn construct_display_info_2() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsStaticTarget::new(
+            OnTypingStatisticsTarget::new(
                 1,
                 2,
                 1,
@@ -1292,7 +1346,8 @@ fn construct_display_info_2() {
             "nzi".to_string(),
             1,
             vec![1],
-            OnTypingStatisticsDynamicTarget::new(1, 3, 3, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None),
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None)
         )
     );
 
@@ -1338,7 +1393,7 @@ fn construct_display_info_2() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsStaticTarget::new(1, 2, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(1, 2, 1, 1, None, None)
         )
     );
 
@@ -1348,9 +1403,30 @@ fn construct_display_info_2() {
             "nji".to_string(),
             2,
             vec![1],
-            OnTypingStatisticsDynamicTarget::new(
+            OnTypingStatisticsTarget::new(
                 2,
                 3,
+                1,
+                1,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![Duration::new(3, 0)])
+            ),
+            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None)
+        )
+    );
+
+    let (_, ksdi) =
+        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "nji".to_string(),
+            2,
+            vec![1],
+            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None),
+            OnTypingStatisticsTarget::new(
+                2,
                 3,
                 1,
                 1,
@@ -1369,7 +1445,7 @@ fn construct_display_info_2() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsStaticTarget::new(
+            OnTypingStatisticsTarget::new(
                 1,
                 2,
                 1,
@@ -1386,7 +1462,8 @@ fn construct_display_info_2() {
             "nji".to_string(),
             2,
             vec![1],
-            OnTypingStatisticsDynamicTarget::new(2, 3, 3, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None),
+            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None)
         )
     );
 }
@@ -1461,7 +1538,7 @@ fn construct_display_info_3() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsStaticTarget::new(1, 2, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(1, 2, 1, 1, None, None)
         )
     );
 
@@ -1471,15 +1548,15 @@ fn construct_display_info_3() {
             "nzi".to_string(),
             1,
             vec![1],
-            OnTypingStatisticsDynamicTarget::new(
+            OnTypingStatisticsTarget::new(
                 1,
-                3,
                 3,
                 1,
                 1,
                 Some(NonZeroUsize::new(2).unwrap()),
                 Some(vec![])
-            )
+            ),
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None)
         )
     );
 
@@ -1492,7 +1569,7 @@ fn construct_display_info_3() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsStaticTarget::new(
+            OnTypingStatisticsTarget::new(
                 1,
                 2,
                 1,
@@ -1509,7 +1586,8 @@ fn construct_display_info_3() {
             "nzi".to_string(),
             1,
             vec![1],
-            OnTypingStatisticsDynamicTarget::new(1, 3, 3, 1, 1, None, None,)
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None),
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None)
         )
     );
 
@@ -1556,7 +1634,7 @@ fn construct_display_info_3() {
             vec![1],
             vec![0],
             1,
-            OnTypingStatisticsStaticTarget::new(1, 2, 0, 1, None, None)
+            OnTypingStatisticsTarget::new(1, 2, 0, 1, None, None)
         )
     );
 
@@ -1566,14 +1644,35 @@ fn construct_display_info_3() {
             "nnzi".to_string(),
             2,
             vec![1],
-            OnTypingStatisticsDynamicTarget::new(
+            OnTypingStatisticsTarget::new(
                 2,
                 4,
-                3,
                 1,
                 1,
                 Some(NonZeroUsize::new(2).unwrap()),
                 Some(vec![Duration::new(3, 0)])
+            ),
+            OnTypingStatisticsTarget::new(1, 3, 0, 1, None, None)
+        )
+    );
+
+    let (_, ksdi) =
+        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "nnzi".to_string(),
+            2,
+            vec![1],
+            OnTypingStatisticsTarget::new(2, 4, 1, 1, None, None),
+            OnTypingStatisticsTarget::new(
+                1,
+                3,
+                0,
+                1,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![])
             )
         )
     );
@@ -1588,7 +1687,7 @@ fn construct_display_info_3() {
             vec![1],
             vec![0],
             1,
-            OnTypingStatisticsStaticTarget::new(
+            OnTypingStatisticsTarget::new(
                 1,
                 2,
                 0,
@@ -1605,7 +1704,8 @@ fn construct_display_info_3() {
             "nnzi".to_string(),
             2,
             vec![1],
-            OnTypingStatisticsDynamicTarget::new(2, 4, 3, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(2, 4, 1, 1, None, None),
+            OnTypingStatisticsTarget::new(1, 3, 0, 1, None, None)
         )
     );
 }
@@ -1730,7 +1830,7 @@ fn construct_display_info_4() {
             vec![1],
             vec![],
             3,
-            OnTypingStatisticsStaticTarget::new(1, 4, 1, 0, None, None)
+            OnTypingStatisticsTarget::new(1, 4, 1, 0, None, None)
         )
     );
 
@@ -1740,9 +1840,30 @@ fn construct_display_info_4() {
             "akkann".to_string(),
             1,
             vec![],
-            OnTypingStatisticsDynamicTarget::new(
+            OnTypingStatisticsTarget::new(
                 1,
                 6,
+                1,
+                0,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![])
+            ),
+            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None)
+        )
+    );
+
+    let (_, ksdi) =
+        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "akkann".to_string(),
+            1,
+            vec![],
+            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None),
+            OnTypingStatisticsTarget::new(
+                1,
                 6,
                 1,
                 0,
@@ -1761,7 +1882,7 @@ fn construct_display_info_4() {
             vec![1],
             vec![],
             3,
-            OnTypingStatisticsStaticTarget::new(
+            OnTypingStatisticsTarget::new(
                 1,
                 4,
                 1,
@@ -1778,7 +1899,8 @@ fn construct_display_info_4() {
             "akkann".to_string(),
             1,
             vec![],
-            OnTypingStatisticsDynamicTarget::new(1, 6, 6, 1, 0, None, None)
+            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None),
+            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None)
         )
     );
 }

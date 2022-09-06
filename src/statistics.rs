@@ -2,28 +2,8 @@ use std::{num::NonZeroUsize, time::Duration};
 
 use serde::{Deserialize, Serialize};
 
-// キーストローク・綴り・表示文字列・語彙といった対象に関するタイピング中に使われることを意図した統計情報
-trait OnTypingStatistics {
-    /// 対象を打ち終えた時に呼ぶ
-    /// completely_correctはその対象を1回もミスタイプなしで打ち終えたかどうかを表す
-    /// 今回打ち終えた対象がラップ末だった場合にはtrueを返す
-    fn on_finished(
-        &mut self,
-        delta: usize,
-        completely_correct: bool,
-        elapsed_time: Duration,
-    ) -> bool;
-
-    /// 対象を統計に加えるときに呼ぶ
-    fn on_target_add(&mut self, delta: usize);
-
-    /// 対象をミスタイプしたときに呼ぶ
-    fn on_wrong(&mut self, delta: usize);
-}
-
-// タイピング中に変わることのない対象列に対しての統計情報
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct OnTypingStatisticsStaticTarget {
+pub struct OnTypingStatisticsTarget {
     // 対象を何個打ち終えたか
     finished_count: usize,
     // クエリに対象は何個あるか
@@ -39,7 +19,7 @@ pub struct OnTypingStatisticsStaticTarget {
     lap_end_time: Option<Vec<Duration>>,
 }
 
-impl OnTypingStatisticsStaticTarget {
+impl OnTypingStatisticsTarget {
     pub(crate) fn new(
         finished_count: usize,
         whole_count: usize,
@@ -59,92 +39,7 @@ impl OnTypingStatisticsStaticTarget {
             lap_end_time,
         }
     }
-}
 
-impl OnTypingStatistics for OnTypingStatisticsStaticTarget {
-    fn on_finished(
-        &mut self,
-        delta: usize,
-        completely_correct: bool,
-        elapsed_time: Duration,
-    ) -> bool {
-        let lap_finish_num = if let Some(tpl) = &self.targets_per_lap {
-            ((self.finished_count + delta) / tpl.get()) - (self.finished_count / tpl.get())
-        } else {
-            0
-        };
-
-        if lap_finish_num != 0 {
-            for _ in 0..lap_finish_num {
-                self.lap_end_time.as_mut().unwrap().push(elapsed_time);
-            }
-        }
-
-        self.finished_count += delta;
-
-        if completely_correct {
-            self.completely_correct_count += delta;
-        }
-
-        lap_finish_num != 0
-    }
-
-    fn on_target_add(&mut self, delta: usize) {
-        self.whole_count += delta;
-    }
-
-    fn on_wrong(&mut self, delta: usize) {
-        self.wrong_count += delta;
-    }
-}
-
-// タイピング中に動的に変わりうる対象列に対しての統計情報
-// 基本的にはStaticTargetと同じだが理想的でない対象列になりうるという点が異なる
-// ex. キーストローク列は理想的な入力を行った場合とそうでない場合で全体の数が変わりうる
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct OnTypingStatisticsDynamicTarget {
-    finished_count: usize,
-    // クエリに対象は動的に何個あるか
-    whole_count: usize,
-    // クエリに対象は理想的には何個あるか
-    ideal_whole_count: usize,
-    completely_correct_count: usize,
-    wrong_count: usize,
-    // ラップ当たりの対象数
-    targets_per_lap: Option<NonZeroUsize>,
-    // 各ラップが末の経過時間
-    lap_end_time: Option<Vec<Duration>>,
-}
-
-impl OnTypingStatisticsDynamicTarget {
-    pub(crate) fn new(
-        finished_count: usize,
-        whole_count: usize,
-        ideal_whole_count: usize,
-        completely_correct_count: usize,
-        wrong_count: usize,
-        targets_per_lap: Option<NonZeroUsize>,
-        lap_end_time: Option<Vec<Duration>>,
-    ) -> Self {
-        assert_eq!(targets_per_lap.is_some(), lap_end_time.is_some());
-
-        Self {
-            finished_count,
-            whole_count,
-            ideal_whole_count,
-            completely_correct_count,
-            wrong_count,
-            targets_per_lap,
-            lap_end_time,
-        }
-    }
-
-    fn on_ideal_target_add(&mut self, delta: usize) {
-        self.ideal_whole_count += delta;
-    }
-}
-
-impl OnTypingStatistics for OnTypingStatisticsDynamicTarget {
     fn on_finished(
         &mut self,
         delta: usize,
@@ -183,28 +78,38 @@ impl OnTypingStatistics for OnTypingStatisticsDynamicTarget {
 
 pub(crate) enum LapRequest {
     KeyStroke(NonZeroUsize),
+    IdealKeyStroke(NonZeroUsize),
     Spell(NonZeroUsize),
     Chunk(NonZeroUsize),
 }
 
 /// タイピング中の各対象の統計情報を管理する
 pub(crate) struct OnTypingStatisticsManager {
-    key_stroke: OnTypingStatisticsDynamicTarget,
-    spell: OnTypingStatisticsStaticTarget,
-    chunk: OnTypingStatisticsStaticTarget,
+    // 実際のキーストローク系列に基づいた統計
+    key_stroke: OnTypingStatisticsTarget,
+    // 理想的なキーストローク系列に基づいた統計
+    ideal_key_stroke: OnTypingStatisticsTarget,
+    spell: OnTypingStatisticsTarget,
+    chunk: OnTypingStatisticsTarget,
     this_key_stroke_wrong: bool,
+    this_ideal_key_stroke_wrong: bool,
     this_spell_wrong: bool,
     this_chunk_wrong: bool,
+    this_candidate_key_stroke_count: Option<usize>,
+    this_ideal_candidate_key_stroke_count: Option<usize>,
+    in_candidate_key_stroke_count: usize,
     last_key_stroke_elapsed_time: Option<Duration>,
 }
 
 impl OnTypingStatisticsManager {
     pub(crate) fn new(lap_request: LapRequest) -> Self {
         let mut key_stroke_targets_per_lap: Option<NonZeroUsize> = None;
+        let mut ideal_key_stroke_targets_per_lap: Option<NonZeroUsize> = None;
         let mut spell_targets_per_lap: Option<NonZeroUsize> = None;
         let mut chunk_targets_per_lap: Option<NonZeroUsize> = None;
 
         let mut key_stroke_lap_end_time: Option<Vec<Duration>> = None;
+        let mut ideal_key_stroke_lap_end_time: Option<Vec<Duration>> = None;
         let mut spell_lap_end_time: Option<Vec<Duration>> = None;
         let mut chunk_lap_end_time: Option<Vec<Duration>> = None;
 
@@ -212,6 +117,10 @@ impl OnTypingStatisticsManager {
             LapRequest::KeyStroke(tpl) => {
                 key_stroke_targets_per_lap.replace(tpl);
                 key_stroke_lap_end_time.replace(vec![]);
+            }
+            LapRequest::IdealKeyStroke(tpl) => {
+                ideal_key_stroke_targets_per_lap.replace(tpl);
+                ideal_key_stroke_lap_end_time.replace(vec![]);
             }
             LapRequest::Spell(tpl) => {
                 spell_targets_per_lap.replace(tpl);
@@ -224,8 +133,7 @@ impl OnTypingStatisticsManager {
         }
 
         Self {
-            key_stroke: OnTypingStatisticsDynamicTarget::new(
-                0,
+            key_stroke: OnTypingStatisticsTarget::new(
                 0,
                 0,
                 0,
@@ -233,7 +141,15 @@ impl OnTypingStatisticsManager {
                 key_stroke_targets_per_lap,
                 key_stroke_lap_end_time,
             ),
-            spell: OnTypingStatisticsStaticTarget::new(
+            ideal_key_stroke: OnTypingStatisticsTarget::new(
+                0,
+                0,
+                0,
+                0,
+                ideal_key_stroke_targets_per_lap,
+                ideal_key_stroke_lap_end_time,
+            ),
+            spell: OnTypingStatisticsTarget::new(
                 0,
                 0,
                 0,
@@ -241,7 +157,7 @@ impl OnTypingStatisticsManager {
                 spell_targets_per_lap,
                 spell_lap_end_time,
             ),
-            chunk: OnTypingStatisticsStaticTarget::new(
+            chunk: OnTypingStatisticsTarget::new(
                 0,
                 0,
                 0,
@@ -250,10 +166,39 @@ impl OnTypingStatisticsManager {
                 chunk_lap_end_time,
             ),
             this_key_stroke_wrong: false,
+            this_ideal_key_stroke_wrong: false,
             this_spell_wrong: false,
             this_chunk_wrong: false,
+            this_candidate_key_stroke_count: None,
+            this_ideal_candidate_key_stroke_count: None,
+            in_candidate_key_stroke_count: 0,
             last_key_stroke_elapsed_time: None,
         }
+    }
+
+    /// 理想的な候補と実際にタイプする候補の対応を取るために各チャンクのキーストローク数をセットする
+    pub(crate) fn set_this_candidate_key_stroke_count(
+        &mut self,
+        candidate_key_stroke_count: usize,
+        ideal_candidate_key_stroke_count: usize,
+    ) {
+        self.this_candidate_key_stroke_count
+            .replace(candidate_key_stroke_count);
+        self.this_ideal_candidate_key_stroke_count
+            .replace(ideal_candidate_key_stroke_count);
+    }
+
+    /// 現在セットされたチャンクのキーストローク数を元に実際のキーストローク内のインデックスが理想的な候補内のどのインデックスに対応するかを計算する
+    ///
+    /// ex. 実際のキーストロークが「kixyo」で理想的なキーストロークが「kyo」だったとき
+    /// 実際の1キーストロークは理想的なキーストロークに換算すると3/5キーストロークである
+    /// そこでnキーストローク打ったときにはceil(n * 3/5)キーストローク打ったことにする
+    fn calc_ideal_key_stroke_index(&self, actual_key_stroke_index: usize) -> usize {
+        let ideal_count = self.this_ideal_candidate_key_stroke_count.unwrap();
+        let actual_count = self.this_candidate_key_stroke_count.unwrap();
+
+        // ceil(a/b)は (a+b-1)/b とできる
+        (((actual_key_stroke_index + 1) * ideal_count) + actual_count - 1) / actual_count - 1
     }
 
     /// 実際のキーストロークをしたときに呼ぶ
@@ -266,14 +211,32 @@ impl OnTypingStatisticsManager {
         let mut is_lap_end = false;
 
         if is_correct {
+            self.in_candidate_key_stroke_count += 1;
             is_lap_end = self
                 .key_stroke
                 .on_finished(1, !self.this_key_stroke_wrong, elapsed_time);
+
+            // 次打つインデックス(実際のキーストローク内インデックス)
+            let in_actual_candidate_new_index = self.in_candidate_key_stroke_count;
+
+            // 今打ったキーストロークによって理想的な候補内のインデックスが変わった場合には理想的な候補を打ち終えたとみなす
+            if self.calc_ideal_key_stroke_index(in_actual_candidate_new_index - 1)
+                != self.calc_ideal_key_stroke_index(in_actual_candidate_new_index)
+            {
+                self.ideal_key_stroke.on_finished(
+                    1,
+                    !self.this_ideal_key_stroke_wrong,
+                    elapsed_time,
+                );
+                self.this_ideal_key_stroke_wrong = false;
+            }
         } else {
             self.key_stroke.on_wrong(1);
+            self.ideal_key_stroke.on_wrong(1);
             self.spell.on_wrong(spell_count);
             self.chunk.on_wrong(1);
 
+            self.this_ideal_key_stroke_wrong = true;
             self.this_spell_wrong = true;
             self.this_chunk_wrong = true;
         }
@@ -303,9 +266,10 @@ impl OnTypingStatisticsManager {
         key_stroke_ideal_whole_count: usize,
         spell_count: usize,
     ) -> bool {
+        self.in_candidate_key_stroke_count = 0;
         self.key_stroke.on_target_add(key_stroke_whole_count);
-        self.key_stroke
-            .on_ideal_target_add(key_stroke_ideal_whole_count);
+        self.ideal_key_stroke
+            .on_target_add(key_stroke_ideal_whole_count);
         self.spell.on_target_add(spell_count);
         self.chunk.on_finished(
             1,
@@ -322,8 +286,8 @@ impl OnTypingStatisticsManager {
         spell_count: usize,
     ) {
         self.key_stroke.on_target_add(key_stroke_whole_count);
-        self.key_stroke
-            .on_ideal_target_add(key_stroke_ideal_whole_count);
+        self.ideal_key_stroke
+            .on_target_add(key_stroke_ideal_whole_count);
         self.spell.on_target_add(spell_count);
         self.chunk.on_target_add(1);
     }
@@ -331,10 +295,16 @@ impl OnTypingStatisticsManager {
     pub(crate) fn emit(
         self,
     ) -> (
-        OnTypingStatisticsDynamicTarget,
-        OnTypingStatisticsStaticTarget,
-        OnTypingStatisticsStaticTarget,
+        OnTypingStatisticsTarget,
+        OnTypingStatisticsTarget,
+        OnTypingStatisticsTarget,
+        OnTypingStatisticsTarget,
     ) {
-        (self.key_stroke, self.spell, self.chunk)
+        (
+            self.key_stroke,
+            self.ideal_key_stroke,
+            self.spell,
+            self.chunk,
+        )
     }
 }
