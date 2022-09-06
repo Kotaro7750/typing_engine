@@ -40,12 +40,7 @@ impl OnTypingStatisticsTarget {
         }
     }
 
-    fn on_finished(
-        &mut self,
-        delta: usize,
-        completely_correct: bool,
-        elapsed_time: Duration,
-    ) -> bool {
+    fn on_finished(&mut self, delta: usize, completely_correct: bool, elapsed_time: Duration) {
         let lap_finish_num = if let Some(tpl) = &self.targets_per_lap {
             ((self.finished_count + delta) / tpl.get()) - (self.finished_count / tpl.get())
         } else {
@@ -63,12 +58,31 @@ impl OnTypingStatisticsTarget {
         if completely_correct {
             self.completely_correct_count += delta;
         }
-
-        lap_finish_num != 0
     }
 
-    fn on_target_add(&mut self, delta: usize) {
+    /// 対象を追加する時に呼ぶ
+    /// もし追加によってラップ末を追加する必要があるときにはラップ末となる位置を返す
+    ///
+    /// ex. 現在の対象数が2でラップあたりの対象数が5のときdeltaが8で呼ばれたケースには[3,8]が返される
+    fn on_target_add(&mut self, delta: usize) -> Option<Vec<usize>> {
+        let mut may_lap_end_deltas: Option<Vec<usize>> = None;
+
+        if let Some(tpl) = self.targets_per_lap {
+            let mut lap_end_deltas = vec![];
+
+            let mut delta_to_next_lap_end = tpl.get() - (self.whole_count % tpl.get());
+            while delta_to_next_lap_end <= delta {
+                lap_end_deltas.push(delta_to_next_lap_end);
+                delta_to_next_lap_end += tpl.get();
+            }
+
+            if !lap_end_deltas.is_empty() {
+                may_lap_end_deltas.replace(lap_end_deltas);
+            }
+        }
         self.whole_count += delta;
+
+        may_lap_end_deltas
     }
 
     fn on_wrong(&mut self, delta: usize) {
@@ -91,6 +105,7 @@ pub(crate) struct OnTypingStatisticsManager {
     ideal_key_stroke: OnTypingStatisticsTarget,
     spell: OnTypingStatisticsTarget,
     chunk: OnTypingStatisticsTarget,
+    lap_request: LapRequest,
     this_key_stroke_wrong: bool,
     this_ideal_key_stroke_wrong: bool,
     this_spell_wrong: bool,
@@ -165,6 +180,7 @@ impl OnTypingStatisticsManager {
                 chunk_targets_per_lap,
                 chunk_lap_end_time,
             ),
+            lap_request,
             this_key_stroke_wrong: false,
             this_ideal_key_stroke_wrong: false,
             this_spell_wrong: false,
@@ -207,13 +223,10 @@ impl OnTypingStatisticsManager {
         is_correct: bool,
         spell_count: usize,
         elapsed_time: Duration,
-    ) -> bool {
-        let mut is_lap_end = false;
-
+    ) {
         if is_correct {
             self.in_candidate_key_stroke_count += 1;
-            is_lap_end = self
-                .key_stroke
+            self.key_stroke
                 .on_finished(1, !self.this_key_stroke_wrong, elapsed_time);
 
             // 次打つインデックス(実際のキーストローク内インデックス)
@@ -243,20 +256,16 @@ impl OnTypingStatisticsManager {
 
         self.this_key_stroke_wrong = !is_correct;
         self.last_key_stroke_elapsed_time.replace(elapsed_time);
-
-        is_lap_end
     }
 
     /// 綴りを打ち終えたときに呼ぶ
-    pub(crate) fn finish_spell(&mut self, spell_count: usize) -> bool {
-        let is_lap_end = self.spell.on_finished(
+    pub(crate) fn finish_spell(&mut self, spell_count: usize) {
+        self.spell.on_finished(
             spell_count,
             !self.this_spell_wrong,
             self.last_key_stroke_elapsed_time.unwrap(),
         );
         self.this_spell_wrong = false;
-
-        is_lap_end
     }
 
     /// チャンクを打ち終えたときに呼ぶ
@@ -265,17 +274,28 @@ impl OnTypingStatisticsManager {
         key_stroke_whole_count: usize,
         key_stroke_ideal_whole_count: usize,
         spell_count: usize,
-    ) -> bool {
-        self.in_candidate_key_stroke_count = 0;
-        self.key_stroke.on_target_add(key_stroke_whole_count);
-        self.ideal_key_stroke
-            .on_target_add(key_stroke_ideal_whole_count);
-        self.spell.on_target_add(spell_count);
+    ) -> Option<Vec<usize>> {
         self.chunk.on_finished(
             1,
             !self.this_chunk_wrong,
             self.last_key_stroke_elapsed_time.unwrap(),
-        )
+        );
+        self.this_chunk_wrong = false;
+
+        self.in_candidate_key_stroke_count = 0;
+        let ksle = self.key_stroke.on_target_add(key_stroke_whole_count);
+        let iksle = self
+            .ideal_key_stroke
+            .on_target_add(key_stroke_ideal_whole_count);
+        let sle = self.spell.on_target_add(spell_count);
+        let cle = self.chunk.on_target_add(1);
+
+        match self.lap_request {
+            LapRequest::KeyStroke(_) => ksle,
+            LapRequest::IdealKeyStroke(_) => iksle,
+            LapRequest::Spell(_) => sle,
+            LapRequest::Chunk(_) => cle,
+        }
     }
 
     /// 打ち終えていないチャンクをカウントする時に呼ぶ
@@ -284,12 +304,20 @@ impl OnTypingStatisticsManager {
         key_stroke_whole_count: usize,
         key_stroke_ideal_whole_count: usize,
         spell_count: usize,
-    ) {
-        self.key_stroke.on_target_add(key_stroke_whole_count);
-        self.ideal_key_stroke
+    ) -> Option<Vec<usize>> {
+        let ksle = self.key_stroke.on_target_add(key_stroke_whole_count);
+        let iksle = self
+            .ideal_key_stroke
             .on_target_add(key_stroke_ideal_whole_count);
-        self.spell.on_target_add(spell_count);
-        self.chunk.on_target_add(1);
+        let sle = self.spell.on_target_add(spell_count);
+        let cle = self.chunk.on_target_add(1);
+
+        match self.lap_request {
+            LapRequest::KeyStroke(_) => ksle,
+            LapRequest::IdealKeyStroke(_) => iksle,
+            LapRequest::Spell(_) => sle,
+            LapRequest::Chunk(_) => cle,
+        }
     }
 
     pub(crate) fn emit(
