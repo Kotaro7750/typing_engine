@@ -167,6 +167,7 @@ pub struct KeyStrokeDisplayInfo {
     key_stroke: String,
     current_cursor_position: usize,
     missed_positions: Vec<usize>,
+    lap_end_positions: Option<Vec<usize>>,
     on_typing_statistics: OnTypingStatisticsTarget,
     on_typing_statistics_ideal: OnTypingStatisticsTarget,
 }
@@ -176,6 +177,7 @@ impl KeyStrokeDisplayInfo {
         key_stroke: String,
         current_cursor_position: usize,
         missed_positions: Vec<usize>,
+        lap_end_positions: Option<Vec<usize>>,
         on_typing_statistics: OnTypingStatisticsTarget,
         on_typing_statistics_ideal: OnTypingStatisticsTarget,
     ) -> Self {
@@ -183,6 +185,7 @@ impl KeyStrokeDisplayInfo {
             key_stroke,
             current_cursor_position,
             missed_positions,
+            lap_end_positions,
             on_typing_statistics,
             on_typing_statistics_ideal,
         }

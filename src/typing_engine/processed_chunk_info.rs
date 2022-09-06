@@ -485,6 +485,7 @@ impl ProcessedChunkInfo {
                 key_stroke,
                 key_stroke_cursor_position,
                 key_stroke_wrong_positions,
+                None,
                 key_stroke_on_typing_statistics,
                 ideal_key_stroke_on_typing_statistics,
             ),
