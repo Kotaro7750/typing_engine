@@ -134,6 +134,22 @@ impl ProcessedChunkInfo {
             // 複数文字の綴りをまとめて打つ場合には綴りの統計は2文字分カウントする必要がある
             let spell_count = confirmed_chunk.effective_spell_count();
 
+            on_typing_stat_manager.set_this_candidate_key_stroke_count(
+                confirmed_chunk
+                    .confirmed_candidate()
+                    .whole_key_stroke()
+                    .chars()
+                    .count(),
+                confirmed_chunk
+                    .as_ref()
+                    .ideal_key_stroke_candidate()
+                    .as_ref()
+                    .unwrap()
+                    .whole_key_stroke()
+                    .chars()
+                    .count(),
+            );
+
             // まず実際のキーストローク系列から統計情報を更新しチャンク内ミス位置を構築する
 
             confirmed_chunk
@@ -230,6 +246,23 @@ impl ProcessedChunkInfo {
             let mut wrong_spell_element_vector = inflight_chunk.initialized_spell_element_vector();
             let mut wrong_key_strokes_vector = inflight_chunk.initialized_key_strokes_vector();
             let mut in_candidate_cursor_position = 0;
+
+            on_typing_stat_manager.set_this_candidate_key_stroke_count(
+                inflight_chunk
+                    .as_ref()
+                    .min_candidate(None)
+                    .whole_key_stroke()
+                    .chars()
+                    .count(),
+                inflight_chunk
+                    .as_ref()
+                    .ideal_key_stroke_candidate()
+                    .as_ref()
+                    .unwrap()
+                    .whole_key_stroke()
+                    .chars()
+                    .count(),
+            );
 
             // まず実際のキーストローク系列から統計情報を更新しチャンク内ミス位置を構築する
 
