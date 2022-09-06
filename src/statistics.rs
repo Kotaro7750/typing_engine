@@ -1,21 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-// キーストローク・綴り・表示文字列・語彙といった対象に関するタイピング中に使われることを意図した統計情報
-trait OnTypingStatistics {
-    /// 対象を打ち終えた時に呼ぶ
-    /// completely_correctはその対象を1回もミスタイプなしで打ち終えたかどうかを表す
-    fn on_finished(&mut self, delta: usize, completely_correct: bool);
-
-    /// 対象を統計に加えるときに呼ぶ
-    fn on_target_add(&mut self, delta: usize);
-
-    /// 対象をミスタイプしたときに呼ぶ
-    fn on_wrong(&mut self, delta: usize);
-}
-
-// タイピング中に変わることのない対象列に対しての統計情報
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct OnTypingStatisticsStaticTarget {
+pub struct OnTypingStatisticsTarget {
     // 対象を何個打ち終えたか
     finished_count: usize,
     // クエリに対象は何個あるか
@@ -27,7 +13,7 @@ pub struct OnTypingStatisticsStaticTarget {
     wrong_count: usize,
 }
 
-impl OnTypingStatisticsStaticTarget {
+impl OnTypingStatisticsTarget {
     pub(crate) fn new(
         finished_count: usize,
         whole_count: usize,
@@ -41,63 +27,7 @@ impl OnTypingStatisticsStaticTarget {
             wrong_count,
         }
     }
-}
 
-impl OnTypingStatistics for OnTypingStatisticsStaticTarget {
-    fn on_finished(&mut self, delta: usize, completely_correct: bool) {
-        self.finished_count += delta;
-
-        if completely_correct {
-            self.completely_correct_count += delta;
-        }
-    }
-
-    fn on_target_add(&mut self, delta: usize) {
-        self.whole_count += delta;
-    }
-
-    fn on_wrong(&mut self, delta: usize) {
-        self.wrong_count += delta;
-    }
-}
-
-// タイピング中に動的に変わりうる対象列に対しての統計情報
-// 基本的にはStaticTargetと同じだが理想的でない対象列になりうるという点が異なる
-// ex. キーストローク列は理想的な入力を行った場合とそうでない場合で全体の数が変わりうる
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct OnTypingStatisticsDynamicTarget {
-    finished_count: usize,
-    // クエリに対象は動的に何個あるか
-    whole_count: usize,
-    // クエリに対象は理想的には何個あるか
-    ideal_whole_count: usize,
-    completely_correct_count: usize,
-    wrong_count: usize,
-}
-
-impl OnTypingStatisticsDynamicTarget {
-    pub(crate) fn new(
-        finished_count: usize,
-        whole_count: usize,
-        ideal_whole_count: usize,
-        completely_correct_count: usize,
-        wrong_count: usize,
-    ) -> Self {
-        Self {
-            finished_count,
-            whole_count,
-            ideal_whole_count,
-            completely_correct_count,
-            wrong_count,
-        }
-    }
-
-    fn on_ideal_target_add(&mut self, delta: usize) {
-        self.ideal_whole_count += delta;
-    }
-}
-
-impl OnTypingStatistics for OnTypingStatisticsDynamicTarget {
     fn on_finished(&mut self, delta: usize, completely_correct: bool) {
         self.finished_count += delta;
 
@@ -117,9 +47,10 @@ impl OnTypingStatistics for OnTypingStatisticsDynamicTarget {
 
 /// タイピング中の各対象の統計情報を管理する
 pub(crate) struct OnTypingStatisticsManager {
-    key_stroke: OnTypingStatisticsDynamicTarget,
-    spell: OnTypingStatisticsStaticTarget,
-    chunk: OnTypingStatisticsStaticTarget,
+    key_stroke: OnTypingStatisticsTarget,
+    ideal_key_stroke: OnTypingStatisticsTarget,
+    spell: OnTypingStatisticsTarget,
+    chunk: OnTypingStatisticsTarget,
     this_key_stroke_wrong: bool,
     this_spell_wrong: bool,
     this_chunk_wrong: bool,
@@ -128,9 +59,10 @@ pub(crate) struct OnTypingStatisticsManager {
 impl OnTypingStatisticsManager {
     pub(crate) fn new() -> Self {
         Self {
-            key_stroke: OnTypingStatisticsDynamicTarget::new(0, 0, 0, 0, 0),
-            spell: OnTypingStatisticsStaticTarget::new(0, 0, 0, 0),
-            chunk: OnTypingStatisticsStaticTarget::new(0, 0, 0, 0),
+            key_stroke: OnTypingStatisticsTarget::new(0, 0, 0, 0),
+            ideal_key_stroke: OnTypingStatisticsTarget::new(0, 0, 0, 0),
+            spell: OnTypingStatisticsTarget::new(0, 0, 0, 0),
+            chunk: OnTypingStatisticsTarget::new(0, 0, 0, 0),
             this_key_stroke_wrong: false,
             this_spell_wrong: false,
             this_chunk_wrong: false,
@@ -168,8 +100,6 @@ impl OnTypingStatisticsManager {
         spell_count: usize,
     ) {
         self.key_stroke.on_target_add(key_stroke_whole_count);
-        self.key_stroke
-            .on_ideal_target_add(key_stroke_ideal_whole_count);
         self.spell.on_target_add(spell_count);
         self.chunk.on_finished(1, !self.this_chunk_wrong);
     }
@@ -182,8 +112,6 @@ impl OnTypingStatisticsManager {
         spell_count: usize,
     ) {
         self.key_stroke.on_target_add(key_stroke_whole_count);
-        self.key_stroke
-            .on_ideal_target_add(key_stroke_ideal_whole_count);
         self.spell.on_target_add(spell_count);
         self.chunk.on_target_add(1);
     }
@@ -191,10 +119,16 @@ impl OnTypingStatisticsManager {
     pub(crate) fn emit(
         self,
     ) -> (
-        OnTypingStatisticsDynamicTarget,
-        OnTypingStatisticsStaticTarget,
-        OnTypingStatisticsStaticTarget,
+        OnTypingStatisticsTarget,
+        OnTypingStatisticsTarget,
+        OnTypingStatisticsTarget,
+        OnTypingStatisticsTarget,
     ) {
-        (self.key_stroke, self.spell, self.chunk)
+        (
+            self.key_stroke,
+            self.ideal_key_stroke,
+            self.spell,
+            self.chunk,
+        )
     }
 }
