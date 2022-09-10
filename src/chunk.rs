@@ -241,14 +241,13 @@ impl Chunk {
 pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
     let mut next_chunk_spell: Option<ChunkSpell> = None;
 
+    // 次のチャンク先頭のキーストローク
+    let mut next_chunk_head_key_strokes: Option<Vec<KeyStrokeChar>> = None;
+
     // このチャンクが「っ」としたときにキーストロークの連続によって表現できるキーストローク群
     // 次のチャンク先頭の子音などのキーストロークともいえる
     // ex. 次のチャンクが「た」だったときには [t] となる
-    let mut key_strokes_can_represent_ltu_by_repeat: Vec<KeyStrokeChar> = Vec::new();
-
-    // 遅延確定候補を確定できるキーストローク群
-    // 次のチャンク先頭のキーストロークと同値
-    let mut key_strokes_can_confirm_delayed_candidate: Vec<KeyStrokeChar> = Vec::new();
+    let mut key_strokes_can_represent_ltu_by_repeat: Option<Vec<KeyStrokeChar>> = None;
 
     // キーストローク候補は次のチャンクに依存するので後ろから走査する
     for chunk in chunks.iter_mut().rev() {
@@ -272,24 +271,43 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                         .unwrap()
                         .iter()
                         // 「n」というキーストロークは次のチャンクによっては使えない
-                        .filter(|key_stroke| match **key_stroke {
-                            "n" => allow_single_n_as_key_stroke(&next_chunk_spell),
-                            _ => true,
+                        .filter_map(|key_stroke| match *key_stroke {
+                            "n" => {
+                                let single_n_avail = allow_single_n_as_key_stroke(
+                                    &next_chunk_spell,
+                                    next_chunk_head_key_strokes.as_ref(),
+                                );
+
+                                match single_n_avail {
+                                    SingleNAvailability::All(avail_as_next_key_strokes) => {
+                                        Some((key_stroke, None, Some(avail_as_next_key_strokes)))
+                                    }
+                                    SingleNAvailability::Partial(avail_as_next_key_strokes) => {
+                                        Some((
+                                            key_stroke,
+                                            Some(avail_as_next_key_strokes[0].clone()),
+                                            Some(avail_as_next_key_strokes),
+                                        ))
+                                    }
+                                    SingleNAvailability::Cannot => None,
+                                }
+                            }
+                            _ => Some((key_stroke, None, None)),
                         })
-                        .for_each(|key_stroke| match *key_stroke {
-                            "n" => key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
-                                vec![key_stroke.to_string().try_into().unwrap()],
-                                None,
-                                Some(DelayedConfirmedCandidateInfo::new(
-                                    key_strokes_can_confirm_delayed_candidate.clone(),
-                                )),
-                            )),
-                            _ => key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
-                                vec![key_stroke.to_string().try_into().unwrap()],
-                                None,
-                                None,
-                            )),
-                        });
+                        .for_each(
+                            |(
+                                key_stroke,
+                                next_chunk_head_constraint,
+                                avail_as_next_key_strokes,
+                            )| {
+                                key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
+                                    vec![key_stroke.to_string().try_into().unwrap()],
+                                    next_chunk_head_constraint,
+                                    avail_as_next_key_strokes
+                                        .map(|aanks| DelayedConfirmedCandidateInfo::new(aanks)),
+                                ))
+                            },
+                        );
                 }
                 // 「っ」は単独で打つ以外にも次のチャンクの子音で済ませる(「った」なら「tta」)ことができる
                 "っ" => {
@@ -307,35 +325,41 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                         });
 
                     // 子音の連続で打つ場合には次のチャンクへの制限をする
-                    key_strokes_can_represent_ltu_by_repeat
-                        .iter()
-                        .for_each(|key_stroke| match char::from(key_stroke.clone()) {
-                            'l' | 'x' => {
-                                key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
+                    if let Some(ref key_strokes_can_represent_ltu_by_repeat) =
+                        key_strokes_can_represent_ltu_by_repeat
+                    {
+                        key_strokes_can_represent_ltu_by_repeat
+                            .iter()
+                            .for_each(|key_stroke| match char::from(key_stroke.clone()) {
+                                'l' | 'x' => {
+                                    key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
+                                        vec![char::from(key_stroke.clone())
+                                            .to_string()
+                                            .try_into()
+                                            .unwrap()],
+                                        Some(key_stroke.clone()),
+                                        // 次のチャンクへの制限があるときには遅延確定候補を確定できるのはその制限だけである
+                                        Some(DelayedConfirmedCandidateInfo::new(
+                                            next_chunk_head_key_strokes
+                                                .as_ref()
+                                                .map_or(&vec![], |v| v)
+                                                .iter()
+                                                .filter(|ks| *ks == key_stroke)
+                                                .map(|ks| ks.clone())
+                                                .collect(),
+                                        )),
+                                    ))
+                                }
+                                _ => key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
                                     vec![char::from(key_stroke.clone())
                                         .to_string()
                                         .try_into()
                                         .unwrap()],
                                     Some(key_stroke.clone()),
-                                    // 次のチャンクへの制限があるときには遅延確定候補を確定できるのはその制限だけである
-                                    Some(DelayedConfirmedCandidateInfo::new(
-                                        key_strokes_can_confirm_delayed_candidate
-                                            .iter()
-                                            .filter(|ks| *ks == key_stroke)
-                                            .map(|ks| ks.clone())
-                                            .collect(),
-                                    )),
-                                ))
-                            }
-                            _ => key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
-                                vec![char::from(key_stroke.clone())
-                                    .to_string()
-                                    .try_into()
-                                    .unwrap()],
-                                Some(key_stroke.clone()),
-                                None,
-                            )),
-                        });
+                                    None,
+                                )),
+                            });
+                    }
                 }
                 _ => {
                     CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY
@@ -403,10 +427,10 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
 
         next_chunk_spell.replace(chunk.spell.clone());
 
-        key_strokes_can_confirm_delayed_candidate.clear();
+        // 次のチャンク先頭のキーストロークを更新する
+        next_chunk_head_key_strokes.replace(vec![]);
 
-        let mut already_pushed_key_strokes_can_confirm_delayed_candidate =
-            HashSet::<KeyStrokeChar>::new();
+        let mut already_pushed_next_chunk_head_key_strokes = HashSet::<KeyStrokeChar>::new();
         chunk
             .key_stroke_candidates
             .as_ref()
@@ -414,47 +438,44 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
             .iter()
             .for_each(|key_stroke_candidate| {
                 let first_char = key_stroke_candidate.key_stroke_char_at_position(0);
-                if !already_pushed_key_strokes_can_confirm_delayed_candidate.contains(&first_char) {
-                    already_pushed_key_strokes_can_confirm_delayed_candidate
-                        .insert(first_char.clone());
-                    key_strokes_can_confirm_delayed_candidate.push(first_char);
+                if !already_pushed_next_chunk_head_key_strokes.contains(&first_char) {
+                    already_pushed_next_chunk_head_key_strokes.insert(first_char.clone());
+                    next_chunk_head_key_strokes
+                        .as_mut()
+                        .unwrap()
+                        .push(first_char);
                 }
             });
 
-        // 次に処理するチャンク（逆順で処理しているので一つ前のチャンク）が「っ」だった場合に備えて子音などのキーストロークを構築する
-        key_strokes_can_represent_ltu_by_repeat.clear();
-
-        let mut already_pushed_key_strokes_can_represent_ltu_by_repeat =
-            HashSet::<KeyStrokeChar>::new();
-        match &chunk.spell {
-            ChunkSpell::SingleChar(_) | ChunkSpell::DoubleChar(_) => chunk
-                .key_stroke_candidates
+        key_strokes_can_represent_ltu_by_repeat.replace(
+            next_chunk_head_key_strokes
                 .as_ref()
                 .unwrap()
                 .iter()
-                .for_each(|key_stroke_candidate| {
-                    let head_key_stroke_char = key_stroke_candidate.key_stroke_char_at_position(0);
-
-                    // 直後のチャンクの先頭が「n」を除く子音だった場合に「っ」を子音の連続で表すことができる
-                    if head_key_stroke_char != 'a'
-                        && head_key_stroke_char != 'i'
-                        && head_key_stroke_char != 'u'
-                        && head_key_stroke_char != 'e'
-                        && head_key_stroke_char != 'o'
-                        && head_key_stroke_char != 'n'
-                    {
-                        if !already_pushed_key_strokes_can_represent_ltu_by_repeat
-                            .contains(&head_key_stroke_char)
+                .filter(|ksc| {
+                    match &chunk.spell {
+                        ChunkSpell::SingleChar(_) | ChunkSpell::DoubleChar(_) =>
+                        // 直後のチャンクの先頭が「n」を除く子音だった場合に「っ」を子音の連続で表すことができる
                         {
-                            already_pushed_key_strokes_can_represent_ltu_by_repeat
-                                .insert(head_key_stroke_char.clone());
-                            key_strokes_can_represent_ltu_by_repeat.push(head_key_stroke_char);
+                            if **ksc != 'a'
+                                && **ksc != 'i'
+                                && **ksc != 'u'
+                                && **ksc != 'e'
+                                && **ksc != 'o'
+                                && **ksc != 'n'
+                            {
+                                true
+                            } else {
+                                false
+                            }
                         }
+                        // 直後のチャンクがASCIIだったら子音の連続で表すことはできない
+                        ChunkSpell::DisplayableAscii(_) => false,
                     }
-                }),
-            // 直後のチャンクがASCIIだったら子音の連続で表すことはできない
-            ChunkSpell::DisplayableAscii(_) => {}
-        }
+                })
+                .map(|ksc| ksc.clone())
+                .collect(),
+        );
     }
 
     append_ideal_candidates_to_chunks(chunks);
@@ -487,39 +508,55 @@ fn append_ideal_candidates_to_chunks(chunks: &mut [Chunk]) {
     });
 }
 
+enum SingleNAvailability {
+    All(Vec<KeyStrokeChar>),
+    Partial(Vec<KeyStrokeChar>),
+    Cannot,
+}
+
 // 「ん」のキーストロークとして「n」を使っていいか判定する
-fn allow_single_n_as_key_stroke(next_chunk_spell: &Option<ChunkSpell>) -> bool {
+fn allow_single_n_as_key_stroke(
+    next_chunk_spell: &Option<ChunkSpell>,
+    next_chunk_head: Option<&Vec<KeyStrokeChar>>,
+) -> SingleNAvailability {
     // 最後のチャンクの場合には許容しない
-    if next_chunk_spell.is_none() {
-        return false;
+    if next_chunk_head.is_none() || next_chunk_spell.is_none() {
+        return SingleNAvailability::Cannot;
     }
 
-    let next_chunk_spell = next_chunk_spell.as_ref().unwrap();
+    if let ChunkSpell::DisplayableAscii(_) = next_chunk_spell.as_ref().unwrap() {
+        return SingleNAvailability::Cannot;
+    }
 
-    // 次のチャンクがASCII・母音・な行・「ゃ」「ゅ」「ょ」を除くや行の場合には許容しない
-    // XXX 「んう」を「nwu」で打つことができるIMEもあるのでどの規格に沿うのか一貫させておいたほうがよい
-    match next_chunk_spell {
-        ChunkSpell::DisplayableAscii(_) => false,
-        ChunkSpell::SingleChar(spell_string) => !matches!(
-            spell_string.as_str(),
-            "あ" | "い"
-                | "う"
-                | "え"
-                | "お"
-                | "な"
-                | "に"
-                | "ぬ"
-                | "ね"
-                | "の"
-                | "や"
-                | "ゆ"
-                | "よ"
-                | "ん"
-        ),
-        ChunkSpell::DoubleChar(spell_string) => !matches!(
-            spell_string.as_str(),
-            "にゃ" | "にぃ" | "にゅ" | "にぇ" | "にょ"
-        ),
+    let next_chunk_head = next_chunk_head.unwrap();
+
+    let available_key_stroke_chars: Vec<KeyStrokeChar> = next_chunk_head
+        .iter()
+        .filter(|ksc| {
+            // 次のチャンク先頭のキーストロークが「a」「i」「u」「e」「o」「y」「n」の場合には「n」で「ん」を打てない
+            if ksc == &&'a'
+                || ksc == &&'i'
+                || ksc == &&'u'
+                || ksc == &&'e'
+                || ksc == &&'o'
+                || ksc == &&'y'
+                || ksc == &&'n'
+            {
+                false
+            } else {
+                true
+            }
+        })
+        .map(|ksc| ksc.clone())
+        .collect();
+
+    if available_key_stroke_chars.is_empty() {
+        SingleNAvailability::Cannot
+    } else if available_key_stroke_chars.len() == next_chunk_head.len() {
+        SingleNAvailability::All(available_key_stroke_chars)
+    } else {
+        assert_eq!(available_key_stroke_chars.len(), 1);
+        SingleNAvailability::Partial(available_key_stroke_chars)
     }
 }
 
