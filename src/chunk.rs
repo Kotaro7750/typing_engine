@@ -304,7 +304,7 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                                     vec![key_stroke.to_string().try_into().unwrap()],
                                     next_chunk_head_constraint,
                                     avail_as_next_key_strokes
-                                        .map(|aanks| DelayedConfirmedCandidateInfo::new(aanks)),
+                                        .map(DelayedConfirmedCandidateInfo::new),
                                 ))
                             },
                         );
@@ -345,7 +345,7 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                                                 .map_or(&vec![], |v| v)
                                                 .iter()
                                                 .filter(|ks| *ks == key_stroke)
-                                                .map(|ks| ks.clone())
+                                                .cloned()
                                                 .collect(),
                                         )),
                                     ))
@@ -457,23 +457,18 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                         ChunkSpell::SingleChar(_) | ChunkSpell::DoubleChar(_) =>
                         // 直後のチャンクの先頭が「n」を除く子音だった場合に「っ」を子音の連続で表すことができる
                         {
-                            if **ksc != 'a'
+                            **ksc != 'a'
                                 && **ksc != 'i'
                                 && **ksc != 'u'
                                 && **ksc != 'e'
                                 && **ksc != 'o'
                                 && **ksc != 'n'
-                            {
-                                true
-                            } else {
-                                false
-                            }
                         }
                         // 直後のチャンクがASCIIだったら子音の連続で表すことはできない
                         ChunkSpell::DisplayableAscii(_) => false,
                     }
                 })
-                .map(|ksc| ksc.clone())
+                .cloned()
                 .collect(),
         );
     }
@@ -534,20 +529,15 @@ fn allow_single_n_as_key_stroke(
         .iter()
         .filter(|ksc| {
             // 次のチャンク先頭のキーストロークが「a」「i」「u」「e」「o」「y」「n」の場合には「n」で「ん」を打てない
-            if ksc == &&'a'
-                || ksc == &&'i'
-                || ksc == &&'u'
-                || ksc == &&'e'
-                || ksc == &&'o'
-                || ksc == &&'y'
-                || ksc == &&'n'
-            {
-                false
-            } else {
-                true
-            }
+            !(**ksc == 'a'
+                || **ksc == 'i'
+                || **ksc == 'u'
+                || **ksc == 'e'
+                || **ksc == 'o'
+                || **ksc == 'y'
+                || **ksc == 'n')
         })
-        .map(|ksc| ksc.clone())
+        .cloned()
         .collect();
 
     if available_key_stroke_chars.is_empty() {

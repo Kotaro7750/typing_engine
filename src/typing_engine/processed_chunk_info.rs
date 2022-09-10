@@ -98,7 +98,7 @@ impl ProcessedChunkInfo {
                 pending_key_strokes.iter().for_each(|actual_key_stroke| {
                     self.inflight_chunk.as_mut().unwrap().stroke_key(
                         actual_key_stroke.key_stroke().clone(),
-                        actual_key_stroke.elapsed_time().clone(),
+                        *actual_key_stroke.elapsed_time(),
                     );
                 });
             } else {
