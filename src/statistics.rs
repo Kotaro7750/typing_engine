@@ -2,6 +2,8 @@ use std::{num::NonZeroUsize, time::Duration};
 
 use serde::{Deserialize, Serialize};
 
+mod multi_target_position_convert;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct OnTypingStatisticsTarget {
     // 対象を何個打ち終えたか
