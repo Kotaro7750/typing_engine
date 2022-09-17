@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 
 mod multi_target_position_convert;
 
+use crate::chunk::KeyStrokeElementCount;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct OnTypingStatisticsTarget {
     // 対象を何個打ち終えたか
@@ -281,8 +283,8 @@ impl OnTypingStatisticsManager {
     /// チャンクを打ち終えたときに呼ぶ
     pub(crate) fn finish_chunk(
         &mut self,
-        key_stroke_whole_count: usize,
-        key_stroke_ideal_whole_count: usize,
+        key_stroke_element_count: KeyStrokeElementCount,
+        ideal_key_stroke_element_count: KeyStrokeElementCount,
         spell_count: usize,
     ) -> Option<Vec<usize>> {
         self.chunk.on_finished(
@@ -293,10 +295,12 @@ impl OnTypingStatisticsManager {
         self.this_chunk_wrong = false;
 
         self.in_candidate_key_stroke_count = 0;
-        let ksle = self.key_stroke.on_target_add(key_stroke_whole_count);
+        let ksle = self
+            .key_stroke
+            .on_target_add(key_stroke_element_count.whole_count());
         let iksle = self
             .ideal_key_stroke
-            .on_target_add(key_stroke_ideal_whole_count);
+            .on_target_add(ideal_key_stroke_element_count.whole_count());
         let sle = self.spell.on_target_add(spell_count);
         let cle = self.chunk.on_target_add(1);
 
@@ -311,14 +315,16 @@ impl OnTypingStatisticsManager {
     /// 打ち終えていないチャンクをカウントする時に呼ぶ
     pub(crate) fn add_unfinished_chunk(
         &mut self,
-        key_stroke_whole_count: usize,
-        key_stroke_ideal_whole_count: usize,
+        key_stroke_element_count: KeyStrokeElementCount,
+        ideal_key_stroke_element_count: KeyStrokeElementCount,
         spell_count: usize,
     ) -> Option<Vec<usize>> {
-        let ksle = self.key_stroke.on_target_add(key_stroke_whole_count);
+        let ksle = self
+            .key_stroke
+            .on_target_add(key_stroke_element_count.whole_count());
         let iksle = self
             .ideal_key_stroke
-            .on_target_add(key_stroke_ideal_whole_count);
+            .on_target_add(ideal_key_stroke_element_count.whole_count());
         let sle = self.spell.on_target_add(spell_count);
         let cle = self.chunk.on_target_add(1);
 

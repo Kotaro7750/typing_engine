@@ -225,17 +225,13 @@ impl ProcessedChunkInfo {
                 confirmed_chunk
                     .as_ref()
                     .min_candidate(None)
-                    .whole_key_stroke()
-                    .chars()
-                    .count(),
+                    .construct_key_stroke_element_count(),
                 confirmed_chunk
                     .as_ref()
                     .ideal_key_stroke_candidate()
                     .as_ref()
                     .unwrap()
-                    .whole_key_stroke()
-                    .chars()
-                    .count(),
+                    .construct_key_stroke_element_count(),
                 confirmed_chunk.as_ref().spell().count(),
             );
         });
@@ -361,17 +357,13 @@ impl ProcessedChunkInfo {
                 inflight_chunk
                     .as_ref()
                     .min_candidate(None)
-                    .whole_key_stroke()
-                    .chars()
-                    .count(),
+                    .construct_key_stroke_element_count(),
                 inflight_chunk
                     .as_ref()
                     .ideal_key_stroke_candidate()
                     .as_ref()
                     .unwrap()
-                    .whole_key_stroke()
-                    .chars()
-                    .count(),
+                    .construct_key_stroke_element_count(),
                 inflight_chunk.as_ref().spell().count(),
             );
         }
@@ -445,17 +437,15 @@ impl ProcessedChunkInfo {
 
                 // チャンクの統計情報を更新する
 
-                let key_stroke_count = unprocessed_chunk
+                let key_stroke_element_count = unprocessed_chunk
                     .ideal_key_stroke_candidate()
                     .as_ref()
                     .unwrap()
-                    .whole_key_stroke()
-                    .chars()
-                    .count();
+                    .construct_key_stroke_element_count();
 
                 on_typing_stat_manager.add_unfinished_chunk(
-                    key_stroke_count,
-                    key_stroke_count,
+                    key_stroke_element_count.clone(),
+                    key_stroke_element_count,
                     unprocessed_chunk.spell().count(),
                 );
 
