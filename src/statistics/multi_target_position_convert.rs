@@ -190,7 +190,7 @@ mod test {
         assert_eq!(m.chunk_delta(&vec![1, 2]), vec![1, 1]);
 
         assert_eq!(m.spell_delta(&vec![1, 2]), vec![1, 2]);
-        assert_eq!(m.ideal_key_stroke_delta(&vec![1, 2]), vec![3, 3]);
+        assert_eq!(m.ideal_key_stroke_delta(&vec![1, 2]), vec![1, 3]);
         assert_eq!(m.key_stroke_delta(&vec![1, 2]), vec![2, 5]);
     }
 
