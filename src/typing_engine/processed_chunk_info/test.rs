@@ -1110,7 +1110,7 @@ fn construct_display_info_1() {
             vec![4, 5],
             vec![0, 1, 3, 4, 5],
             7,
-            OnTypingStatisticsTarget::new(4, 8, 1, 5, None, None)
+            OnTypingStatisticsTarget::new(4, 8, 1, 5, None, None, vec![1, 2, 3, 3, 5, 6])
         )
     );
 
@@ -1120,7 +1120,6 @@ fn construct_display_info_1() {
             "kyokixyokyoky".to_string(),
             9,
             vec![1, 5, 8],
-            Some(vec![1, 3, 5, 7, 9, 11]),
             OnTypingStatisticsTarget::new(
                 9,
                 13,
@@ -1132,17 +1131,10 @@ fn construct_display_info_1() {
                     Duration::new(5, 0),
                     Duration::new(8, 0),
                     Duration::new(10, 0)
-                ])
+                ]),
+                vec![1, 3, 5, 7, 9, 11],
             ),
-            // kixyoという系列は理想的な系列がkyoと長さの比率が5:3なので
-            // 実際のiキーストローク目は理想的な系列でのceil(3 * i / 5)キーストローク目に対応する
-            // つまり
-            // k -> k
-            // i -> y
-            // x -> y
-            // y -> o
-            // o -> o
-            OnTypingStatisticsTarget::new(7, 11, 4, 3, None, None)
+            OnTypingStatisticsTarget::new(7, 11, 4, 3, None, None, vec![1, 3, 4, 5, 7, 9])
         )
     );
 
@@ -1155,8 +1147,7 @@ fn construct_display_info_1() {
             "kyokixyokyoky".to_string(),
             9,
             vec![1, 5, 8],
-            Some(vec![1, 3, 7, 9, 11]),
-            OnTypingStatisticsTarget::new(9, 13, 6, 3, None, None),
+            OnTypingStatisticsTarget::new(9, 13, 6, 3, None, None, vec![1, 3, 5, 7, 9]),
             OnTypingStatisticsTarget::new(
                 7,
                 11,
@@ -1167,7 +1158,8 @@ fn construct_display_info_1() {
                     Duration::new(3, 0),
                     Duration::new(5, 0),
                     Duration::new(10, 0)
-                ])
+                ]),
+                vec![1, 4, 7, 9, 11],
             )
         )
     );
@@ -1192,7 +1184,8 @@ fn construct_display_info_1() {
                     Duration::new(4, 0),
                     Duration::new(6, 0),
                     Duration::new(10, 0)
-                ])
+                ]),
+                vec![0, 1, 2, 3, 4, 5, 6, 7]
             )
         )
     );
@@ -1203,9 +1196,8 @@ fn construct_display_info_1() {
             "kyokixyokyoky".to_string(),
             9,
             vec![1, 5, 8],
-            None,
-            OnTypingStatisticsTarget::new(9, 13, 6, 3, None, None),
-            OnTypingStatisticsTarget::new(7, 11, 4, 3, None, None)
+            OnTypingStatisticsTarget::new(9, 13, 6, 3, None, None, vec![0, 2, 4, 7, 8, 10, 11, 12]),
+            OnTypingStatisticsTarget::new(7, 11, 4, 3, None, None, vec![0, 2, 3, 5, 6, 8, 9, 10])
         )
     );
 }
@@ -1280,7 +1272,7 @@ fn construct_display_info_2() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsTarget::new(1, 2, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(1, 2, 1, 1, None, None, vec![1])
         )
     );
 
@@ -1290,16 +1282,16 @@ fn construct_display_info_2() {
             "nzi".to_string(),
             1,
             vec![1],
-            Some(vec![1]),
             OnTypingStatisticsTarget::new(
                 1,
                 3,
                 1,
                 1,
                 Some(NonZeroUsize::new(2).unwrap()),
-                Some(vec![])
+                Some(vec![]),
+                vec![1],
             ),
-            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None, vec![1])
         )
     );
 
@@ -1312,15 +1304,15 @@ fn construct_display_info_2() {
             "nzi".to_string(),
             1,
             vec![1],
-            Some(vec![1]),
-            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None),
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None, vec![1]),
             OnTypingStatisticsTarget::new(
                 1,
                 3,
                 1,
                 1,
                 Some(NonZeroUsize::new(2).unwrap()),
-                Some(vec![])
+                Some(vec![]),
+                vec![1]
             )
         )
     );
@@ -1340,7 +1332,8 @@ fn construct_display_info_2() {
                 1,
                 1,
                 Some(NonZeroUsize::new(1).unwrap()),
-                Some(vec![Duration::new(1, 0)])
+                Some(vec![Duration::new(1, 0)]),
+                vec![0, 1]
             )
         )
     );
@@ -1351,9 +1344,8 @@ fn construct_display_info_2() {
             "nzi".to_string(),
             1,
             vec![1],
-            None,
-            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None),
-            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None, vec![0, 2]),
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None, vec![0, 2])
         )
     );
 
@@ -1399,7 +1391,7 @@ fn construct_display_info_2() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsTarget::new(1, 2, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(1, 2, 1, 1, None, None, vec![1])
         )
     );
 
@@ -1409,16 +1401,16 @@ fn construct_display_info_2() {
             "nji".to_string(),
             2,
             vec![1],
-            Some(vec![1]),
             OnTypingStatisticsTarget::new(
                 2,
                 3,
                 1,
                 1,
                 Some(NonZeroUsize::new(2).unwrap()),
-                Some(vec![Duration::new(3, 0)])
+                Some(vec![Duration::new(3, 0)]),
+                vec![1],
             ),
-            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None, vec![1])
         )
     );
 
@@ -1431,15 +1423,15 @@ fn construct_display_info_2() {
             "nji".to_string(),
             2,
             vec![1],
-            Some(vec![1]),
-            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None),
+            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None, vec![1]),
             OnTypingStatisticsTarget::new(
                 2,
                 3,
                 1,
                 1,
                 Some(NonZeroUsize::new(2).unwrap()),
-                Some(vec![Duration::new(3, 0)])
+                Some(vec![Duration::new(3, 0)]),
+                vec![1]
             )
         )
     );
@@ -1459,7 +1451,8 @@ fn construct_display_info_2() {
                 1,
                 1,
                 Some(NonZeroUsize::new(1).unwrap()),
-                Some(vec![Duration::new(1, 0)])
+                Some(vec![Duration::new(1, 0)]),
+                vec![0, 1]
             )
         )
     );
@@ -1470,9 +1463,8 @@ fn construct_display_info_2() {
             "nji".to_string(),
             2,
             vec![1],
-            None,
-            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None),
-            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None, vec![0, 2]),
+            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None, vec![0, 2])
         )
     );
 }
@@ -1547,7 +1539,7 @@ fn construct_display_info_3() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsTarget::new(1, 2, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(1, 2, 1, 1, None, None, vec![1])
         )
     );
 
@@ -1557,16 +1549,16 @@ fn construct_display_info_3() {
             "nzi".to_string(),
             1,
             vec![1],
-            Some(vec![1]),
             OnTypingStatisticsTarget::new(
                 1,
                 3,
                 1,
                 1,
                 Some(NonZeroUsize::new(2).unwrap()),
-                Some(vec![])
+                Some(vec![]),
+                vec![1],
             ),
-            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None, vec![1])
         )
     );
 
@@ -1585,7 +1577,8 @@ fn construct_display_info_3() {
                 1,
                 1,
                 Some(NonZeroUsize::new(1).unwrap()),
-                Some(vec![Duration::new(1, 0)])
+                Some(vec![Duration::new(1, 0)]),
+                vec![0, 1]
             )
         )
     );
@@ -1596,9 +1589,8 @@ fn construct_display_info_3() {
             "nzi".to_string(),
             1,
             vec![1],
-            None,
-            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None),
-            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None)
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None, vec![0, 2]),
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None, vec![0, 2])
         )
     );
 
@@ -1645,7 +1637,7 @@ fn construct_display_info_3() {
             vec![1],
             vec![0],
             1,
-            OnTypingStatisticsTarget::new(1, 2, 0, 1, None, None)
+            OnTypingStatisticsTarget::new(1, 2, 0, 1, None, None, vec![0, 1])
         )
     );
 
@@ -1655,16 +1647,16 @@ fn construct_display_info_3() {
             "nnzi".to_string(),
             2,
             vec![1],
-            Some(vec![1, 3]),
             OnTypingStatisticsTarget::new(
                 2,
                 4,
                 1,
                 1,
                 Some(NonZeroUsize::new(2).unwrap()),
-                Some(vec![Duration::new(3, 0)])
+                Some(vec![Duration::new(3, 0)]),
+                vec![1, 3],
             ),
-            OnTypingStatisticsTarget::new(1, 3, 0, 1, None, None)
+            OnTypingStatisticsTarget::new(1, 3, 0, 1, None, None, vec![0, 2])
         )
     );
 
@@ -1677,15 +1669,15 @@ fn construct_display_info_3() {
             "nnzi".to_string(),
             2,
             vec![1],
-            Some(vec![2]),
-            OnTypingStatisticsTarget::new(2, 4, 1, 1, None, None),
+            OnTypingStatisticsTarget::new(2, 4, 1, 1, None, None, vec![2]),
             OnTypingStatisticsTarget::new(
                 1,
                 3,
                 0,
                 1,
                 Some(NonZeroUsize::new(2).unwrap()),
-                Some(vec![])
+                Some(vec![]),
+                vec![1]
             )
         )
     );
@@ -1706,7 +1698,8 @@ fn construct_display_info_3() {
                 0,
                 1,
                 Some(NonZeroUsize::new(1).unwrap()),
-                Some(vec![Duration::new(3, 0)])
+                Some(vec![Duration::new(3, 0)]),
+                vec![0, 1]
             )
         )
     );
@@ -1717,9 +1710,8 @@ fn construct_display_info_3() {
             "nnzi".to_string(),
             2,
             vec![1],
-            None,
-            OnTypingStatisticsTarget::new(2, 4, 1, 1, None, None),
-            OnTypingStatisticsTarget::new(1, 3, 0, 1, None, None)
+            OnTypingStatisticsTarget::new(2, 4, 1, 1, None, None, vec![1, 3]),
+            OnTypingStatisticsTarget::new(1, 3, 0, 1, None, None, vec![0, 2])
         )
     );
 }
@@ -1844,7 +1836,7 @@ fn construct_display_info_4() {
             vec![1],
             vec![],
             3,
-            OnTypingStatisticsTarget::new(1, 4, 1, 0, None, None)
+            OnTypingStatisticsTarget::new(1, 4, 1, 0, None, None, vec![1, 2, 3])
         )
     );
 
@@ -1854,16 +1846,16 @@ fn construct_display_info_4() {
             "akkann".to_string(),
             1,
             vec![],
-            Some(vec![1, 3, 5]),
             OnTypingStatisticsTarget::new(
                 1,
                 6,
                 1,
                 0,
                 Some(NonZeroUsize::new(2).unwrap()),
-                Some(vec![])
+                Some(vec![]),
+                vec![1, 3, 5],
             ),
-            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None)
+            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None, vec![1, 3, 5])
         )
     );
 
@@ -1876,15 +1868,15 @@ fn construct_display_info_4() {
             "akkann".to_string(),
             1,
             vec![],
-            Some(vec![1, 3, 5]),
-            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None),
+            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None, vec![1, 3, 5]),
             OnTypingStatisticsTarget::new(
                 1,
                 6,
                 1,
                 0,
                 Some(NonZeroUsize::new(2).unwrap()),
-                Some(vec![])
+                Some(vec![]),
+                vec![1, 3, 5]
             )
         )
     );
@@ -1904,7 +1896,8 @@ fn construct_display_info_4() {
                 1,
                 0,
                 Some(NonZeroUsize::new(1).unwrap()),
-                Some(vec![Duration::new(1, 0)])
+                Some(vec![Duration::new(1, 0)]),
+                vec![0, 1, 2, 3]
             )
         )
     );
@@ -1915,9 +1908,8 @@ fn construct_display_info_4() {
             "akkann".to_string(),
             1,
             vec![],
-            None,
-            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None),
-            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None)
+            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None, vec![0, 1, 3, 5]),
+            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None, vec![0, 1, 3, 5])
         )
     );
 }

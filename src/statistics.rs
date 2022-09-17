@@ -17,8 +17,10 @@ pub struct OnTypingStatisticsTarget {
     wrong_count: usize,
     // ラップ当たりの対象数
     targets_per_lap: Option<NonZeroUsize>,
-    // 各ラップが末の経過時間
+    // 各ラップ末の経過時間
     lap_end_time: Option<Vec<Duration>>,
+    // 各ラップ末の位置
+    lap_end_position: Vec<usize>,
 }
 
 impl OnTypingStatisticsTarget {
@@ -29,6 +31,7 @@ impl OnTypingStatisticsTarget {
         wrong_count: usize,
         targets_per_lap: Option<NonZeroUsize>,
         lap_end_time: Option<Vec<Duration>>,
+        lap_end_position: Vec<usize>,
     ) -> Self {
         assert_eq!(targets_per_lap.is_some(), lap_end_time.is_some());
 
@@ -39,6 +42,7 @@ impl OnTypingStatisticsTarget {
             wrong_count,
             targets_per_lap,
             lap_end_time,
+            lap_end_position,
         }
     }
 
@@ -157,6 +161,7 @@ impl OnTypingStatisticsManager {
                 0,
                 key_stroke_targets_per_lap,
                 key_stroke_lap_end_time,
+                vec![],
             ),
             ideal_key_stroke: OnTypingStatisticsTarget::new(
                 0,
@@ -165,6 +170,7 @@ impl OnTypingStatisticsManager {
                 0,
                 ideal_key_stroke_targets_per_lap,
                 ideal_key_stroke_lap_end_time,
+                vec![],
             ),
             spell: OnTypingStatisticsTarget::new(
                 0,
@@ -173,6 +179,7 @@ impl OnTypingStatisticsManager {
                 0,
                 spell_targets_per_lap,
                 spell_lap_end_time,
+                vec![],
             ),
             chunk: OnTypingStatisticsTarget::new(
                 0,
@@ -181,6 +188,7 @@ impl OnTypingStatisticsManager {
                 0,
                 chunk_targets_per_lap,
                 chunk_lap_end_time,
+                vec![],
             ),
             lap_request,
             this_key_stroke_wrong: false,
