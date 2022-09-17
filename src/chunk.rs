@@ -746,19 +746,15 @@ impl KeyStrokeElementCount {
     }
 
     // 綴りの位置を理想的なキーストローク・キーストロークの位置に変換する
-    pub(crate) fn convert_spell_delta_to_key_stroke_delta(&self, spell_delta: usize) -> usize {
-        match self {
-            Self::Sigle(c) => *c,
-            Self::Double((c1, c2)) => {
-                if spell_delta == 1 {
-                    *c1
-                } else if spell_delta == 2 {
-                    c1 + c2
-                } else {
-                    unreachable!()
-                }
-            }
-        }
+    pub(crate) fn convert_spell_delta_to_key_stroke_delta(
+        &self,
+        spell: usize,
+        spell_delta: usize,
+    ) -> usize {
+        let pseudo_count = self.construct_pseudo_count_of_spell_elements(spell);
+
+        pseudo_count.key_stroke_count_offset(spell_delta - 1)
+            + pseudo_count.count_of_spell_elements_index(spell_delta - 1)
     }
 
     /// 綴りのどの位置に属すかという観点で擬似的な綴り要素ごとの個数を構築する

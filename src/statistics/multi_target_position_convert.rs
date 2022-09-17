@@ -78,7 +78,7 @@ impl MultiTargetDeltaConverter {
                 .iter()
                 .map(|spell_delta| {
                     self.ideal_key_stroke
-                        .convert_spell_delta_to_key_stroke_delta(*spell_delta)
+                        .convert_spell_delta_to_key_stroke_delta(self.spell, *spell_delta)
                 })
                 .collect(),
             BaseTarget::IdealKeyStroke => base_deltas.to_vec(),
@@ -107,7 +107,7 @@ impl MultiTargetDeltaConverter {
                 .iter()
                 .map(|spell_delta| {
                     self.key_stroke
-                        .convert_spell_delta_to_key_stroke_delta(*spell_delta)
+                        .convert_spell_delta_to_key_stroke_delta(self.spell, *spell_delta)
                 })
                 .collect(),
             BaseTarget::IdealKeyStroke => base_deltas
