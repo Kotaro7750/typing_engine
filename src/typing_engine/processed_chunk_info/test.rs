@@ -1147,7 +1147,7 @@ fn construct_display_info_1() {
             "kyokixyokyoky".to_string(),
             9,
             vec![1, 5, 8],
-            OnTypingStatisticsTarget::new(9, 13, 6, 3, None, None, vec![1, 3, 5, 7, 9]),
+            OnTypingStatisticsTarget::new(9, 13, 6, 3, None, None, vec![1, 4, 7, 9, 11]),
             OnTypingStatisticsTarget::new(
                 7,
                 11,
@@ -1159,7 +1159,7 @@ fn construct_display_info_1() {
                     Duration::new(5, 0),
                     Duration::new(10, 0)
                 ]),
-                vec![1, 4, 7, 9, 11],
+                vec![1, 3, 5, 7, 9]
             )
         )
     );
