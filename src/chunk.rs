@@ -4,6 +4,7 @@ use std::num::NonZeroUsize;
 use crate::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
 use crate::key_stroke::{KeyStrokeChar, KeyStrokeString};
 use crate::spell::SpellString;
+use crate::utility::convert_by_weighted_count;
 
 pub(crate) mod confirmed;
 pub(crate) mod has_actual_key_strokes;
@@ -639,6 +640,16 @@ impl ChunkKeyStrokeCandidate {
         s.try_into().unwrap()
     }
 
+    pub(crate) fn construct_key_stroke_element_count(&self) -> KeyStrokeElementCount {
+        KeyStrokeElementCount::new(
+            &(self
+                .key_stroke_elements
+                .iter()
+                .map(|s| s.chars().count())
+                .collect::<Vec<usize>>()),
+        )
+    }
+
     // この候補のキーストローク系列の特定のキーストロークを取り出す
     fn key_stroke_char_at_position(&self, position: usize) -> KeyStrokeChar {
         let whole_key_stroke = self.whole_key_stroke();
@@ -702,6 +713,148 @@ impl ChunkKeyStrokeCandidate {
         self.next_chunk_head_constraint.take();
         // 遅延確定候補は普通の候補にする必要がある
         self.delayed_confirmed_candidate_info.take();
+    }
+}
+
+/// チャンク内の各綴り要素に対応するキーストローク数
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) enum KeyStrokeElementCount {
+    Sigle(usize),
+    Double((usize, usize)),
+}
+
+impl KeyStrokeElementCount {
+    pub(crate) fn new(counts: &[usize]) -> Self {
+        match counts.len() {
+            1 => Self::Sigle(counts[0]),
+            2 => Self::Double((counts[0], counts[1])),
+            _ => unreachable!(
+                "key stroke elements count must be 1 or 2, but {}",
+                counts.len()
+            ),
+        }
+    }
+
+    pub(crate) fn whole_count(&self) -> usize {
+        match self {
+            Self::Sigle(c) => *c,
+            Self::Double((c1, c2)) => c1 + c2,
+        }
+    }
+
+    pub(crate) fn is_double(&self) -> bool {
+        match self {
+            Self::Double(_) => true,
+            _ => false,
+        }
+    }
+
+    // 理想的なキーストローク・キーストロークの位置を綴りの位置に変換する
+    pub(crate) fn convert_key_stroke_delta_to_spell_delta(
+        &self,
+        spell: usize,
+        key_stroke_delta: usize,
+    ) -> usize {
+        let spell_elements_index = self.spell_elements_index_of_delta(key_stroke_delta);
+
+        let in_spell_element_key_stroke_delta = if spell_elements_index == 0 {
+            key_stroke_delta
+        } else {
+            key_stroke_delta - self.key_stroke_count_offset(spell_elements_index)
+        };
+
+        let effective_spell_count = if self.is_double() { 1 } else { spell };
+
+        convert_by_weighted_count(
+            self.count_of_spell_elements_index(spell_elements_index),
+            effective_spell_count,
+            in_spell_element_key_stroke_delta,
+        ) + spell_elements_index
+    }
+
+    // 綴りの位置を理想的なキーストローク・キーストロークの位置に変換する
+    pub(crate) fn convert_spell_delta_to_key_stroke_delta(
+        &self,
+        spell: usize,
+        spell_delta: usize,
+    ) -> usize {
+        let pseudo_count = self.construct_pseudo_count_of_spell_elements(spell);
+
+        pseudo_count.key_stroke_count_offset(spell_delta - 1)
+            + pseudo_count.count_of_spell_elements_index(spell_delta - 1)
+    }
+
+    /// 綴りのどの位置に属すかという観点で擬似的な綴り要素ごとの個数を構築する
+    /// ex. 「きょ」という綴りの「kyo」というキーストロークの綴り要素は1つだが
+    /// 位置変換という文脈ではkは0番目に属しyoは1番目に属する
+    pub(crate) fn construct_pseudo_count_of_spell_elements(
+        &self,
+        spell: usize,
+    ) -> KeyStrokeElementCount {
+        if (!self.is_double() && spell == 1) || (self.is_double() && spell == 2) {
+            return self.clone();
+        }
+
+        assert_eq!(spell, 2);
+        let key_stroke_count = match self {
+            Self::Sigle(c) => *c,
+            Self::Double(_) => unreachable!(),
+        };
+
+        let mut v = vec![0; spell];
+
+        for i in 1..=key_stroke_count {
+            let spell_delta = self.convert_key_stroke_delta_to_spell_delta(spell, i);
+            v[spell_delta - 1] += 1;
+        }
+
+        Self::Double((v[0], v[1]))
+    }
+
+    /// キーストローク位置が綴り要素の何番目に属するか
+    pub(crate) fn spell_elements_index_of_delta(&self, key_stroke_delta: usize) -> usize {
+        match self {
+            Self::Sigle(c) => {
+                assert!(key_stroke_delta <= *c);
+                0
+            }
+            Self::Double((c1, c2)) => {
+                assert!(key_stroke_delta <= (c1 + c2));
+                if key_stroke_delta <= *c1 {
+                    0
+                } else {
+                    1
+                }
+            }
+        }
+    }
+
+    pub(crate) fn count_of_spell_elements_index(&self, spell_elements_index: usize) -> usize {
+        match self {
+            Self::Sigle(c) => *c,
+            Self::Double((c1, c2)) => {
+                if spell_elements_index == 0 {
+                    *c1
+                } else if spell_elements_index == 1 {
+                    *c2
+                } else {
+                    unreachable!();
+                }
+            }
+        }
+    }
+
+    pub(crate) fn key_stroke_count_offset(&self, spell_elements_index: usize) -> usize {
+        match self {
+            Self::Sigle(_) => 0,
+            Self::Double((c1, c2)) => {
+                if spell_elements_index == 0 {
+                    0
+                } else {
+                    *c1
+                }
+            }
+        }
     }
 }
 

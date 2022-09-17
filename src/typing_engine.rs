@@ -1,10 +1,12 @@
 use std::error::Error;
 use std::fmt::Display;
+use std::num::NonZeroUsize;
 use std::time::Instant;
 
 use crate::display_info::{DisplayInfo, ViewDisplayInfo};
 use crate::key_stroke::KeyStrokeChar;
 use crate::query::QueryRequest;
+use crate::statistics::LapRequest;
 use crate::typing_engine::processed_chunk_info::ProcessedChunkInfo;
 use crate::vocabulary::{construct_view_position_of_spell_positions, VocabularyInfo};
 
@@ -177,7 +179,8 @@ impl TypingEngine {
                 .processed_chunk_info
                 .as_ref()
                 .unwrap()
-                .construct_display_info();
+                // XXX 引数で指定するようにする
+                .construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(50).unwrap()));
 
             let view_position_of_spell_position =
                 construct_view_position_of_spell_positions(self.vocabulary_infos.as_ref().unwrap());

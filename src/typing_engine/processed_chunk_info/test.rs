@@ -1,5 +1,6 @@
 use super::*;
 
+use std::num::NonZeroUsize;
 use std::time::Duration;
 
 use crate::key_stroke::ActualKeyStroke;
@@ -1099,7 +1100,8 @@ fn construct_display_info_1() {
         }
     );
 
-    let (sdi, ksdi) = pci.construct_display_info();
+    let (sdi, ksdi) =
+        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
 
     assert_eq!(
         sdi,
@@ -1108,7 +1110,7 @@ fn construct_display_info_1() {
             vec![4, 5],
             vec![0, 1, 3, 4, 5],
             7,
-            OnTypingStatisticsTarget::new(4, 8, 1, 5)
+            OnTypingStatisticsTarget::new(4, 8, 1, 5, None, None, vec![1, 2, 3, 3, 5, 6])
         )
     );
 
@@ -1118,16 +1120,84 @@ fn construct_display_info_1() {
             "kyokixyokyoky".to_string(),
             9,
             vec![1, 5, 8],
-            OnTypingStatisticsTarget::new(9, 13, 6, 3),
-            // kixyoという系列は理想的な系列がkyoと長さの比率が5:3なので
-            // 実際のiキーストローク目は理想的な系列でのceil(3 * i / 5)キーストローク目に対応する
-            // つまり
-            // k -> k
-            // i -> y
-            // x -> y
-            // y -> o
-            // o -> o
-            OnTypingStatisticsTarget::new(7, 11, 4, 3)
+            OnTypingStatisticsTarget::new(
+                9,
+                13,
+                6,
+                3,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![
+                    Duration::new(3, 0),
+                    Duration::new(5, 0),
+                    Duration::new(8, 0),
+                    Duration::new(10, 0)
+                ]),
+                vec![1, 3, 5, 7, 9, 11],
+            ),
+            OnTypingStatisticsTarget::new(7, 11, 4, 3, None, None, vec![1, 3, 4, 5, 7, 9])
+        )
+    );
+
+    let (_, ksdi) =
+        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "kyokixyokyoky".to_string(),
+            9,
+            vec![1, 5, 8],
+            OnTypingStatisticsTarget::new(9, 13, 6, 3, None, None, vec![1, 4, 7, 9, 11]),
+            OnTypingStatisticsTarget::new(
+                7,
+                11,
+                4,
+                3,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![
+                    Duration::new(3, 0),
+                    Duration::new(5, 0),
+                    Duration::new(10, 0)
+                ]),
+                vec![1, 3, 5, 7, 9]
+            )
+        )
+    );
+
+    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+
+    assert_eq!(
+        sdi,
+        SpellDisplayInfo::new(
+            "きょきょきょきょ".to_string(),
+            vec![4, 5],
+            vec![0, 1, 3, 4, 5],
+            7,
+            OnTypingStatisticsTarget::new(
+                4,
+                8,
+                1,
+                5,
+                Some(NonZeroUsize::new(1).unwrap()),
+                Some(vec![
+                    Duration::new(4, 0),
+                    Duration::new(4, 0),
+                    Duration::new(6, 0),
+                    Duration::new(10, 0)
+                ]),
+                vec![0, 1, 2, 3, 4, 5, 6, 7]
+            )
+        )
+    );
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "kyokixyokyoky".to_string(),
+            9,
+            vec![1, 5, 8],
+            OnTypingStatisticsTarget::new(9, 13, 6, 3, None, None, vec![0, 2, 4, 7, 8, 10, 11, 12]),
+            OnTypingStatisticsTarget::new(7, 11, 4, 3, None, None, vec![0, 2, 3, 5, 6, 8, 9, 10])
         )
     );
 }
@@ -1190,7 +1260,8 @@ fn construct_display_info_2() {
         }
     );
 
-    let (sdi, ksdi) = pci.construct_display_info();
+    let (sdi, ksdi) =
+        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
 
     // 入力を終えた遅延確定候補は表示の上では確定したとみなす
     // pendingにあるミスタイプは表示状は次のチャンクに帰属させる
@@ -1201,7 +1272,7 @@ fn construct_display_info_2() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsTarget::new(1, 2, 1, 1)
+            OnTypingStatisticsTarget::new(1, 2, 1, 1, None, None, vec![1])
         )
     );
 
@@ -1211,8 +1282,70 @@ fn construct_display_info_2() {
             "nzi".to_string(),
             1,
             vec![1],
-            OnTypingStatisticsTarget::new(1, 3, 1, 1),
-            OnTypingStatisticsTarget::new(1, 3, 1, 1)
+            OnTypingStatisticsTarget::new(
+                1,
+                3,
+                1,
+                1,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![]),
+                vec![1],
+            ),
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None, vec![1])
+        )
+    );
+
+    let (_, ksdi) =
+        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "nzi".to_string(),
+            1,
+            vec![1],
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None, vec![1]),
+            OnTypingStatisticsTarget::new(
+                1,
+                3,
+                1,
+                1,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![]),
+                vec![1]
+            )
+        )
+    );
+
+    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+
+    assert_eq!(
+        sdi,
+        SpellDisplayInfo::new(
+            "んじ".to_string(),
+            vec![1],
+            vec![1],
+            1,
+            OnTypingStatisticsTarget::new(
+                1,
+                2,
+                1,
+                1,
+                Some(NonZeroUsize::new(1).unwrap()),
+                Some(vec![Duration::new(1, 0)]),
+                vec![0, 1]
+            )
+        )
+    );
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "nzi".to_string(),
+            1,
+            vec![1],
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None, vec![0, 2]),
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None, vec![0, 2])
         )
     );
 
@@ -1247,7 +1380,8 @@ fn construct_display_info_2() {
         }
     );
 
-    let (sdi, ksdi) = pci.construct_display_info();
+    let (sdi, ksdi) =
+        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
 
     // 遅延確定候補で確定したのでミスタイプは引き続き次のチャンクに属する
     assert_eq!(
@@ -1257,7 +1391,7 @@ fn construct_display_info_2() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsTarget::new(1, 2, 1, 1)
+            OnTypingStatisticsTarget::new(1, 2, 1, 1, None, None, vec![1])
         )
     );
 
@@ -1267,8 +1401,70 @@ fn construct_display_info_2() {
             "nji".to_string(),
             2,
             vec![1],
-            OnTypingStatisticsTarget::new(2, 3, 1, 1),
-            OnTypingStatisticsTarget::new(2, 3, 1, 1)
+            OnTypingStatisticsTarget::new(
+                2,
+                3,
+                1,
+                1,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![Duration::new(3, 0)]),
+                vec![1],
+            ),
+            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None, vec![1])
+        )
+    );
+
+    let (_, ksdi) =
+        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "nji".to_string(),
+            2,
+            vec![1],
+            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None, vec![1]),
+            OnTypingStatisticsTarget::new(
+                2,
+                3,
+                1,
+                1,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![Duration::new(3, 0)]),
+                vec![1]
+            )
+        )
+    );
+
+    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+
+    assert_eq!(
+        sdi,
+        SpellDisplayInfo::new(
+            "んじ".to_string(),
+            vec![1],
+            vec![1],
+            1,
+            OnTypingStatisticsTarget::new(
+                1,
+                2,
+                1,
+                1,
+                Some(NonZeroUsize::new(1).unwrap()),
+                Some(vec![Duration::new(1, 0)]),
+                vec![0, 1]
+            )
+        )
+    );
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "nji".to_string(),
+            2,
+            vec![1],
+            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None, vec![0, 2]),
+            OnTypingStatisticsTarget::new(2, 3, 1, 1, None, None, vec![0, 2])
         )
     );
 }
@@ -1331,7 +1527,8 @@ fn construct_display_info_3() {
         }
     );
 
-    let (sdi, ksdi) = pci.construct_display_info();
+    let (sdi, ksdi) =
+        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
 
     // 入力を終えた遅延確定候補は表示の上では確定したとみなす
     // pendingにあるミスタイプは表示状は次のチャンクに帰属させる
@@ -1342,7 +1539,7 @@ fn construct_display_info_3() {
             vec![1],
             vec![1],
             1,
-            OnTypingStatisticsTarget::new(1, 2, 1, 1)
+            OnTypingStatisticsTarget::new(1, 2, 1, 1, None, None, vec![1])
         )
     );
 
@@ -1352,8 +1549,48 @@ fn construct_display_info_3() {
             "nzi".to_string(),
             1,
             vec![1],
-            OnTypingStatisticsTarget::new(1, 3, 1, 1),
-            OnTypingStatisticsTarget::new(1, 3, 1, 1)
+            OnTypingStatisticsTarget::new(
+                1,
+                3,
+                1,
+                1,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![]),
+                vec![1],
+            ),
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None, vec![1])
+        )
+    );
+
+    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+
+    assert_eq!(
+        sdi,
+        SpellDisplayInfo::new(
+            "んじ".to_string(),
+            vec![1],
+            vec![1],
+            1,
+            OnTypingStatisticsTarget::new(
+                1,
+                2,
+                1,
+                1,
+                Some(NonZeroUsize::new(1).unwrap()),
+                Some(vec![Duration::new(1, 0)]),
+                vec![0, 1]
+            )
+        )
+    );
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "nzi".to_string(),
+            1,
+            vec![1],
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None, vec![0, 2]),
+            OnTypingStatisticsTarget::new(1, 3, 1, 1, None, None, vec![0, 2])
         )
     );
 
@@ -1389,7 +1626,8 @@ fn construct_display_info_3() {
         }
     );
 
-    let (sdi, ksdi) = pci.construct_display_info();
+    let (sdi, ksdi) =
+        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
 
     // 遅延確定候補ではない候補で確定したのでミスタイプはその候補に属する
     assert_eq!(
@@ -1399,7 +1637,7 @@ fn construct_display_info_3() {
             vec![1],
             vec![0],
             1,
-            OnTypingStatisticsTarget::new(1, 2, 0, 1)
+            OnTypingStatisticsTarget::new(1, 2, 0, 1, None, None, vec![0, 1])
         )
     );
 
@@ -1409,8 +1647,71 @@ fn construct_display_info_3() {
             "nnzi".to_string(),
             2,
             vec![1],
-            OnTypingStatisticsTarget::new(2, 4, 1, 1),
-            OnTypingStatisticsTarget::new(1, 3, 0, 1)
+            OnTypingStatisticsTarget::new(
+                2,
+                4,
+                1,
+                1,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![Duration::new(3, 0)]),
+                vec![1, 3],
+            ),
+            OnTypingStatisticsTarget::new(1, 3, 0, 1, None, None, vec![0, 2])
+        )
+    );
+
+    let (_, ksdi) =
+        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "nnzi".to_string(),
+            2,
+            vec![1],
+            OnTypingStatisticsTarget::new(2, 4, 1, 1, None, None, vec![2]),
+            OnTypingStatisticsTarget::new(
+                1,
+                3,
+                0,
+                1,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![]),
+                vec![1]
+            )
+        )
+    );
+
+    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+
+    // 遅延確定候補ではない候補で確定したのでミスタイプはその候補に属する
+    assert_eq!(
+        sdi,
+        SpellDisplayInfo::new(
+            "んじ".to_string(),
+            vec![1],
+            vec![0],
+            1,
+            OnTypingStatisticsTarget::new(
+                1,
+                2,
+                0,
+                1,
+                Some(NonZeroUsize::new(1).unwrap()),
+                Some(vec![Duration::new(3, 0)]),
+                vec![0, 1]
+            )
+        )
+    );
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "nnzi".to_string(),
+            2,
+            vec![1],
+            OnTypingStatisticsTarget::new(2, 4, 1, 1, None, None, vec![1, 3]),
+            OnTypingStatisticsTarget::new(1, 3, 0, 1, None, None, vec![0, 2])
         )
     );
 }
@@ -1525,7 +1826,8 @@ fn construct_display_info_4() {
         }
     );
 
-    let (sdi, ksdi) = pci.construct_display_info();
+    let (sdi, ksdi) =
+        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
 
     assert_eq!(
         sdi,
@@ -1534,7 +1836,7 @@ fn construct_display_info_4() {
             vec![1],
             vec![],
             3,
-            OnTypingStatisticsTarget::new(1, 4, 1, 0)
+            OnTypingStatisticsTarget::new(1, 4, 1, 0, None, None, vec![1, 2, 3])
         )
     );
 
@@ -1544,8 +1846,70 @@ fn construct_display_info_4() {
             "akkann".to_string(),
             1,
             vec![],
-            OnTypingStatisticsTarget::new(1, 6, 1, 0),
-            OnTypingStatisticsTarget::new(1, 6, 1, 0)
+            OnTypingStatisticsTarget::new(
+                1,
+                6,
+                1,
+                0,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![]),
+                vec![1, 3, 5],
+            ),
+            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None, vec![1, 3, 5])
+        )
+    );
+
+    let (_, ksdi) =
+        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "akkann".to_string(),
+            1,
+            vec![],
+            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None, vec![1, 3, 5]),
+            OnTypingStatisticsTarget::new(
+                1,
+                6,
+                1,
+                0,
+                Some(NonZeroUsize::new(2).unwrap()),
+                Some(vec![]),
+                vec![1, 3, 5]
+            )
+        )
+    );
+
+    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+
+    assert_eq!(
+        sdi,
+        SpellDisplayInfo::new(
+            "あっかん".to_string(),
+            vec![1],
+            vec![],
+            3,
+            OnTypingStatisticsTarget::new(
+                1,
+                4,
+                1,
+                0,
+                Some(NonZeroUsize::new(1).unwrap()),
+                Some(vec![Duration::new(1, 0)]),
+                vec![0, 1, 2, 3]
+            )
+        )
+    );
+
+    assert_eq!(
+        ksdi,
+        KeyStrokeDisplayInfo::new(
+            "akkann".to_string(),
+            1,
+            vec![],
+            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None, vec![0, 1, 3, 5]),
+            OnTypingStatisticsTarget::new(1, 6, 1, 0, None, None, vec![0, 1, 3, 5])
         )
     );
 }
