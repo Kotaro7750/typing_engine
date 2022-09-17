@@ -1,7 +1,7 @@
 use crate::chunk::KeyStrokeElementCount;
 use crate::utility::convert_by_weighted_count;
 
-enum BaseTarget {
+pub(crate) enum BaseTarget {
     Chunk,
     Spell,
     IdealKeyStroke,
@@ -37,16 +37,16 @@ impl MultiTargetDeltaConverter {
     }
 
     /// 基準の位置はチャンクでいうとどこか
-    pub(crate) fn chunk_delta(&self, base_deltas: Vec<usize>) -> Vec<usize> {
+    pub(crate) fn chunk_delta(&self, base_deltas: &[usize]) -> Vec<usize> {
         // 他の対象のどこに位置があったとしてもそのチャンク末であることには変わりない
         base_deltas.iter().map(|_| 1).collect()
     }
 
     /// 基準の位置は綴りでいうとどこか
-    pub(crate) fn spell_delta(&self, base_deltas: Vec<usize>) -> Vec<usize> {
+    pub(crate) fn spell_delta(&self, base_deltas: &[usize]) -> Vec<usize> {
         match self.base {
             BaseTarget::Chunk => base_deltas.iter().map(|_| self.spell).collect(),
-            BaseTarget::Spell => base_deltas,
+            BaseTarget::Spell => base_deltas.to_vec(),
             BaseTarget::IdealKeyStroke => base_deltas
                 .iter()
                 .map(|ideal_key_stroke_delta| {
@@ -68,7 +68,7 @@ impl MultiTargetDeltaConverter {
     }
 
     /// 基準の位置は理想的なキーストローク系列でいうとどこか
-    pub(crate) fn ideal_key_stroke_delta(&self, base_deltas: Vec<usize>) -> Vec<usize> {
+    pub(crate) fn ideal_key_stroke_delta(&self, base_deltas: &[usize]) -> Vec<usize> {
         match self.base {
             BaseTarget::Chunk => base_deltas
                 .iter()
@@ -81,7 +81,7 @@ impl MultiTargetDeltaConverter {
                         .convert_spell_delta_to_key_stroke_delta(*spell_delta)
                 })
                 .collect(),
-            BaseTarget::IdealKeyStroke => base_deltas,
+            BaseTarget::IdealKeyStroke => base_deltas.to_vec(),
             BaseTarget::KeyStroke => base_deltas
                 .iter()
                 .map(|key_stroke_delta| {
@@ -97,7 +97,7 @@ impl MultiTargetDeltaConverter {
     }
 
     /// 基準の位置はキーストローク系列でいうとどこか
-    pub(crate) fn key_stroke_delta(&self, base_deltas: Vec<usize>) -> Vec<usize> {
+    pub(crate) fn key_stroke_delta(&self, base_deltas: &[usize]) -> Vec<usize> {
         match self.base {
             BaseTarget::Chunk => base_deltas
                 .iter()
@@ -121,7 +121,7 @@ impl MultiTargetDeltaConverter {
                     )
                 })
                 .collect(),
-            BaseTarget::KeyStroke => base_deltas,
+            BaseTarget::KeyStroke => base_deltas.to_vec(),
         }
     }
 }
@@ -172,10 +172,10 @@ mod test {
             BaseTarget::Chunk,
         );
 
-        assert_eq!(m.chunk_delta(vec![1]), vec![1]);
-        assert_eq!(m.spell_delta(vec![1]), vec![2]);
-        assert_eq!(m.ideal_key_stroke_delta(vec![1]), vec![3]);
-        assert_eq!(m.key_stroke_delta(vec![1]), vec![5]);
+        assert_eq!(m.chunk_delta(&vec![1]), vec![1]);
+        assert_eq!(m.spell_delta(&vec![1]), vec![2]);
+        assert_eq!(m.ideal_key_stroke_delta(&vec![1]), vec![3]);
+        assert_eq!(m.key_stroke_delta(&vec![1]), vec![5]);
     }
 
     #[test]
@@ -187,11 +187,11 @@ mod test {
             BaseTarget::Spell,
         );
 
-        assert_eq!(m.chunk_delta(vec![1, 2]), vec![1, 1]);
+        assert_eq!(m.chunk_delta(&vec![1, 2]), vec![1, 1]);
 
-        assert_eq!(m.spell_delta(vec![1, 2]), vec![1, 2]);
-        assert_eq!(m.ideal_key_stroke_delta(vec![1, 2]), vec![3, 3]);
-        assert_eq!(m.key_stroke_delta(vec![1, 2]), vec![2, 5]);
+        assert_eq!(m.spell_delta(&vec![1, 2]), vec![1, 2]);
+        assert_eq!(m.ideal_key_stroke_delta(&vec![1, 2]), vec![3, 3]);
+        assert_eq!(m.key_stroke_delta(&vec![1, 2]), vec![2, 5]);
     }
 
     #[test]
@@ -203,10 +203,10 @@ mod test {
             BaseTarget::IdealKeyStroke,
         );
 
-        assert_eq!(m.chunk_delta(vec![1, 2, 3]), vec![1, 1, 1]);
-        assert_eq!(m.spell_delta(vec![1, 2, 3]), vec![1, 2, 2]);
-        assert_eq!(m.ideal_key_stroke_delta(vec![1, 2, 3]), vec![1, 2, 3]);
-        assert_eq!(m.key_stroke_delta(vec![1, 2, 3]), vec![2, 4, 5]);
+        assert_eq!(m.chunk_delta(&vec![1, 2, 3]), vec![1, 1, 1]);
+        assert_eq!(m.spell_delta(&vec![1, 2, 3]), vec![1, 2, 2]);
+        assert_eq!(m.ideal_key_stroke_delta(&vec![1, 2, 3]), vec![1, 2, 3]);
+        assert_eq!(m.key_stroke_delta(&vec![1, 2, 3]), vec![2, 4, 5]);
     }
 
     #[test]
@@ -218,12 +218,15 @@ mod test {
             BaseTarget::KeyStroke,
         );
 
-        assert_eq!(m.chunk_delta(vec![1, 2, 3, 4, 5]), vec![1, 1, 1, 1, 1]);
-        assert_eq!(m.spell_delta(vec![1, 2, 3, 4, 5]), vec![1, 1, 2, 2, 2]);
+        assert_eq!(m.chunk_delta(&vec![1, 2, 3, 4, 5]), vec![1, 1, 1, 1, 1]);
+        assert_eq!(m.spell_delta(&vec![1, 2, 3, 4, 5]), vec![1, 1, 2, 2, 2]);
         assert_eq!(
-            m.ideal_key_stroke_delta(vec![1, 2, 3, 4, 5]),
+            m.ideal_key_stroke_delta(&vec![1, 2, 3, 4, 5]),
             vec![1, 1, 2, 3, 3]
         );
-        assert_eq!(m.key_stroke_delta(vec![1, 2, 3, 4, 5]), vec![1, 2, 3, 4, 5]);
+        assert_eq!(
+            m.key_stroke_delta(&vec![1, 2, 3, 4, 5]),
+            vec![1, 2, 3, 4, 5]
+        );
     }
 }

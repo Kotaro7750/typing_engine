@@ -5,6 +5,9 @@ use serde::{Deserialize, Serialize};
 mod multi_target_position_convert;
 
 use crate::chunk::KeyStrokeElementCount;
+use multi_target_position_convert::MultiTargetDeltaConverter;
+
+use self::multi_target_position_convert::BaseTarget;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct OnTypingStatisticsTarget {
@@ -46,6 +49,10 @@ impl OnTypingStatisticsTarget {
             lap_end_time,
             lap_end_position,
         }
+    }
+
+    fn whole_count(&self) -> usize {
+        self.whole_count
     }
 
     fn on_finished(&mut self, delta: usize, completely_correct: bool, elapsed_time: Duration) {
@@ -96,6 +103,13 @@ impl OnTypingStatisticsTarget {
     fn on_wrong(&mut self, delta: usize) {
         self.wrong_count += delta;
     }
+
+    fn add_lap_ends(&mut self, lap_end_deltas: &[usize], base_whole_count: usize) {
+        lap_end_deltas.iter().for_each(|lap_end_delta| {
+            self.lap_end_position
+                .push(base_whole_count + lap_end_delta - 1);
+        });
+    }
 }
 
 pub(crate) enum LapRequest {
@@ -103,6 +117,17 @@ pub(crate) enum LapRequest {
     IdealKeyStroke(NonZeroUsize),
     Spell(NonZeroUsize),
     Chunk(NonZeroUsize),
+}
+
+impl LapRequest {
+    fn construct_base_target(&self) -> BaseTarget {
+        match self {
+            Self::KeyStroke(_) => BaseTarget::KeyStroke,
+            Self::IdealKeyStroke(_) => BaseTarget::IdealKeyStroke,
+            Self::Spell(_) => BaseTarget::Spell,
+            Self::Chunk(_) => BaseTarget::Chunk,
+        }
+    }
 }
 
 /// タイピング中の各対象の統計情報を管理する
@@ -286,7 +311,7 @@ impl OnTypingStatisticsManager {
         key_stroke_element_count: KeyStrokeElementCount,
         ideal_key_stroke_element_count: KeyStrokeElementCount,
         spell_count: usize,
-    ) -> Option<Vec<usize>> {
+    ) {
         self.chunk.on_finished(
             1,
             !self.this_chunk_wrong,
@@ -295,20 +320,48 @@ impl OnTypingStatisticsManager {
         self.this_chunk_wrong = false;
 
         self.in_candidate_key_stroke_count = 0;
+
+        let ks_whole_count = self.key_stroke.whole_count();
         let ksle = self
             .key_stroke
             .on_target_add(key_stroke_element_count.whole_count());
+
+        let iks_whole_count = self.ideal_key_stroke.whole_count();
         let iksle = self
             .ideal_key_stroke
             .on_target_add(ideal_key_stroke_element_count.whole_count());
+
+        let s_whole_count = self.spell.whole_count();
         let sle = self.spell.on_target_add(spell_count);
+
+        let c_whole_count = self.chunk.whole_count();
         let cle = self.chunk.on_target_add(1);
 
-        match self.lap_request {
-            LapRequest::KeyStroke(_) => ksle,
-            LapRequest::IdealKeyStroke(_) => iksle,
-            LapRequest::Spell(_) => sle,
-            LapRequest::Chunk(_) => cle,
+        if ksle.is_some() || iksle.is_some() || sle.is_some() || cle.is_some() {
+            let lap_ends = match self.lap_request {
+                LapRequest::KeyStroke(_) => ksle,
+                LapRequest::IdealKeyStroke(_) => iksle,
+                LapRequest::Spell(_) => sle,
+                LapRequest::Chunk(_) => cle,
+            };
+
+            let lap_ends = lap_ends.unwrap();
+
+            let mdc = MultiTargetDeltaConverter::new(
+                spell_count,
+                ideal_key_stroke_element_count,
+                key_stroke_element_count,
+                self.lap_request.construct_base_target(),
+            );
+
+            self.key_stroke
+                .add_lap_ends(&mdc.key_stroke_delta(&lap_ends), ks_whole_count);
+            self.ideal_key_stroke
+                .add_lap_ends(&mdc.ideal_key_stroke_delta(&lap_ends), iks_whole_count);
+            self.spell
+                .add_lap_ends(&mdc.spell_delta(&lap_ends), s_whole_count);
+            self.chunk
+                .add_lap_ends(&mdc.chunk_delta(&lap_ends), c_whole_count);
         }
     }
 
@@ -318,21 +371,48 @@ impl OnTypingStatisticsManager {
         key_stroke_element_count: KeyStrokeElementCount,
         ideal_key_stroke_element_count: KeyStrokeElementCount,
         spell_count: usize,
-    ) -> Option<Vec<usize>> {
+    ) {
+        let ks_whole_count = self.key_stroke.whole_count();
         let ksle = self
             .key_stroke
             .on_target_add(key_stroke_element_count.whole_count());
+
+        let iks_whole_count = self.ideal_key_stroke.whole_count();
         let iksle = self
             .ideal_key_stroke
             .on_target_add(ideal_key_stroke_element_count.whole_count());
+
+        let s_whole_count = self.spell.whole_count();
         let sle = self.spell.on_target_add(spell_count);
+
+        let c_whole_count = self.chunk.whole_count();
         let cle = self.chunk.on_target_add(1);
 
-        match self.lap_request {
-            LapRequest::KeyStroke(_) => ksle,
-            LapRequest::IdealKeyStroke(_) => iksle,
-            LapRequest::Spell(_) => sle,
-            LapRequest::Chunk(_) => cle,
+        if ksle.is_some() || iksle.is_some() || sle.is_some() || cle.is_some() {
+            let lap_ends = match self.lap_request {
+                LapRequest::KeyStroke(_) => ksle,
+                LapRequest::IdealKeyStroke(_) => iksle,
+                LapRequest::Spell(_) => sle,
+                LapRequest::Chunk(_) => cle,
+            };
+
+            let lap_ends = lap_ends.unwrap();
+
+            let mdc = MultiTargetDeltaConverter::new(
+                spell_count,
+                ideal_key_stroke_element_count,
+                key_stroke_element_count,
+                self.lap_request.construct_base_target(),
+            );
+
+            self.key_stroke
+                .add_lap_ends(&mdc.key_stroke_delta(&lap_ends), ks_whole_count);
+            self.ideal_key_stroke
+                .add_lap_ends(&mdc.ideal_key_stroke_delta(&lap_ends), iks_whole_count);
+            self.spell
+                .add_lap_ends(&mdc.spell_delta(&lap_ends), s_whole_count);
+            self.chunk
+                .add_lap_ends(&mdc.chunk_delta(&lap_ends), c_whole_count);
         }
     }
 
