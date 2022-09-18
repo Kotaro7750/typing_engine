@@ -95,6 +95,13 @@ impl ViewDisplayInfo {
     pub fn missed_positions(&self) -> &Vec<usize> {
         &self.missed_positions
     }
+
+    /// Index of last view string to be typed.
+    ///
+    /// This function is useful to distinct view string character to be typed and not to be typed.
+    pub fn last_position(&self) -> usize {
+        self.last_position
+    }
 }
 
 /// Information about spell of query string.
@@ -201,5 +208,13 @@ impl KeyStrokeDisplayInfo {
     /// Index of key stroke which is not correctly typed.
     pub fn missed_positions(&self) -> &Vec<usize> {
         &self.missed_positions
+    }
+
+    pub fn on_typing_statistics(&self) -> &OnTypingStatisticsTarget {
+        &self.on_typing_statistics
+    }
+
+    pub fn on_typing_statistics_ideal(&self) -> &OnTypingStatisticsTarget {
+        &self.on_typing_statistics_ideal
     }
 }

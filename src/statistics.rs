@@ -51,8 +51,37 @@ impl OnTypingStatisticsTarget {
         }
     }
 
-    fn whole_count(&self) -> usize {
+    /// Get count of finished targets.
+    pub fn finished_count(&self) -> usize {
+        self.finished_count
+    }
+
+    /// Get count of whole targets.
+    pub fn whole_count(&self) -> usize {
         self.whole_count
+    }
+
+    /// Get count of targets that are finished without miss.
+    pub fn completely_correct_count(&self) -> usize {
+        self.completely_correct_count
+    }
+
+    /// Get count of wrong typed targets.
+    /// Multiple miss types in same targets are counted separately.
+    pub fn wrong_count(&self) -> usize {
+        self.wrong_count
+    }
+
+    /// Get lap end time of target.
+    /// This returns [`None`](std::option::Option::None) when target is not a target for take laps.
+    pub fn lap_end_time(&self) -> Option<&Vec<Duration>> {
+        self.lap_end_time.as_ref()
+    }
+
+    /// Get lap end positions of target.
+    /// Each positions is converted from requested target.
+    pub fn lap_end_positions(&self) -> &Vec<usize> {
+        &self.lap_end_position
     }
 
     fn on_finished(&mut self, delta: usize, completely_correct: bool, elapsed_time: Duration) {
