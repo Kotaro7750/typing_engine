@@ -1,6 +1,5 @@
 use std::error::Error;
 use std::fmt::Display;
-use std::num::NonZeroUsize;
 use std::time::Instant;
 
 use crate::display_info::{DisplayInfo, ViewDisplayInfo};
@@ -173,14 +172,17 @@ impl TypingEngine {
     ///
     /// If this method is called before starting via calling [`start`](Self::start()) method,
     /// this method returns error.
-    pub fn construct_display_info(&self) -> Result<DisplayInfo, TypingEngineError> {
+    pub fn construct_display_info(
+        &self,
+        lap_request: LapRequest,
+    ) -> Result<DisplayInfo, TypingEngineError> {
         if self.is_started() {
             let (spell_display_info, key_stroke_display_info) = self
                 .processed_chunk_info
                 .as_ref()
                 .unwrap()
                 // XXX 引数で指定するようにする
-                .construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(50).unwrap()));
+                .construct_display_info(lap_request);
 
             let view_position_of_spell_position =
                 construct_view_position_of_spell_positions(self.vocabulary_infos.as_ref().unwrap());

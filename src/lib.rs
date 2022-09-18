@@ -2,6 +2,7 @@ pub use crate::display_info::DisplayInfo;
 pub use crate::key_stroke::{KeyStrokeChar, KeyStrokeCharError};
 pub use crate::query::{QueryRequest, VocabularyOrder, VocabularyQuantifier, VocabularySeparator};
 pub use crate::spell::{SpellString, SpellStringError};
+pub use crate::statistics::LapRequest;
 pub use crate::typing_engine::*;
 pub use crate::vocabulary::VocabularyEntry;
 

@@ -112,7 +112,7 @@ impl OnTypingStatisticsTarget {
     }
 }
 
-pub(crate) enum LapRequest {
+pub enum LapRequest {
     KeyStroke(NonZeroUsize),
     IdealKeyStroke(NonZeroUsize),
     Spell(NonZeroUsize),
