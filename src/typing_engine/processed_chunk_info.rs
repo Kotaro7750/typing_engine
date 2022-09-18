@@ -94,13 +94,22 @@ impl ProcessedChunkInfo {
             // 遅延確定候補で確定した場合にはpendingしていたキーストロークを次のチャンクに入力する必要がある
             if is_delayed_confirmable {
                 assert!(self.inflight_chunk.is_some());
+                let inflight_chunk = self.inflight_chunk.as_mut().unwrap();
 
                 pending_key_strokes.iter().for_each(|actual_key_stroke| {
-                    self.inflight_chunk.as_mut().unwrap().stroke_key(
+                    inflight_chunk.stroke_key(
                         actual_key_stroke.key_stroke().clone(),
                         *actual_key_stroke.elapsed_time(),
                     );
                 });
+
+                // pendingしていたキーストロークの入力によって次のチャンクが終了する場合に対処する
+                if inflight_chunk.is_confirmed() {
+                    // pendingしていたキーストローク中には正しいキーストロークは一つしか無いはずなので遅延確定候補が終了することはない
+                    assert!(!inflight_chunk.is_delayed_confirmable());
+
+                    self.move_next_chunk();
+                }
             } else {
                 assert!(pending_key_strokes.is_empty());
             }

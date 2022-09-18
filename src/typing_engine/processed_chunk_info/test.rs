@@ -987,6 +987,134 @@ fn stroke_key_3() {
 }
 
 #[test]
+fn stroke_key_4() {
+    // 1. 初期化
+    let mut pci = ProcessedChunkInfo::new(vec![
+        gen_chunk!(
+            "ん",
+            vec![
+                gen_candidate!(["n"], ['p']),
+                gen_candidate!(["nn"]),
+                gen_candidate!(["xn"])
+            ],
+            gen_candidate!(["n"], ['p'])
+        ),
+        gen_chunk!("ぴ", vec![gen_candidate!(["p"]),], gen_candidate!(["p"])),
+    ]);
+
+    assert_eq!(
+        pci,
+        ProcessedChunkInfo {
+            unprocessed_chunks: vec![
+                gen_chunk!(
+                    "ん",
+                    vec![
+                        gen_candidate!(["n"], ['p']),
+                        gen_candidate!(["nn"]),
+                        gen_candidate!(["xn"])
+                    ],
+                    gen_candidate!(["n"], ['p'])
+                ),
+                gen_chunk!("ぴ", vec![gen_candidate!(["p"]),], gen_candidate!(["p"])),
+            ]
+            .into(),
+            inflight_chunk: None,
+            confirmed_chunks: vec![],
+        }
+    );
+
+    // 2. タイピング開始
+    pci.move_next_chunk();
+    assert_eq!(
+        pci,
+        ProcessedChunkInfo {
+            unprocessed_chunks: vec![gen_chunk!(
+                "ぴ",
+                vec![gen_candidate!(["p"]),],
+                gen_candidate!(["p"])
+            ),]
+            .into(),
+            inflight_chunk: Some(
+                gen_chunk!(
+                    "ん",
+                    vec![
+                        gen_candidate!(["n"], ['p']),
+                        gen_candidate!(["nn"]),
+                        gen_candidate!(["xn"])
+                    ],
+                    gen_candidate!(["n"], ['p'])
+                )
+                .into()
+            ),
+            confirmed_chunks: vec![],
+        }
+    );
+
+    // 3. 「n」と入力
+    pci.stroke_key('n'.try_into().unwrap(), Duration::new(1, 0));
+    assert_eq!(
+        pci,
+        ProcessedChunkInfo {
+            unprocessed_chunks: vec![gen_chunk!(
+                "ぴ",
+                vec![gen_candidate!(["p"]),],
+                gen_candidate!(["p"])
+            )]
+            .into(),
+            inflight_chunk: Some(TypedChunk::new(
+                gen_chunk!(
+                    "ん",
+                    vec![gen_candidate!(["n"], ['p']), gen_candidate!(["nn"]),],
+                    gen_candidate!(["n"], ['p'])
+                ),
+                vec![1, 1],
+                vec![ActualKeyStroke::new(
+                    Duration::new(1, 0),
+                    'n'.try_into().unwrap(),
+                    true
+                )],
+                vec![]
+            )),
+            confirmed_chunks: vec![],
+        }
+    );
+
+    // 3. 「p」と入力
+    pci.stroke_key('p'.try_into().unwrap(), Duration::new(2, 0));
+    assert_eq!(
+        pci,
+        ProcessedChunkInfo {
+            unprocessed_chunks: vec![].into(),
+            inflight_chunk: None,
+            confirmed_chunks: vec![
+                ConfirmedChunk::new(
+                    gen_chunk!(
+                        "ん",
+                        vec![gen_candidate!(["n"], ['p'])],
+                        gen_candidate!(["n"], ['p'])
+                    ),
+                    vec![ActualKeyStroke::new(
+                        Duration::new(1, 0),
+                        'n'.try_into().unwrap(),
+                        true
+                    ),],
+                ),
+                ConfirmedChunk::new(
+                    gen_chunk!("ぴ", vec![gen_candidate!(["p"])], gen_candidate!(["p"])),
+                    vec![ActualKeyStroke::new(
+                        Duration::new(2, 0),
+                        'p'.try_into().unwrap(),
+                        true
+                    ),],
+                )
+            ],
+        }
+    );
+
+    assert!(pci.is_finished());
+}
+
+#[test]
 fn construct_display_info_1() {
     // 1. 初期化
     let mut pci = ProcessedChunkInfo::new(vec![
