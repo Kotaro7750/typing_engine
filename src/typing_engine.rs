@@ -35,6 +35,7 @@ impl Error for TypingEngineError {}
 enum TypingEngineErrorKind {
     MustBeInitialized,
     MustBeStarted,
+    AlreadyFinished,
 }
 
 impl TypingEngineErrorKind {
@@ -44,6 +45,7 @@ impl TypingEngineErrorKind {
         match *self {
             MustBeInitialized => "not initialized",
             MustBeStarted => "not started",
+            AlreadyFinished => "already finished",
         }
     }
 }
@@ -153,16 +155,20 @@ impl TypingEngine {
     ///
     /// If this method is called before initializing via calling [`start`](Self::start()) method,
     /// this method returns error.
-    pub fn stroke_key(&mut self, key_stroke: KeyStrokeChar) -> Result<(), TypingEngineError> {
+    pub fn stroke_key(&mut self, key_stroke: KeyStrokeChar) -> Result<bool, TypingEngineError> {
         if self.is_started() {
+            let pci = self.processed_chunk_info.as_mut().unwrap();
+            if pci.is_finished() {
+                return Err(TypingEngineError::new(
+                    TypingEngineErrorKind::AlreadyFinished,
+                ));
+            }
+
             let elapsed_time = self.start_time.as_ref().unwrap().elapsed();
 
-            self.processed_chunk_info
-                .as_mut()
-                .unwrap()
-                .stroke_key(key_stroke, elapsed_time);
+            pci.stroke_key(key_stroke, elapsed_time);
 
-            Ok(())
+            Ok(pci.is_finished())
         } else {
             Err(TypingEngineError::new(TypingEngineErrorKind::MustBeStarted))
         }
