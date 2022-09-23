@@ -219,7 +219,7 @@ pub static CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY: Lazy<HashMap<&'static str, Vec<
         m.insert("＄", vec!["$"]);
         m.insert("％", vec!["%"]);
         m.insert("＆", vec!["&"]);
-        m.insert("’ ", vec!["'"]);
+        m.insert("’", vec!["'"]);
         m.insert("（", vec!["("]);
         m.insert("）", vec![")"]);
         m.insert("＊", vec!["*"]);
