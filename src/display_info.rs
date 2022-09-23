@@ -59,7 +59,11 @@ impl ViewDisplayInfo {
                 .current_cursor_positions
                 .iter()
                 .map(|spell_cursor_position| {
-                    view_position_of_spell_position[*spell_cursor_position]
+                    if *spell_cursor_position >= view_position_of_spell_position.len() {
+                        view_position_of_spell_position.last().unwrap() + 1
+                    } else {
+                        view_position_of_spell_position[*spell_cursor_position]
+                    }
                 })
                 .collect(),
             missed_positions: spell_display_info
