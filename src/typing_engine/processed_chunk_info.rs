@@ -118,6 +118,10 @@ impl ProcessedChunkInfo {
         result
     }
 
+    pub(crate) fn confirmed_chunks(&self) -> &Vec<ConfirmedChunk> {
+        &self.confirmed_chunks
+    }
+
     pub(crate) fn construct_display_info(
         &self,
         lap_request: LapRequest,

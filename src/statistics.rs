@@ -3,6 +3,7 @@ use std::{num::NonZeroUsize, time::Duration};
 use serde::{Deserialize, Serialize};
 
 mod multi_target_position_convert;
+pub(crate) mod result;
 
 use crate::chunk::KeyStrokeElementCount;
 use multi_target_position_convert::MultiTargetDeltaConverter;

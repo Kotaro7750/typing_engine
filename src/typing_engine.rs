@@ -5,6 +5,7 @@ use std::time::Instant;
 use crate::display_info::{DisplayInfo, ViewDisplayInfo};
 use crate::key_stroke::KeyStrokeChar;
 use crate::query::QueryRequest;
+use crate::statistics::result::{construct_result, TypingResultStatistics};
 use crate::statistics::LapRequest;
 use crate::typing_engine::processed_chunk_info::ProcessedChunkInfo;
 use crate::vocabulary::{construct_view_position_of_spell_positions, VocabularyInfo};
@@ -36,6 +37,7 @@ enum TypingEngineErrorKind {
     MustBeInitialized,
     MustBeStarted,
     AlreadyFinished,
+    NotFinished,
 }
 
 impl TypingEngineErrorKind {
@@ -46,6 +48,7 @@ impl TypingEngineErrorKind {
             MustBeInitialized => "not initialized",
             MustBeStarted => "not started",
             AlreadyFinished => "already finished",
+            NotFinished => "not finished",
         }
     }
 }
@@ -210,6 +213,27 @@ impl TypingEngine {
                 spell_display_info,
                 key_stroke_display_info,
             ))
+        } else {
+            Err(TypingEngineError::new(TypingEngineErrorKind::MustBeStarted))
+        }
+    }
+
+    pub fn construst_result_statistics(
+        &self,
+        lap_request: LapRequest,
+    ) -> Result<TypingResultStatistics, TypingEngineError> {
+        if self.is_started() {
+            let confirmed_chunks = self
+                .processed_chunk_info
+                .as_ref()
+                .unwrap()
+                .confirmed_chunks();
+
+            if self.processed_chunk_info.as_ref().unwrap().is_finished() {
+                Ok(construct_result(confirmed_chunks, lap_request))
+            } else {
+                Err(TypingEngineError::new(TypingEngineErrorKind::NotFinished))
+            }
         } else {
             Err(TypingEngineError::new(TypingEngineErrorKind::MustBeStarted))
         }
