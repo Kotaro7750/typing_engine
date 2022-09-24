@@ -1,5 +1,8 @@
 [package]
 name = "typing_engine"
+description = "A typing game engine for Japanese and English."
+license = "MIT"
+authors = ["Kotaro7750 <7750koutarou@gmail.com>"]
 version = "0.1.0"
 edition = "2021"
 
