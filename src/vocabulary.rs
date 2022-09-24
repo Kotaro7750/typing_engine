@@ -7,7 +7,18 @@ use crate::spell::SpellString;
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// Spells of a vocabulary.
 pub enum VocabularySpell {
+    /// Spells for almost all of vocabularies.
+    /// Each elements represents spells of single charactor of view.
+    ///
+    /// Ex. When vocabulary is
+    /// * `巨大`, VocabularySpell is `Normal(["きょ","だい"])`
+    /// * `Big`, VocabularySpell is `Normal(["B","i","g"])`
     Normal(Vec<SpellString>),
+    /// Spells for compound vocabularies(熟字訓).
+    /// This type of spells correspond whole of view.
+    ///
+    /// Ex. When vocabulary is
+    /// * `今日`, VocabularySpell is `Compound("きょう")`
     Compound(SpellString),
 }
 
@@ -182,7 +193,9 @@ pub(crate) fn convert_spell_positions_to_view_positions(
         let view_position = if *spell_position >= view_position_of_spell_position.len() {
             view_position_of_spell_position.last().unwrap()
         } else {
-            view_position_of_spell_position.get(*spell_position).unwrap()
+            view_position_of_spell_position
+                .get(*spell_position)
+                .unwrap()
         };
 
         match view_position {
