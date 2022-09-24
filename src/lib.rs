@@ -5,7 +5,7 @@ pub use crate::spell::{SpellString, SpellStringError};
 pub use crate::statistics::result::{TypingResultStatistics, TypingResultStatisticsTarget};
 pub use crate::statistics::{LapRequest, OnTypingStatisticsTarget};
 pub use crate::typing_engine::*;
-pub use crate::vocabulary::VocabularyEntry;
+pub use crate::vocabulary::{VocabularyEntry, VocabularySpell};
 
 mod chunk;
 mod chunk_key_stroke_dictionary;

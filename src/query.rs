@@ -3,7 +3,7 @@ use std::num::NonZeroUsize;
 
 use crate::{
     chunk::{append_key_stroke_to_chunks, Chunk},
-    vocabulary::{VocabularyEntry, VocabularyInfo},
+    vocabulary::{VocabularyEntry, VocabularyInfo, VocabularySpell},
 };
 
 /// A vocabulary quantifier for constructing query.
@@ -35,10 +35,11 @@ impl VocabularySeparator {
     fn generate_separator_vocabulary(&self) -> VocabularyEntry {
         match self {
             Self::Vocabulary(v) => v.clone(),
-            Self::WhiteSpace => {
-                VocabularyEntry::new(" ".to_string(), vec![" ".to_string().try_into().unwrap()])
-                    .unwrap()
-            }
+            Self::WhiteSpace => VocabularyEntry::new(
+                " ".to_string(),
+                VocabularySpell::Normal(vec![" ".to_string().try_into().unwrap()]),
+            )
+            .unwrap(),
             Self::None => unreachable!("this function cannot be called when self is None"),
         }
     }
@@ -329,7 +330,9 @@ impl Query {
 mod test {
     use super::*;
 
-    use crate::{gen_candidate, gen_chunk, gen_vocabulary_entry, gen_vocabulary_info};
+    use crate::{
+        gen_candidate, gen_chunk, gen_view_position, gen_vocabulary_entry, gen_vocabulary_info,
+    };
 
     #[test]
     fn construct_query_1() {
@@ -352,8 +355,17 @@ mod test {
             query,
             Query::new(
                 vec![
-                    gen_vocabulary_info!("イオン", "いおん", vec![0, 1, 2], 3),
-                    gen_vocabulary_info!(" ", " ", vec![0], 1)
+                    gen_vocabulary_info!(
+                        "イオン",
+                        "いおん",
+                        vec![
+                            gen_view_position!(0),
+                            gen_view_position!(1),
+                            gen_view_position!(2)
+                        ],
+                        3
+                    ),
+                    gen_vocabulary_info!(" ", " ", vec![gen_view_position!(0)], 1)
                 ],
                 vec![
                     gen_chunk!(
@@ -394,8 +406,26 @@ mod test {
             query,
             Query::new(
                 vec![
-                    gen_vocabulary_info!("イオン", "いおん", vec![0, 1, 2], 3),
-                    gen_vocabulary_info!("イオン", "いおん", vec![0, 1, 2], 1)
+                    gen_vocabulary_info!(
+                        "イオン",
+                        "いおん",
+                        vec![
+                            gen_view_position!(0),
+                            gen_view_position!(1),
+                            gen_view_position!(2)
+                        ],
+                        3
+                    ),
+                    gen_vocabulary_info!(
+                        "イオン",
+                        "いおん",
+                        vec![
+                            gen_view_position!(0),
+                            gen_view_position!(1),
+                            gen_view_position!(2)
+                        ],
+                        1
+                    )
                 ],
                 vec![
                     gen_chunk!(
@@ -444,10 +474,33 @@ mod test {
             query,
             Query::new(
                 vec![
-                    gen_vocabulary_info!("イオン", "いおん", vec![0, 1, 2], 3),
-                    gen_vocabulary_info!("買っ", "かっ", vec![0, 1], 2),
-                    gen_vocabulary_info!("た", "た", vec![0], 1),
-                    gen_vocabulary_info!("イオン", "いおん", vec![0, 1, 2], 2),
+                    gen_vocabulary_info!(
+                        "イオン",
+                        "いおん",
+                        vec![
+                            gen_view_position!(0),
+                            gen_view_position!(1),
+                            gen_view_position!(2)
+                        ],
+                        3
+                    ),
+                    gen_vocabulary_info!(
+                        "買っ",
+                        "かっ",
+                        vec![gen_view_position!(0), gen_view_position!(1)],
+                        2
+                    ),
+                    gen_vocabulary_info!("た", "た", vec![gen_view_position!(0)], 1),
+                    gen_vocabulary_info!(
+                        "イオン",
+                        "いおん",
+                        vec![
+                            gen_view_position!(0),
+                            gen_view_position!(1),
+                            gen_view_position!(2)
+                        ],
+                        2
+                    ),
                 ],
                 vec![
                     gen_chunk!(
@@ -526,9 +579,9 @@ mod test {
             query,
             Query::new(
                 vec![
-                    gen_vocabulary_info!("2", "2", vec![0], 1),
-                    gen_vocabulary_info!(" ", " ", vec![0], 1),
-                    gen_vocabulary_info!("1", "1", vec![0], 1),
+                    gen_vocabulary_info!("2", "2", vec![gen_view_position!(0)], 1),
+                    gen_vocabulary_info!(" ", " ", vec![gen_view_position!(0)], 1),
+                    gen_vocabulary_info!("1", "1", vec![gen_view_position!(0)], 1),
                 ],
                 vec![
                     gen_chunk!("2", vec![gen_candidate!(["2"])], gen_candidate!(["2"])),
@@ -560,8 +613,17 @@ mod test {
             query,
             Query::new(
                 vec![
-                    gen_vocabulary_info!("イオン", "いおん", vec![0, 1, 2], 3),
-                    gen_vocabulary_info!(" ", " ", vec![0], 1)
+                    gen_vocabulary_info!(
+                        "イオン",
+                        "いおん",
+                        vec![
+                            gen_view_position!(0),
+                            gen_view_position!(1),
+                            gen_view_position!(2)
+                        ],
+                        3
+                    ),
+                    gen_vocabulary_info!(" ", " ", vec![gen_view_position!(0)], 1)
                 ],
                 vec![
                     gen_chunk!(
@@ -601,7 +663,16 @@ mod test {
         assert_eq!(
             query,
             Query::new(
-                vec![gen_vocabulary_info!("印字", "いんじ", vec![0, 0, 1], 3),],
+                vec![gen_vocabulary_info!(
+                    "印字",
+                    "いんじ",
+                    vec![
+                        gen_view_position!(0),
+                        gen_view_position!(0),
+                        gen_view_position!(1)
+                    ],
+                    3
+                ),],
                 vec![
                     gen_chunk!(
                         "い",
@@ -647,7 +718,16 @@ mod test {
         assert_eq!(
             query,
             Query::new(
-                vec![gen_vocabulary_info!("印字", "いんじ", vec![0, 0, 1], 2),],
+                vec![gen_vocabulary_info!(
+                    "印字",
+                    "いんじ",
+                    vec![
+                        gen_view_position!(0),
+                        gen_view_position!(0),
+                        gen_view_position!(1)
+                    ],
+                    2
+                ),],
                 vec![
                     gen_chunk!(
                         "い",

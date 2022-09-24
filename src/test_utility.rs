@@ -26,17 +26,50 @@ macro_rules! gen_chunk {
 }
 
 #[macro_export]
+macro_rules! gen_vocabulary_spell {
+    ([$($spell:literal),*]) => {
+        crate::vocabulary::VocabularySpell::Normal(vec![
+            $(
+                String::from($spell).try_into().unwrap(),
+            )*
+        ])
+    };
+    ($spell:literal) => {
+        crate::vocabulary::VocabularySpell::Compound(String::from($spell).try_into().unwrap())
+    };
+}
+
+#[macro_export]
 macro_rules! gen_vocabulary_entry {
         ($vs:literal,[$($spell:literal),*]) => {
             crate::vocabulary::VocabularyEntry::new( String::from($vs),
-                vec![
+                crate::vocabulary::VocabularySpell::Normal(vec![
                     $(
                         String::from($spell).try_into().unwrap(),
                     )*
-                ]
+                ])
+            ).unwrap()
+        };
+        ($vs:literal,$spell:literal) => {
+            crate::vocabulary::VocabularyEntry::new( String::from($vs),
+                crate::vocabulary::VocabularySpell::Compound(String::from($spell).try_into().unwrap())
             ).unwrap()
         };
     }
+
+#[macro_export]
+macro_rules! gen_view_position {
+    ($position:literal) => {
+        crate::vocabulary::ViewPosition::Normal($position)
+    };
+    ([$($position:literal),*]) => {
+        crate::vocabulary::ViewPosition::Compound(vec![
+            $(
+                $position
+            )*
+        ])
+    };
+}
 
 #[macro_export]
 macro_rules! gen_vocabulary_info {

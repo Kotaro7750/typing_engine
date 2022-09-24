@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::statistics::OnTypingStatisticsTarget;
+use crate::vocabulary::convert_spell_positions_to_view_positions;
+use crate::{statistics::OnTypingStatisticsTarget, vocabulary::ViewPosition};
 
 /// A type for composing typing game UI.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -51,29 +52,20 @@ impl ViewDisplayInfo {
     pub(crate) fn new(
         spell_display_info: &SpellDisplayInfo,
         view: String,
-        view_position_of_spell_position: Vec<usize>,
+        view_position_of_spell_position: Vec<ViewPosition>,
     ) -> Self {
         Self {
             view,
-            current_cursor_positions: spell_display_info
-                .current_cursor_positions
-                .iter()
-                .map(|spell_cursor_position| {
-                    if *spell_cursor_position >= view_position_of_spell_position.len() {
-                        view_position_of_spell_position.last().unwrap() + 1
-                    } else {
-                        view_position_of_spell_position[*spell_cursor_position]
-                    }
-                })
-                .collect(),
-            missed_positions: spell_display_info
-                .missed_positions
-                .iter()
-                .map(|spell_missed_position| {
-                    view_position_of_spell_position[*spell_missed_position]
-                })
-                .collect(),
-            last_position: view_position_of_spell_position[spell_display_info.last_position],
+            current_cursor_positions: convert_spell_positions_to_view_positions(
+                &spell_display_info.current_cursor_positions,
+                &view_position_of_spell_position,
+            ),
+            missed_positions: convert_spell_positions_to_view_positions(
+                &spell_display_info.missed_positions,
+                &view_position_of_spell_position,
+            ),
+            last_position: view_position_of_spell_position[spell_display_info.last_position]
+                .last_position(),
         }
     }
 
