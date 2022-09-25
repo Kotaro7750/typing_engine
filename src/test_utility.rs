@@ -41,18 +41,26 @@ macro_rules! gen_vocabulary_spell {
 
 #[macro_export]
 macro_rules! gen_vocabulary_entry {
-        ($vs:literal,[$($spell:literal),*]) => {
+        (
+            $vs:literal,
+            [
+                $(
+                    (
+                        $spell:literal
+                        $(,$view_count:literal)?
+                    )
+                ),*
+            ]) => {
             crate::vocabulary::VocabularyEntry::new( String::from($vs),
-                crate::vocabulary::VocabularySpell::Normal(vec![
+                vec![
                     $(
-                        String::from($spell).try_into().unwrap(),
+                        {
+                            let _vse = crate::vocabulary::VocabularySpellElement::Normal(String::from($spell).try_into().unwrap());
+                            $(let _vse = crate::vocabulary::VocabularySpellElement::Compound((String::from($spell).try_into().unwrap(),std::num::NonZeroUsize::new($view_count).unwrap()));)?
+                            _vse
+                        },
                     )*
-                ])
-            ).unwrap()
-        };
-        ($vs:literal,$spell:literal) => {
-            crate::vocabulary::VocabularyEntry::new( String::from($vs),
-                crate::vocabulary::VocabularySpell::Compound(String::from($spell).try_into().unwrap())
+                ]
             ).unwrap()
         };
     }

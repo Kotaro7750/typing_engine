@@ -3,7 +3,7 @@ use std::num::NonZeroUsize;
 
 use crate::{
     chunk::{append_key_stroke_to_chunks, Chunk},
-    vocabulary::{VocabularyEntry, VocabularyInfo, VocabularySpell},
+    vocabulary::{VocabularyEntry, VocabularyInfo, VocabularySpellElement},
 };
 
 /// A vocabulary quantifier for constructing query.
@@ -37,7 +37,9 @@ impl VocabularySeparator {
             Self::Vocabulary(v) => v.clone(),
             Self::WhiteSpace => VocabularyEntry::new(
                 " ".to_string(),
-                VocabularySpell::Normal(vec![" ".to_string().try_into().unwrap()]),
+                vec![VocabularySpellElement::Normal(
+                    " ".to_string().try_into().unwrap(),
+                )],
             )
             .unwrap(),
             Self::None => unreachable!("this function cannot be called when self is None"),
@@ -336,7 +338,7 @@ mod test {
 
     #[test]
     fn construct_query_1() {
-        let vocabularies = vec![gen_vocabulary_entry!("イオン", ["い", "お", "ん"])];
+        let vocabularies = vec![gen_vocabulary_entry!("イオン", [("い"), ("お"), ("ん")])];
 
         let qr = QueryRequest::new(
             vocabularies
@@ -387,7 +389,7 @@ mod test {
 
     #[test]
     fn construct_query_2() {
-        let vocabularies = vec![gen_vocabulary_entry!("イオン", ["い", "お", "ん"])];
+        let vocabularies = vec![gen_vocabulary_entry!("イオン", [("い"), ("お"), ("ん")])];
 
         let qr = QueryRequest::new(
             vocabularies
@@ -452,9 +454,9 @@ mod test {
     #[test]
     fn construct_query_3() {
         let vocabularies = vec![
-            gen_vocabulary_entry!("イオン", ["い", "お", "ん"]),
-            gen_vocabulary_entry!("買っ", ["か", "っ"]),
-            gen_vocabulary_entry!("た", ["た"]),
+            gen_vocabulary_entry!("イオン", [("い"), ("お"), ("ん")]),
+            gen_vocabulary_entry!("買っ", [("か"), ("っ")]),
+            gen_vocabulary_entry!("た", [("た")]),
         ];
 
         let qr = QueryRequest::new(
@@ -548,8 +550,8 @@ mod test {
     #[test]
     fn construct_query_4() {
         let vocabularies = vec![
-            gen_vocabulary_entry!("1", ["1"]),
-            gen_vocabulary_entry!("2", ["2"]),
+            gen_vocabulary_entry!("1", [("1")]),
+            gen_vocabulary_entry!("2", [("2")]),
         ];
 
         let qr = QueryRequest::new(
@@ -594,7 +596,7 @@ mod test {
 
     #[test]
     fn construct_query_5() {
-        let vocabularies = vec![gen_vocabulary_entry!("イオン", ["い", "お", "ん"])];
+        let vocabularies = vec![gen_vocabulary_entry!("イオン", [("い"), ("お"), ("ん")])];
 
         let qr = QueryRequest::new(
             vocabularies
@@ -645,7 +647,7 @@ mod test {
 
     #[test]
     fn construct_query_6() {
-        let vocabularies = vec![gen_vocabulary_entry!("印字", ["いん", "じ"])];
+        let vocabularies = vec![gen_vocabulary_entry!("印字", [("いん"), ("じ")])];
 
         let qr = QueryRequest::new(
             vocabularies
@@ -700,7 +702,7 @@ mod test {
 
     #[test]
     fn construct_query_7() {
-        let vocabularies = vec![gen_vocabulary_entry!("印字", ["いん", "じ"])];
+        let vocabularies = vec![gen_vocabulary_entry!("印字", [("いん"), ("じ")])];
 
         let qr = QueryRequest::new(
             vocabularies

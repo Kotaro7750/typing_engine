@@ -5,36 +5,31 @@ use crate::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
 use crate::spell::SpellString;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
-/// Spells of a vocabulary.
-pub enum VocabularySpell {
-    /// Spells for almost all of vocabularies.
-    /// Each elements represents spells of single charactor of view.
+/// Each spells of a vocabulary.
+/// [`Vec<VocabularySpellElement>`] represents spells for single vocabulary.
+pub enum VocabularySpellElement {
+    /// Spell for almost all of spells.
+    /// This variant represents spells for single charactor of view.
     ///
     /// Ex. When vocabulary is
-    /// * `巨大`, VocabularySpell is `Normal(["きょ","だい"])`
-    /// * `Big`, VocabularySpell is `Normal(["B","i","g"])`
-    Normal(Vec<SpellString>),
-    /// Spells for compound vocabularies(熟字訓).
-    /// This type of spells correspond whole of view.
+    /// * `巨大`, spells are `[Normal("きょ"), Normal("だい")]`
+    /// * `Big`, spells are `[Normal("B"), Normal("i"), Normal("g")]`
+    Normal(SpellString),
+    /// Spell for compound vocabularies(熟字訓).
+    /// This variant represents spells for some parts of view.
+    ///
+    /// Second element of inner tuple represents how many view charactors this spell corresponds to.
     ///
     /// Ex. When vocabulary is
-    /// * `今日`, VocabularySpell is `Compound("きょう")`
-    Compound(SpellString),
+    /// * `今日`, spells are `[Compound("きょう", 2)]`
+    /// * `五月雨`, spells are `[Compound("さみだれ", 3)]`
+    Compound((SpellString, NonZeroUsize)),
 }
 
-impl VocabularySpell {
+impl VocabularySpellElement {
     pub(crate) fn construct_spell_string(&self) -> SpellString {
         match self {
-            Self::Normal(spells) => {
-                let mut s = String::new();
-
-                for spell in spells {
-                    s.push_str(spell);
-                }
-
-                s.try_into().unwrap()
-            }
-            Self::Compound(spell) => spell.clone(),
+            Self::Normal(spell) | Self::Compound((spell, _)) => spell.clone(),
         }
     }
 }
@@ -42,32 +37,32 @@ impl VocabularySpell {
 /// An vocabulary for used in query.
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct VocabularyEntry {
-    // 問題文として表示する文字列
     view: String,
-    // viewの各文字のそれぞれの綴り
-    // ex. 「機能」という語彙に対しては[き,のう]
-    spells: VocabularySpell,
+    spells: Vec<VocabularySpellElement>,
 }
 
 impl VocabularyEntry {
     /// Construct a new [`VocabularyEntry`].
     ///
     /// `view` is this vocabulary itself.
-    /// Each element of `spell_list` describes a spell of each charactor of `view` string.
+    /// Each element of `spells` describes spells of each part of `view` string.
     ///
     /// For example,
-    /// * `"巨大"` has `"巨大"` as `view` , and `["きょ","だい"]` as `spell_list`
-    /// * `"Big"` has `"Big"` as `view` , and `["B","i","g"]` as `spell_list`
-    pub fn new(view: String, spells: VocabularySpell) -> Option<Self> {
-        match spells {
-            VocabularySpell::Normal(ref v) => {
-                if view.chars().count() != v.len() {
-                    None
-                } else {
-                    Some(Self { view, spells })
-                }
+    /// * `"巨大"` has `"巨大"` as `view` , and `[VocabularySpellElement::Normal("きょ"), VocabularySpellElement::Normal("だい")]` as `spells`
+    /// * `"Big"` has `"Big"` as `view` , and `[VocabularySpellElement::Normal("B"),VocabularySpellElement::Normal("i"),VocabularySpellElement::Normal("g")]` as `spells`
+    /// * `"七夕送り"` has `"七夕送り"` as `view` , and `[VocabularySpellElement::Compound("たなばた", 2), VocabularySpellElement::Normal("おく"), VocabularySpellElement::Normal("り")]` as `spells`
+    pub fn new(view: String, spells: Vec<VocabularySpellElement>) -> Option<Self> {
+        let view_count = spells.iter().fold(0, |acc, vocabulary_spell_element| {
+            acc + match vocabulary_spell_element {
+                VocabularySpellElement::Normal(_) => 1,
+                VocabularySpellElement::Compound((_, count)) => count.get(),
             }
-            VocabularySpell::Compound(_) => Some(Self { view, spells }),
+        });
+
+        if view.chars().count() != view_count {
+            None
+        } else {
+            Some(Self { view, spells })
         }
     }
 
@@ -75,36 +70,43 @@ impl VocabularyEntry {
         self.view.as_str()
     }
 
-    pub fn spells(&self) -> &VocabularySpell {
+    pub fn spells(&self) -> &Vec<VocabularySpellElement> {
         &self.spells
     }
 
     // 語彙全体の綴りを構築する
     // 表示文字列の各文字に対しての綴りをつなげたもの
     pub(crate) fn construct_spell_string(&self) -> SpellString {
-        self.spells.construct_spell_string()
+        let mut s = String::new();
+
+        self.spells
+            .iter()
+            .for_each(|spell| s.push_str(&spell.construct_spell_string()));
+
+        s.try_into().unwrap()
     }
 
     // クエリ用の語彙情報を生成する
     pub(crate) fn construct_vocabulary_info(&self, chunk_count: NonZeroUsize) -> VocabularyInfo {
         let mut view_position_of_spell: Vec<ViewPosition> = vec![];
 
-        match &self.spells {
-            VocabularySpell::Normal(spells) => {
-                spells.iter().enumerate().for_each(|(i, spell)| {
-                    spell.chars().for_each(|_| {
-                        view_position_of_spell.push(ViewPosition::Normal(i));
-                    });
+        let mut i = 0;
+        self.spells.iter().for_each(|spell| match spell {
+            VocabularySpellElement::Normal(spell) => {
+                spell.chars().for_each(|_| {
+                    view_position_of_spell.push(ViewPosition::Normal(i));
                 });
+                i += 1;
             }
-            VocabularySpell::Compound(spell) => {
+            VocabularySpellElement::Compound((spell, view_count)) => {
                 spell.chars().for_each(|_| {
                     view_position_of_spell.push(ViewPosition::Compound(
-                        (0..self.view.chars().count()).collect(),
+                        (i..(i + view_count.get())).collect(),
                     ));
                 });
+                i += view_count.get();
             }
-        }
+        });
 
         VocabularyInfo {
             view: self.view.clone(),
@@ -275,37 +277,29 @@ mod test {
     use super::{convert_spell_positions_to_view_positions, ViewPosition};
 
     macro_rules! equal_check_construct_chunks {
-        (($vs:literal,[$($spell:literal),*]), [$($s:literal),*]) => {
-            let ve = gen_vocabulary_entry!($vs,[$($spell),*]);
+        (($vs:literal,[$(($spell:literal$(,$view_count:literal)?)),*]), [$($s:literal),*]) => {
+            let ve = gen_vocabulary_entry!($vs,[$(($spell$(,$view_count)?)),*]);
 
             assert_eq!(
                 ve.construct_chunks(),
                 vec![$(gen_unprocessed_chunk!($s)),*]
             );
         };
-        (($vs:literal,$spell:literal), [$($s:literal),*]) => {
-            let ve = gen_vocabulary_entry!($vs,$spell);
-
-            assert_eq!(
-                ve.construct_chunks(),
-                vec![$(gen_unprocessed_chunk!($s)),*]
-            );
-        }
     }
 
     #[test]
     fn construct_chunks_from_vocabulary_entry_1() {
-        equal_check_construct_chunks!(("今日", "きょう"), ["きょ", "う"]);
+        equal_check_construct_chunks!(("今日", [("きょう", 2)]), ["きょ", "う"]);
     }
 
     #[test]
     fn construct_chunks_from_vocabulary_entry_2() {
-        equal_check_construct_chunks!((" 　", [" ", "　"]), [" ", "　"]);
+        equal_check_construct_chunks!((" 　", [(" "), ("　")]), [" ", "　"]);
     }
 
     #[test]
     fn construct_chunks_from_vocabulary_entry_3() {
-        equal_check_construct_chunks!(("big", ["b", "i", "g"]), ["b", "i", "g"]);
+        equal_check_construct_chunks!(("big", [("b"), ("i"), ("g")]), ["b", "i", "g"]);
     }
 
     #[test]
