@@ -1,6 +1,5 @@
 use super::{has_actual_key_strokes::ChunkHasActualKeyStrokes, Chunk};
-use crate::key_stroke::ActualKeyStroke;
-use crate::key_stroke::KeyStrokeChar;
+use crate::typing_primitive_types::key_stroke::{ActualKeyStroke, KeyStrokeChar};
 
 use super::ChunkKeyStrokeCandidate;
 

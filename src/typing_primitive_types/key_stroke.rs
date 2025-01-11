@@ -46,7 +46,7 @@ impl TryFrom<char> for KeyStrokeChar {
 
 // KeyStrokeCharで構成された文字列
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct KeyStrokeString(String);
+pub(crate) struct KeyStrokeString(String);
 
 impl From<KeyStrokeString> for String {
     fn from(s: KeyStrokeString) -> Self {
@@ -62,7 +62,7 @@ impl Deref for KeyStrokeString {
 }
 
 #[derive(Debug)]
-pub struct KeyStrokeStringError {
+pub(crate) struct KeyStrokeStringError {
     char: char,
 }
 

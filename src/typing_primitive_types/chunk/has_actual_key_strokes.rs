@@ -1,4 +1,4 @@
-use crate::key_stroke::ActualKeyStroke;
+use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
 
 use super::{Chunk, ChunkKeyStrokeCandidate};
 

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use super::{has_actual_key_strokes::ChunkHasActualKeyStrokes, Chunk};
-use crate::key_stroke::{ActualKeyStroke, KeyStrokeChar};
+use crate::typing_primitive_types::key_stroke::{ActualKeyStroke, KeyStrokeChar};
 
 use super::confirmed::ConfirmedChunk;
 

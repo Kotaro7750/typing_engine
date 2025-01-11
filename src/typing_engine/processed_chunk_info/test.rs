@@ -3,12 +3,12 @@ use super::*;
 use std::num::NonZeroUsize;
 use std::time::Duration;
 
-use crate::key_stroke::ActualKeyStroke;
 use crate::statistics::OnTypingStatisticsTarget;
 use crate::typing_engine::processed_chunk_info::ConfirmedChunk;
 use crate::typing_engine::processed_chunk_info::KeyStrokeDisplayInfo;
 use crate::typing_engine::processed_chunk_info::SpellDisplayInfo;
 use crate::typing_engine::processed_chunk_info::TypedChunk;
+use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
 use crate::{gen_candidate, gen_chunk};
 
 #[test]

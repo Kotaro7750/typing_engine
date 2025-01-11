@@ -95,7 +95,7 @@ macro_rules! gen_vocabulary_info {
 macro_rules! gen_candidate {
         ([$($key_stroke:literal),*]$(, $constraint:literal)?$(, [$($delayed:literal),*])?) => {
             {
-                let _constraint: Option<crate::key_stroke::KeyStrokeChar> = None;
+                let _constraint: Option<crate::typing_primitive_types::key_stroke::KeyStrokeChar> = None;
                 $(let _constraint = Some($constraint.try_into().unwrap());)?
 
                 let _delayed: Option<crate::typing_primitive_types::chunk::DelayedConfirmedCandidateInfo> = None;
