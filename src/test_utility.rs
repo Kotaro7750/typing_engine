@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! gen_unprocessed_chunk {
     ($chunk_spell:literal) => {
-        crate::chunk::Chunk::new($chunk_spell.to_string().try_into().unwrap(), None, None)
+        crate::typing_primitive_types::chunk::Chunk::new($chunk_spell.to_string().try_into().unwrap(), None, None)
     };
 }
 
@@ -13,10 +13,10 @@ macro_rules! gen_chunk {
             $(,$ideal_candidate:expr)?
         ) => {
         {
-            let _ideal_candidate: Option<crate::chunk::ChunkKeyStrokeCandidate> = None;
+            let _ideal_candidate: Option<crate::typing_primitive_types::chunk::ChunkKeyStrokeCandidate> = None;
             $(let _ideal_candidate = Some($ideal_candidate);)?
 
-            crate::chunk::Chunk::new(
+            crate::typing_primitive_types::chunk::Chunk::new(
                 $chunk_spell.to_string().try_into().unwrap(),
                 Some($key_stroke_candidates),
                 _ideal_candidate
@@ -98,9 +98,9 @@ macro_rules! gen_candidate {
                 let _constraint: Option<crate::key_stroke::KeyStrokeChar> = None;
                 $(let _constraint = Some($constraint.try_into().unwrap());)?
 
-                let _delayed: Option<crate::chunk::DelayedConfirmedCandidateInfo> = None;
-                $(let _delayed = Some(crate::chunk::DelayedConfirmedCandidateInfo::new(vec![$($delayed.try_into().unwrap()),*]));)?
-                crate::chunk::ChunkKeyStrokeCandidate::new(vec![$($key_stroke.to_string().try_into().unwrap()),*],_constraint,_delayed)
+                let _delayed: Option<crate::typing_primitive_types::chunk::DelayedConfirmedCandidateInfo> = None;
+                $(let _delayed = Some(crate::typing_primitive_types::chunk::DelayedConfirmedCandidateInfo::new(vec![$($delayed.try_into().unwrap()),*]));)?
+                crate::typing_primitive_types::chunk::ChunkKeyStrokeCandidate::new(vec![$($key_stroke.to_string().try_into().unwrap()),*],_constraint,_delayed)
             }
         };
     }

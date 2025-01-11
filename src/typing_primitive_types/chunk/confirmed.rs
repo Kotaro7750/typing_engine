@@ -1,4 +1,4 @@
-use crate::chunk::{has_actual_key_strokes::ChunkHasActualKeyStrokes, Chunk};
+use super::{has_actual_key_strokes::ChunkHasActualKeyStrokes, Chunk};
 use crate::key_stroke::ActualKeyStroke;
 use crate::key_stroke::KeyStrokeChar;
 

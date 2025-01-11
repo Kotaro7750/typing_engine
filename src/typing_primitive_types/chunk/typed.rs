@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::chunk::{has_actual_key_strokes::ChunkHasActualKeyStrokes, Chunk};
+use super::{has_actual_key_strokes::ChunkHasActualKeyStrokes, Chunk};
 use crate::key_stroke::{ActualKeyStroke, KeyStrokeChar};
 
 use super::confirmed::ConfirmedChunk;

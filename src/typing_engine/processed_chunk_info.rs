@@ -1,13 +1,13 @@
 use std::collections::VecDeque;
 use std::time::Duration;
 
-use crate::chunk::confirmed::ConfirmedChunk;
-use crate::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
-use crate::chunk::typed::{KeyStrokeResult, TypedChunk};
-use crate::chunk::Chunk;
 use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
 use crate::key_stroke::KeyStrokeChar;
 use crate::statistics::{LapRequest, OnTypingStatisticsManager};
+use crate::typing_primitive_types::chunk::confirmed::ConfirmedChunk;
+use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
+use crate::typing_primitive_types::chunk::typed::{KeyStrokeResult, TypedChunk};
+use crate::typing_primitive_types::chunk::Chunk;
 
 #[cfg(test)]
 mod test;

@@ -1,4 +1,4 @@
-use crate::chunk::KeyStrokeElementCount;
+use crate::typing_primitive_types::chunk::KeyStrokeElementCount;
 use crate::utility::convert_by_weighted_count;
 
 pub(crate) enum BaseTarget {

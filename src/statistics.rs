@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 mod multi_target_position_convert;
 pub(crate) mod result;
 
-use crate::chunk::KeyStrokeElementCount;
+use crate::typing_primitive_types::chunk::KeyStrokeElementCount;
 use multi_target_position_convert::MultiTargetDeltaConverter;
 
 use self::multi_target_position_convert::BaseTarget;

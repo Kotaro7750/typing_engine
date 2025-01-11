@@ -2,8 +2,8 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
-use crate::chunk::confirmed::ConfirmedChunk;
-use crate::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
+use crate::typing_primitive_types::chunk::confirmed::ConfirmedChunk;
+use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use crate::statistics::OnTypingStatisticsManager;
 use crate::LapRequest;
 
