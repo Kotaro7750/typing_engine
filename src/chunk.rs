@@ -3,7 +3,7 @@ use std::num::NonZeroUsize;
 
 use crate::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
 use crate::key_stroke::{KeyStrokeChar, KeyStrokeString};
-use crate::spell::SpellString;
+use crate::typing_primitive_types::spell::SpellString;
 use crate::utility::convert_by_weighted_count;
 
 pub(crate) mod confirmed;
