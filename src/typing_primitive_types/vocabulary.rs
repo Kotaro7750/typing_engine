@@ -1,7 +1,7 @@
 use std::num::NonZeroUsize;
 
 use crate::typing_primitive_types::chunk::Chunk;
-use crate::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
+use crate::typing_primitive_types::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
 use crate::typing_primitive_types::spell::SpellString;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]

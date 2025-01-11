@@ -7,7 +7,6 @@ pub use crate::typing_primitive_types::key_stroke::{KeyStrokeChar, KeyStrokeChar
 pub use crate::typing_primitive_types::spell::{SpellString, SpellStringError};
 pub use crate::typing_primitive_types::vocabulary::{VocabularyEntry, VocabularySpellElement};
 
-mod chunk_key_stroke_dictionary;
 pub mod display_info;
 mod query;
 mod statistics;

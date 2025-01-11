@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::num::NonZeroUsize;
 
-use crate::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
+use crate::typing_primitive_types::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
 use crate::typing_primitive_types::key_stroke::{KeyStrokeChar, KeyStrokeString};
 use crate::typing_primitive_types::spell::SpellString;
 use crate::utility::convert_by_weighted_count;
