@@ -8,7 +8,9 @@ use crate::query::QueryRequest;
 use crate::statistics::result::{construct_result, TypingResultStatistics};
 use crate::statistics::LapRequest;
 use crate::typing_engine::processed_chunk_info::ProcessedChunkInfo;
-use crate::vocabulary::{construct_view_position_of_spell_positions, VocabularyInfo};
+use crate::typing_primitive_types::vocabulary::{
+    construct_view_position_of_spell_positions, VocabularyInfo,
+};
 
 mod processed_chunk_info;
 

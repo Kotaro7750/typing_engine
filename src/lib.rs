@@ -5,7 +5,7 @@ pub use crate::statistics::result::{TypingResultStatistics, TypingResultStatisti
 pub use crate::statistics::{LapRequest, OnTypingStatisticsTarget};
 pub use crate::typing_engine::*;
 pub use crate::typing_primitive_types::spell::{SpellString, SpellStringError};
-pub use crate::vocabulary::{VocabularyEntry, VocabularySpellElement};
+pub use crate::typing_primitive_types::vocabulary::{VocabularyEntry, VocabularySpellElement};
 
 mod chunk_key_stroke_dictionary;
 pub mod display_info;
@@ -15,7 +15,6 @@ mod statistics;
 mod typing_engine;
 pub mod typing_primitive_types;
 mod utility;
-mod vocabulary;
 
 #[cfg(test)]
 mod test_utility;

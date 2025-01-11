@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::vocabulary::convert_spell_positions_to_view_positions;
-use crate::{statistics::OnTypingStatisticsTarget, vocabulary::ViewPosition};
+use crate::typing_primitive_types::vocabulary::{convert_spell_positions_to_view_positions, ViewPosition};
+use crate::statistics::OnTypingStatisticsTarget;
 
 /// A type for composing typing game UI.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

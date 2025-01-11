@@ -28,14 +28,14 @@ macro_rules! gen_chunk {
 #[macro_export]
 macro_rules! gen_vocabulary_spell {
     ([$($spell:literal),*]) => {
-        crate::vocabulary::VocabularySpell::Normal(vec![
+        crate::typing_primitive_types::vocabulary::VocabularySpell::Normal(vec![
             $(
                 String::from($spell).try_into().unwrap(),
             )*
         ])
     };
     ($spell:literal) => {
-        crate::vocabulary::VocabularySpell::Compound(String::from($spell).try_into().unwrap())
+        crate::typing_primitive_types::vocabulary::VocabularySpell::Compound(String::from($spell).try_into().unwrap())
     };
 }
 
@@ -51,12 +51,12 @@ macro_rules! gen_vocabulary_entry {
                     )
                 ),*
             ]) => {
-            crate::vocabulary::VocabularyEntry::new( String::from($vs),
+            crate::typing_primitive_types::vocabulary::VocabularyEntry::new( String::from($vs),
                 vec![
                     $(
                         {
-                            let _vse = crate::vocabulary::VocabularySpellElement::Normal(String::from($spell).try_into().unwrap());
-                            $(let _vse = crate::vocabulary::VocabularySpellElement::Compound((String::from($spell).try_into().unwrap(),std::num::NonZeroUsize::new($view_count).unwrap()));)?
+                            let _vse = crate::typing_primitive_types::vocabulary::VocabularySpellElement::Normal(String::from($spell).try_into().unwrap());
+                            $(let _vse = crate::typing_primitive_types::vocabulary::VocabularySpellElement::Compound((String::from($spell).try_into().unwrap(),std::num::NonZeroUsize::new($view_count).unwrap()));)?
                             _vse
                         },
                     )*
@@ -68,10 +68,10 @@ macro_rules! gen_vocabulary_entry {
 #[macro_export]
 macro_rules! gen_view_position {
     ($position:literal) => {
-        crate::vocabulary::ViewPosition::Normal($position)
+        crate::typing_primitive_types::vocabulary::ViewPosition::Normal($position)
     };
     ([$($position:literal),*]) => {
-        crate::vocabulary::ViewPosition::Compound(vec![
+        crate::typing_primitive_types::vocabulary::ViewPosition::Compound(vec![
             $(
                 $position
             )*
@@ -82,7 +82,7 @@ macro_rules! gen_view_position {
 #[macro_export]
 macro_rules! gen_vocabulary_info {
     ($view:literal,$spell:literal,$vpos:expr,$chunk_count:literal) => {
-        crate::vocabulary::VocabularyInfo::new(
+        crate::typing_primitive_types::vocabulary::VocabularyInfo::new(
             String::from($view),
             String::from($spell).try_into().unwrap(),
             $vpos,

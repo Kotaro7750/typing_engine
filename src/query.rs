@@ -1,8 +1,8 @@
 use rand::random;
 use std::num::NonZeroUsize;
 
-use crate::{
-    typing_primitive_types::chunk::{append_key_stroke_to_chunks, Chunk},
+use crate::typing_primitive_types::{
+    chunk::{append_key_stroke_to_chunks, Chunk},
     vocabulary::{VocabularyEntry, VocabularyInfo, VocabularySpellElement},
 };
 
