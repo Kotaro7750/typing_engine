@@ -6,7 +6,7 @@ use std::{
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-/// An string only contains characters which can be used as spells.
+/// A string only contains characters which can be used as spells.
 ///
 /// Characters can be used as spells are
 /// * A displayable ASCII. (`U+20` ~ `U+7E`)
@@ -15,6 +15,7 @@ use std::{
 pub struct SpellString(String);
 
 impl SpellString {
+    /// Returns whether SpellString contains displayable ASCII characters.
     pub(crate) fn contains_displayable_ascii(&self) -> bool {
         for c in self.chars() {
             if is_displayable_ascii(c) {
@@ -26,7 +27,8 @@ impl SpellString {
     }
 }
 
-fn can_use_in_spell_string(c: char) -> bool {
+/// Checks whether a character can be used in a SpellString.
+fn usable_in_spell_string(c: char) -> bool {
     is_displayable_ascii(c) || is_hiragana(c) || is_japanese_symbol(c)
 }
 
@@ -50,6 +52,7 @@ impl DerefMut for SpellString {
 }
 
 #[derive(Debug)]
+/// An error type for SpellString related operations.
 pub struct SpellStringError {
     char: char,
 }
@@ -73,7 +76,7 @@ impl TryFrom<String> for SpellString {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         for c in value.chars() {
-            if !can_use_in_spell_string(c) {
+            if !usable_in_spell_string(c) {
                 return Err(SpellStringError::new(c));
             }
         }
