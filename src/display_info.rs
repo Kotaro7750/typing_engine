@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::typing_primitive_types::vocabulary::{convert_spell_positions_to_view_positions, ViewPosition};
 use crate::statistics::OnTypingStatisticsTarget;
+use crate::typing_primitive_types::vocabulary::{
+    corresponding_view_positions_for_spell, ViewPosition,
+};
 
 /// A type for composing typing game UI.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -52,20 +54,19 @@ impl ViewDisplayInfo {
     pub(crate) fn new(
         spell_display_info: &SpellDisplayInfo,
         view: String,
-        view_position_of_spell_position: Vec<ViewPosition>,
+        view_position_of_spell: Vec<ViewPosition>,
     ) -> Self {
         Self {
             view,
-            current_cursor_positions: convert_spell_positions_to_view_positions(
+            current_cursor_positions: corresponding_view_positions_for_spell(
                 &spell_display_info.current_cursor_positions,
-                &view_position_of_spell_position,
+                &view_position_of_spell,
             ),
-            missed_positions: convert_spell_positions_to_view_positions(
+            missed_positions: corresponding_view_positions_for_spell(
                 &spell_display_info.missed_positions,
-                &view_position_of_spell_position,
+                &view_position_of_spell,
             ),
-            last_position: view_position_of_spell_position[spell_display_info.last_position]
-                .last_position(),
+            last_position: view_position_of_spell[spell_display_info.last_position].last_position(),
         }
     }
 

@@ -9,7 +9,7 @@ use crate::statistics::LapRequest;
 use crate::typing_engine::processed_chunk_info::ProcessedChunkInfo;
 use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
 use crate::typing_primitive_types::vocabulary::{
-    construct_view_position_of_spell_positions, VocabularyInfo,
+    view_position_of_spell_for_vocabulary_infos, VocabularyInfo,
 };
 
 mod processed_chunk_info;
@@ -195,8 +195,9 @@ impl TypingEngine {
                 // XXX 引数で指定するようにする
                 .construct_display_info(lap_request);
 
-            let view_position_of_spell_position =
-                construct_view_position_of_spell_positions(self.vocabulary_infos.as_ref().unwrap());
+            let view_position_of_spell = view_position_of_spell_for_vocabulary_infos(
+                self.vocabulary_infos.as_ref().unwrap(),
+            );
 
             let view = self
                 .vocabulary_infos
@@ -208,7 +209,7 @@ impl TypingEngine {
                 .unwrap();
 
             let view_display_info =
-                ViewDisplayInfo::new(&spell_display_info, view, view_position_of_spell_position);
+                ViewDisplayInfo::new(&spell_display_info, view, view_position_of_spell);
 
             Ok(DisplayInfo::new(
                 view_display_info,

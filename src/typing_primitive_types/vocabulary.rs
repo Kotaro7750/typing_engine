@@ -27,14 +27,15 @@ pub enum VocabularySpellElement {
 }
 
 impl VocabularySpellElement {
-    pub(crate) fn construct_spell_string(&self) -> SpellString {
+    // Construct single SpellString of this element.
+    pub(crate) fn construct_whole_spell(&self) -> SpellString {
         match self {
             Self::Normal(spell) | Self::Compound((spell, _)) => spell.clone(),
         }
     }
 }
 
-/// An vocabulary for used in query.
+/// A struct representing a vocabulary for constructing query.
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct VocabularyEntry {
     view: String,
@@ -66,27 +67,29 @@ impl VocabularyEntry {
         }
     }
 
+    /// Return the view of this vocabulary.
     pub fn view(&self) -> &str {
         self.view.as_str()
     }
 
+    /// Return the spells of this vocabulary.
     pub fn spells(&self) -> &Vec<VocabularySpellElement> {
         &self.spells
     }
 
-    // 語彙全体の綴りを構築する
-    // 表示文字列の各文字に対しての綴りをつなげたもの
-    pub(crate) fn construct_spell_string(&self) -> SpellString {
+    /// Construct the whole spell of this entry.
+    /// This is accomlished by concatenating spell elements of this entry.
+    pub(crate) fn construct_whole_spell(&self) -> SpellString {
         let mut s = String::new();
 
         self.spells
             .iter()
-            .for_each(|spell| s.push_str(&spell.construct_spell_string()));
+            .for_each(|spell| s.push_str(&spell.construct_whole_spell()));
 
         s.try_into().unwrap()
     }
 
-    // クエリ用の語彙情報を生成する
+    /// Construct VocabularyInfo from this entry.
     pub(crate) fn construct_vocabulary_info(&self, chunk_count: NonZeroUsize) -> VocabularyInfo {
         let mut view_position_of_spell: Vec<ViewPosition> = vec![];
 
@@ -110,18 +113,18 @@ impl VocabularyEntry {
 
         VocabularyInfo {
             view: self.view.clone(),
-            spell: self.construct_spell_string(),
+            spell: self.construct_whole_spell(),
             view_position_of_spell,
             chunk_count,
         }
     }
 
-    // 語彙からチャンク列を構築する
-    // この段階ではそれぞれのチャンクに対するキーストローク候補は設定しない
+    /// Construct chunks from this entry.
+    /// At this stage, key stroke candidates for each chunk are not set.
     pub(crate) fn construct_chunks(&self) -> Vec<Chunk> {
         let mut chunks = Vec::<Chunk>::new();
 
-        let spell_chars: Vec<char> = self.construct_spell_string().chars().collect();
+        let spell_chars: Vec<char> = self.construct_whole_spell().chars().collect();
 
         let mut i = 0;
         while i < spell_chars.len() {
@@ -159,14 +162,16 @@ impl VocabularyEntry {
     }
 }
 
+/// An enum representing position indexes in view string for each spell charactors.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum ViewPosition {
     Normal(usize),
+    /// Represents position indexes for a spell charactor in compound vocabulary.
     Compound(Vec<usize>),
 }
 
 impl ViewPosition {
-    /// 位置にオフセットを適用する
+    /// Apply static offset to position.
     fn offset(&self, offset: usize) -> Self {
         match self {
             Self::Normal(position) => Self::Normal(position + offset),
@@ -176,6 +181,7 @@ impl ViewPosition {
         }
     }
 
+    /// Return the last view position of corrensponding spell charactor.
     pub(crate) fn last_position(&self) -> usize {
         match self {
             Self::Normal(position) => *position,
@@ -184,20 +190,19 @@ impl ViewPosition {
     }
 }
 
-pub(crate) fn convert_spell_positions_to_view_positions(
+/// Return view position indexes for each spell positions.
+pub(crate) fn corresponding_view_positions_for_spell(
     spell_positions: &[usize],
-    view_position_of_spell_position: &[ViewPosition],
+    view_position_of_spell: &[ViewPosition],
 ) -> Vec<usize> {
     let mut view_positions = vec![];
 
     spell_positions.iter().for_each(|spell_position| {
         // カーソル位置など綴り字数を超える場合がある
-        let view_position = if *spell_position >= view_position_of_spell_position.len() {
-            view_position_of_spell_position.last().unwrap()
+        let view_position = if *spell_position >= view_position_of_spell.len() {
+            view_position_of_spell.last().unwrap()
         } else {
-            view_position_of_spell_position
-                .get(*spell_position)
-                .unwrap()
+            view_position_of_spell.get(*spell_position).unwrap()
         };
 
         match view_position {
@@ -211,11 +216,12 @@ pub(crate) fn convert_spell_positions_to_view_positions(
     view_positions
 }
 
-// クエリ中での語彙
+/// A struct representing an actual vocabulary in a query.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct VocabularyInfo {
     view: String,
     spell: SpellString,
+    /// Corresponding position index in view string for each spell charactors. Position is 0 oriented.
     view_position_of_spell: Vec<ViewPosition>,
     chunk_count: NonZeroUsize,
 }
@@ -236,23 +242,27 @@ impl VocabularyInfo {
         }
     }
 
+    /// Return the count of chunks of this vocabulary.
     pub(crate) fn chunk_count(&self) -> NonZeroUsize {
         self.chunk_count
     }
 
+    /// Return the view of this vocabulary.
     pub(crate) fn view(&self) -> &str {
         self.view.as_str()
     }
 
+    /// Reset the count of chunks of this vocabulary.
     pub(crate) fn reset_chunk_count(&mut self, chunk_count: NonZeroUsize) {
         self.chunk_count = chunk_count;
     }
 }
 
-pub(crate) fn construct_view_position_of_spell_positions(
+/// Construct view position indexes for spell charactors concatenated from passed VocabularyInfos.
+pub(crate) fn view_position_of_spell_for_vocabulary_infos(
     vocabulary_infos: &[VocabularyInfo],
 ) -> Vec<ViewPosition> {
-    let mut view_position_of_spell_positions: Vec<ViewPosition> = vec![];
+    let mut view_position_of_spell: Vec<ViewPosition> = vec![];
 
     let mut index = 0;
 
@@ -261,20 +271,20 @@ pub(crate) fn construct_view_position_of_spell_positions(
             .view_position_of_spell
             .iter()
             .for_each(|in_vocabulary_view_position| {
-                view_position_of_spell_positions.push(in_vocabulary_view_position.offset(index));
+                view_position_of_spell.push(in_vocabulary_view_position.offset(index));
             });
 
         index += vocabulary_info.view().chars().count();
     });
 
-    view_position_of_spell_positions
+    view_position_of_spell
 }
 
 #[cfg(test)]
 mod test {
     use crate::{gen_unprocessed_chunk, gen_vocabulary_entry};
 
-    use super::{convert_spell_positions_to_view_positions, ViewPosition};
+    use super::{corresponding_view_positions_for_spell, ViewPosition};
 
     macro_rules! equal_check_construct_chunks {
         (($vs:literal,[$(($spell:literal$(,$view_count:literal)?)),*]), [$($s:literal),*]) => {
@@ -303,8 +313,8 @@ mod test {
     }
 
     #[test]
-    fn convert_spell_positions_to_view_positions_1() {
-        let vp = convert_spell_positions_to_view_positions(
+    fn corresponding_view_positions_for_spell_1() {
+        let vp = corresponding_view_positions_for_spell(
             &vec![0, 1, 2],
             &vec![
                 ViewPosition::Compound(vec![0, 1, 2, 3]),
