@@ -1,4 +1,4 @@
-use crate::typing_primitive_types::chunk::KeyStrokeElementCount;
+use crate::typing_primitive_types::chunk::key_stroke_candidate::KeyStrokeElementCount;
 use crate::utility::convert_by_weighted_count;
 
 #[cfg(test)]

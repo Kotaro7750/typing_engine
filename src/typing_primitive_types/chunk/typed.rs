@@ -220,7 +220,7 @@ impl TypedChunk {
             .delayed_confirmed_candiate_info()
             .as_ref()
             .unwrap()
-            .is_valid_key_stroke(key_stroke.clone())
+            .can_confirm_with_key_stroke(key_stroke.clone())
         {
             // 遅延確定候補以外の候補を削除する
             let mut candidate_reduce_vec = vec![false; key_stroke_candidates.len()];
@@ -311,7 +311,9 @@ impl TypedChunk {
             cursor_positions.push(
                 self.as_ref()
                     .min_candidate(None)
-                    .element_index_at_key_stroke_index(self.current_key_stroke_cursor_position()),
+                    .belonging_element_index_of_key_stroke(
+                        self.current_key_stroke_cursor_position(),
+                    ),
             );
         } else {
             // チャンクをまとめて入力している場合にはチャンクの綴り全体にカーソルを当てる

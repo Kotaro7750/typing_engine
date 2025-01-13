@@ -2,9 +2,9 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
+use crate::statistics::OnTypingStatisticsManager;
 use crate::typing_primitive_types::chunk::confirmed::ConfirmedChunk;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
-use crate::statistics::OnTypingStatisticsManager;
 use crate::LapRequest;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -111,7 +111,8 @@ pub(crate) fn construct_result(
 
                     wrong_spell_element_vector[confirmed_chunk
                         .confirmed_candidate()
-                        .element_index_at_key_stroke_index(in_candidate_cursor_position)] = true;
+                        .belonging_element_index_of_key_stroke(in_candidate_cursor_position)] =
+                        true;
                 }
             });
 

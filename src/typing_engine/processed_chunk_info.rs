@@ -190,7 +190,7 @@ impl ProcessedChunkInfo {
 
                         wrong_spell_element_vector[confirmed_chunk
                             .confirmed_candidate()
-                            .element_index_at_key_stroke_index(in_candidate_cursor_position)] =
+                            .belonging_element_index_of_key_stroke(in_candidate_cursor_position)] =
                             true;
                     }
                 });
@@ -304,7 +304,7 @@ impl ProcessedChunkInfo {
                         wrong_spell_element_vector[inflight_chunk
                             .as_ref()
                             .min_candidate(None)
-                            .element_index_at_key_stroke_index(in_candidate_cursor_position)] =
+                            .belonging_element_index_of_key_stroke(in_candidate_cursor_position)] =
                             true;
                     }
                 });

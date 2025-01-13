@@ -1,7 +1,7 @@
 use super::{has_actual_key_strokes::ChunkHasActualKeyStrokes, Chunk};
 use crate::typing_primitive_types::key_stroke::{ActualKeyStroke, KeyStrokeChar};
 
-use super::ChunkKeyStrokeCandidate;
+use super::key_stroke_candidate::ChunkKeyStrokeCandidate;
 
 // 確定したチャンク
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
