@@ -3,19 +3,22 @@ use crate::typing_primitive_types::key_stroke::{ActualKeyStroke, KeyStrokeChar};
 
 use super::key_stroke_candidate::ChunkKeyStrokeCandidate;
 
-// 確定したチャンク
+/// A struct representing an already confirmed chunk.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct ConfirmedChunk {
     chunk: Chunk,
-    // ミスタイプも含めた実際のキーストローク
-    key_strokes: Vec<ActualKeyStroke>,
+    actual_key_strokes: Vec<ActualKeyStroke>,
 }
 
 impl ConfirmedChunk {
     pub(crate) fn new(chunk: Chunk, key_strokes: Vec<ActualKeyStroke>) -> Self {
-        Self { chunk, key_strokes }
+        Self {
+            chunk,
+            actual_key_strokes: key_strokes,
+        }
     }
 
+    /// Returns a candidate that confirm this chunk.
     pub(crate) fn confirmed_candidate(&self) -> &ChunkKeyStrokeCandidate {
         assert!(self.chunk.key_stroke_candidates().as_ref().unwrap().len() == 1);
 
@@ -23,11 +26,11 @@ impl ConfirmedChunk {
             .key_stroke_candidates()
             .as_ref()
             .unwrap()
-            .get(0)
+            .first()
             .unwrap()
     }
 
-    // 確定した候補について次のチャンク先頭への制限を生成する
+    /// Returns a constraint for the next chunk head based on the confirmed candidate.
     pub(crate) fn next_chunk_head_constraint(&mut self) -> Option<KeyStrokeChar> {
         self.confirmed_candidate()
             .next_chunk_head_constraint()
@@ -37,7 +40,7 @@ impl ConfirmedChunk {
 
 impl ChunkHasActualKeyStrokes for ConfirmedChunk {
     fn actual_key_strokes(&self) -> &[ActualKeyStroke] {
-        &self.key_strokes
+        &self.actual_key_strokes
     }
 
     fn effective_candidate(&self) -> &ChunkKeyStrokeCandidate {
