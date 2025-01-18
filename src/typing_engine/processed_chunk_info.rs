@@ -145,8 +145,6 @@ impl ProcessedChunkInfo {
         // 1. 確定したチャンク
         self.confirmed_chunks.iter().for_each(|confirmed_chunk| {
             let mut in_candidate_cursor_position = 0;
-            let mut wrong_spell_element_vector = confirmed_chunk.initialized_spell_element_vector();
-            let mut wrong_key_strokes_vector = confirmed_chunk.initialized_key_strokes_vector();
             // 複数文字の綴りをまとめて打つ場合には綴りの統計は2文字分カウントする必要がある
             let spell_count = confirmed_chunk.effective_spell_count();
 
@@ -166,8 +164,7 @@ impl ProcessedChunkInfo {
                     .count(),
             );
 
-            // まず実際のキーストローク系列から統計情報を更新しチャンク内ミス位置を構築する
-
+            // Update statistics using actual key strokes
             confirmed_chunk
                 .actual_key_strokes()
                 .iter()
@@ -185,50 +182,18 @@ impl ProcessedChunkInfo {
                         if let Some(delta) = spell_end {
                             on_typing_stat_manager.finish_spell(*delta);
                         }
-                    } else {
-                        wrong_key_strokes_vector[in_candidate_cursor_position] = true;
-
-                        wrong_spell_element_vector[confirmed_chunk
-                            .confirmed_candidate()
-                            .belonging_element_index_of_key_stroke(in_candidate_cursor_position)] =
-                            true;
                     }
                 });
 
-            // 次に構築したチャンク内ミス位置からキーストロークと綴りのそれぞれのカーソル位置とミス位置を更新する
-
-            wrong_key_strokes_vector
-                .iter()
-                .enumerate()
-                .for_each(|(i, is_wrong)| {
-                    if *is_wrong {
-                        key_stroke_wrong_positions.push(key_stroke_cursor_position + i);
-                    }
-                });
+            // Update cursor positions and wrong positions for key stroke
+            key_stroke_wrong_positions
+                .extend(confirmed_chunk.wrong_key_stroke_positions(key_stroke_cursor_position));
             key_stroke_cursor_position += in_candidate_cursor_position;
 
-            confirmed_chunk
-                .as_ref()
-                .spell()
-                .as_ref()
-                .chars()
-                .enumerate()
-                .for_each(|(i, _)| {
-                    // 複数文字チャンクを個別に入力した場合はそれぞれの綴りについて
-                    // それ以外ではチャンク全体の綴りについて
-                    // タイプミス判定をする
-                    let element_index = if wrong_spell_element_vector.len() == 1 {
-                        0
-                    } else {
-                        i
-                    };
-
-                    if wrong_spell_element_vector[element_index] {
-                        spell_wrong_positions.push(spell_head_position);
-                    }
-
-                    spell_head_position += 1;
-                });
+            // Update cursor positions and wrong positions for spell
+            spell_wrong_positions
+                .extend(confirmed_chunk.wrong_spell_positions(spell_head_position));
+            spell_head_position += confirmed_chunk.as_ref().spell().count();
 
             // 最後にチャンクの統計情報と表示用の文字列を更新する
             key_stroke.push_str(&confirmed_chunk.confirmed_candidate().whole_key_stroke());
@@ -258,8 +223,6 @@ impl ProcessedChunkInfo {
             let inflight_chunk = self.inflight_chunk.as_ref().unwrap();
 
             let spell_count = inflight_chunk.effective_spell_count();
-            let mut wrong_spell_element_vector = inflight_chunk.initialized_spell_element_vector();
-            let mut wrong_key_strokes_vector = inflight_chunk.initialized_key_strokes_vector();
             let mut in_candidate_cursor_position = 0;
 
             on_typing_stat_manager.set_this_candidate_key_stroke_count(
@@ -279,8 +242,7 @@ impl ProcessedChunkInfo {
                     .count(),
             );
 
-            // まず実際のキーストローク系列から統計情報を更新しチャンク内ミス位置を構築する
-
+            // Update statistics using actual key strokes
             inflight_chunk
                 .actual_key_strokes()
                 .iter()
@@ -298,63 +260,24 @@ impl ProcessedChunkInfo {
                         if let Some(delta) = spell_end {
                             on_typing_stat_manager.finish_spell(*delta);
                         }
-                    } else {
-                        wrong_key_strokes_vector[in_candidate_cursor_position] = true;
-
-                        wrong_spell_element_vector[inflight_chunk
-                            .as_ref()
-                            .min_candidate(None)
-                            .belonging_element_index_of_key_stroke(in_candidate_cursor_position)] =
-                            true;
                     }
                 });
 
-            // 次に構築したチャンク内ミス位置からキーストロークと綴りのそれぞれのカーソル位置とミス位置を更新する
+            // Update cursor positions and wrong positions for key stroke
+            key_stroke_wrong_positions
+                .extend(inflight_chunk.wrong_key_stroke_positions(key_stroke_cursor_position));
+            key_stroke_cursor_position += inflight_chunk.current_key_stroke_cursor_position(); // この時点ではカーソル位置はこのチャンクの先頭を指しているので単純に足すだけで良い
 
-            wrong_key_strokes_vector
-                .iter()
-                .enumerate()
-                .for_each(|(i, is_wrong)| {
-                    if *is_wrong {
-                        key_stroke_wrong_positions.push(key_stroke_cursor_position + i);
-                    }
-                });
-            // この時点ではカーソル位置はこのチャンクの先頭を指しているので単純に足すだけで良い
-            key_stroke_cursor_position += inflight_chunk.current_key_stroke_cursor_position();
-
-            // 綴りのカーソル位置は複数ある場合がある
-            let in_chunk_current_spell_cursor_positions =
-                inflight_chunk.current_spell_cursor_positions();
-
-            spell_cursor_positions = in_chunk_current_spell_cursor_positions
+            // Update cursor positions and wrong positions for spell
+            spell_cursor_positions = inflight_chunk
+                .current_spell_cursor_positions()
                 .iter()
                 .map(|in_chunk_current_spell_cursor_position| {
                     spell_head_position + in_chunk_current_spell_cursor_position
                 })
                 .collect();
-
-            inflight_chunk
-                .as_ref()
-                .spell()
-                .as_ref()
-                .chars()
-                .enumerate()
-                .for_each(|(i, _)| {
-                    // 複数文字チャンクを個別に入力した場合はそれぞれの綴りについて
-                    // それ以外ではチャンク全体の綴りについて
-                    // タイプミス判定をする
-                    let element_index = if wrong_spell_element_vector.len() == 1 {
-                        0
-                    } else {
-                        i
-                    };
-
-                    if wrong_spell_element_vector[element_index] {
-                        spell_wrong_positions.push(spell_head_position);
-                    }
-
-                    spell_head_position += 1;
-                });
+            spell_wrong_positions.extend(inflight_chunk.wrong_spell_positions(spell_head_position));
+            spell_head_position += inflight_chunk.as_ref().spell().count();
 
             // 最後にチャンクの統計情報と表示用の文字列を更新する
 
