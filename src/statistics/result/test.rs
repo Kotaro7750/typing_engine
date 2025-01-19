@@ -14,8 +14,12 @@ fn construct_result_1() {
         ConfirmedChunk::new(
             gen_chunk!(
                 "きょ",
-                vec![gen_candidate!(["kyo"]),],
-                gen_candidate!(["kyo"])
+                vec![
+                    gen_candidate!(["kyo"], true, Some(3)),
+                    gen_candidate!(["ki", "lyo"], false, Some(1)),
+                    gen_candidate!(["ki", "xyo"], false, Some(1))
+                ],
+                gen_candidate!(["kyo"], true, None)
             ),
             vec![
                 ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
@@ -28,8 +32,12 @@ fn construct_result_1() {
         ConfirmedChunk::new(
             gen_chunk!(
                 "きょ",
-                vec![gen_candidate!(["ki", "xyo"]),],
-                gen_candidate!(["kyo"])
+                vec![
+                    gen_candidate!(["kyo"], false, Some(1)),
+                    gen_candidate!(["ki", "lyo"], false, Some(2)),
+                    gen_candidate!(["ki", "xyo"], true, Some(5))
+                ],
+                gen_candidate!(["kyo"], true, None)
             ),
             vec![
                 ActualKeyStroke::new(Duration::new(6, 0), 'k'.try_into().unwrap(), true),

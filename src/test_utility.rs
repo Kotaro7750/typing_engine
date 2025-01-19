@@ -97,14 +97,25 @@ macro_rules! gen_vocabulary_info {
 
 #[macro_export]
 macro_rules! gen_candidate {
-        ([$($key_stroke:literal),*]$(, $constraint:literal)?$(, [$($delayed:literal),*])?) => {
+        ([$($key_stroke:literal),*], $is_active:literal, $cursor_position:expr$(, $constraint:literal)?$(, [$($delayed:literal),*])?) => {
             {
                 let _constraint: Option<crate::typing_primitive_types::key_stroke::KeyStrokeChar> = None;
                 $(let _constraint = Some($constraint.try_into().unwrap());)?
 
                 let _delayed: Option<crate::typing_primitive_types::chunk::key_stroke_candidate::DelayedConfirmedCandidateInfo> = None;
                 $(let _delayed = Some(crate::typing_primitive_types::chunk::key_stroke_candidate::DelayedConfirmedCandidateInfo::new(vec![$($delayed.try_into().unwrap()),*]));)?
-                crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate::new(vec![$($key_stroke.to_string().try_into().unwrap()),*],_constraint,_delayed)
+
+                let _is_active = $is_active.try_into().unwrap();
+
+                let _cursor_position = $cursor_position.try_into().unwrap();
+
+                crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate::new(
+                    vec![$($key_stroke.to_string().try_into().unwrap()),*],
+                    _constraint,
+                    _delayed,
+                    _is_active,
+                    _cursor_position,
+                )
             }
         };
     }

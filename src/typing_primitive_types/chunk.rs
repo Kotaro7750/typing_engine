@@ -114,8 +114,50 @@ impl Chunk {
     }
 
     /// Returns key stroke candidates of this chunk.
-    pub(crate) fn key_stroke_candidates(&self) -> &Option<Vec<ChunkKeyStrokeCandidate>> {
+    pub(crate) fn all_key_stroke_candidates(&self) -> &Option<Vec<ChunkKeyStrokeCandidate>> {
         &self.key_stroke_candidates
+    }
+
+    fn all_key_stroke_candidates_mut(&mut self) -> &mut Option<Vec<ChunkKeyStrokeCandidate>> {
+        &mut self.key_stroke_candidates
+    }
+
+    pub(crate) fn key_stroke_candidates_mut(
+        &mut self,
+    ) -> Option<Vec<&mut ChunkKeyStrokeCandidate>> {
+        match self.key_stroke_candidates.as_mut() {
+            Some(key_stroke_candidates) => Some(
+                key_stroke_candidates
+                    .as_mut_slice()
+                    .iter_mut()
+                    .filter(|candidate| candidate.is_active())
+                    .collect(),
+            ),
+            None => None,
+        }
+    }
+
+    pub(crate) fn key_stroke_candidates(&self) -> Option<Vec<&ChunkKeyStrokeCandidate>> {
+        match self.key_stroke_candidates.as_ref() {
+            Some(key_stroke_candidates) => Some(
+                key_stroke_candidates
+                    .as_slice()
+                    .iter()
+                    .filter(|candidate| candidate.is_active())
+                    .collect(),
+            ),
+            None => None,
+        }
+    }
+
+    pub(crate) fn change_state_to_typed(&mut self) {
+        self.all_key_stroke_candidates_mut()
+            .as_mut()
+            .unwrap()
+            .iter_mut()
+            .for_each(|candidate| {
+                candidate.advance_cursor();
+            });
     }
 
     /// Returns the ideal key stroke candidate of this chunk.
@@ -126,7 +168,7 @@ impl Chunk {
     /// Returns the estimated minimum number of key strokes required to type this chunk.
     /// This is just an estimate because actual key strokes are not assigned yet.
     pub fn estimate_min_key_stroke_count(&self) -> usize {
-        assert!(self.key_stroke_candidates.is_none());
+        assert!(self.key_stroke_candidates().is_none());
 
         // ここで推測するのはあくまでも最小なので基本的には変換辞書から引いたものをそのまま使う
         // これは，2文字のチャンクの最小キーストロークは2文字をまとめて打つものだからである
@@ -157,13 +199,12 @@ impl Chunk {
         &self,
         chunk_head_striction: Option<KeyStrokeChar>,
     ) -> &ChunkKeyStrokeCandidate {
-        assert!(self.key_stroke_candidates.is_some());
+        assert!(self.key_stroke_candidates().is_some());
 
         let min_candidate = self
-            .key_stroke_candidates
-            .as_ref()
+            .key_stroke_candidates()
             .unwrap()
-            .iter()
+            .into_iter()
             .filter(|candidate| {
                 if let Some(chunk_head_striction) = &chunk_head_striction {
                     &candidate.key_stroke_char_at_position(0) == chunk_head_striction
@@ -188,11 +229,6 @@ impl Chunk {
     /// This is calculated by selecting the shortest key stroke candidate.
     pub fn calc_min_key_stroke_count(&self) -> usize {
         self.min_candidate(None).calc_key_stroke_count()
-    }
-
-    /// Returns the number of key stroke candidates.
-    pub(crate) fn key_stroke_candidates_count(&self) -> Option<usize> {
-        self.key_stroke_candidates.as_ref().map(|v| v.len())
     }
 
     /// 最後のチャンクに使うことを想定している
@@ -240,21 +276,29 @@ impl Chunk {
     /// Restrict the candidates of this chunk by the key stroke of chunk head.
     /// Ex. If the chunk_head_striction is "s", the candidates that do not start with "s" are removed.
     pub(crate) fn strict_chunk_head(&mut self, chunk_head_striction: KeyStrokeChar) {
-        let key_stroke_candidates = self.key_stroke_candidates.as_mut().unwrap();
-
-        key_stroke_candidates
-            .retain(|candidate| candidate.key_stroke_char_at_position(0) == chunk_head_striction);
+        self.key_stroke_candidates_mut()
+            .as_mut()
+            .unwrap()
+            .iter_mut()
+            .for_each(|candidate| {
+                if candidate.key_stroke_char_at_position(0) != chunk_head_striction {
+                    candidate.inactivate();
+                }
+            });
     }
 
     /// Reduce the candidates of this chunk.
     /// Retain only the candidates whose index is true in the retain_vector.
     pub(crate) fn reduce_candidate(&mut self, retain_vector: &[bool]) {
-        let mut index = 0;
-        self.key_stroke_candidates.as_mut().unwrap().retain(|_| {
-            let is_hit = *retain_vector.get(index).unwrap();
-            index += 1;
-            is_hit
-        });
+        self.all_key_stroke_candidates_mut()
+            .as_mut()
+            .unwrap()
+            .iter_mut()
+            .enumerate()
+            .filter(|(i, _)| !retain_vector[*i])
+            .for_each(|(_, candidate)| {
+                candidate.inactivate();
+            });
     }
 }
 
@@ -272,7 +316,7 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
 
     // キーストローク候補は次のチャンクに依存するので後ろから走査する
     for chunk in chunks.iter_mut().rev() {
-        assert!(chunk.key_stroke_candidates.is_none());
+        assert!(chunk.key_stroke_candidates().is_none());
 
         let mut key_stroke_candidates = Vec::<ChunkKeyStrokeCandidate>::new();
 
@@ -282,6 +326,8 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                 key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
                     vec![String::from(spell_string.clone()).try_into().unwrap()],
                     None,
+                    None,
+                    true,
                     None,
                 ));
             }
@@ -327,6 +373,8 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                                     next_chunk_head_constraint,
                                     avail_as_next_key_strokes
                                         .map(DelayedConfirmedCandidateInfo::new),
+                                    true,
+                                    None,
                                 ))
                             },
                         );
@@ -342,6 +390,8 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                             key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
                                 vec![key_stroke.to_string().try_into().unwrap()],
                                 None,
+                                None,
+                                true,
                                 None,
                             ))
                         });
@@ -370,6 +420,8 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                                                 .cloned()
                                                 .collect(),
                                         )),
+                                        true,
+                                        None,
                                     ))
                                 }
                                 _ => key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
@@ -378,6 +430,8 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                                         .try_into()
                                         .unwrap()],
                                     Some(key_stroke.clone()),
+                                    None,
+                                    true,
                                     None,
                                 )),
                             });
@@ -392,6 +446,8 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                             key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
                                 vec![key_stroke.to_string().try_into().unwrap()],
                                 None,
+                                None,
+                                true,
                                 None,
                             ));
                         });
@@ -408,6 +464,8 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                         key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
                             vec![key_stroke.to_string().try_into().unwrap()],
                             None,
+                            None,
+                            true,
                             None,
                         ));
                     });
@@ -432,6 +490,8 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
                                     ],
                                     None,
                                     None,
+                                    true,
+                                    None,
                                 ));
                             });
                     });
@@ -454,8 +514,7 @@ pub fn append_key_stroke_to_chunks(chunks: &mut [Chunk]) {
 
         let mut already_pushed_next_chunk_head_key_strokes = HashSet::<KeyStrokeChar>::new();
         chunk
-            .key_stroke_candidates
-            .as_ref()
+            .key_stroke_candidates()
             .unwrap()
             .iter()
             .for_each(|key_stroke_candidate| {

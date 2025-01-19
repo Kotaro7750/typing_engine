@@ -17,6 +17,16 @@ pub struct ChunkKeyStrokeCandidate {
     /// Information of delayed confirmed candidate if this candidate is a delayed confirmed
     /// candidate.
     delayed_confirmed_candidate_info: Option<DelayedConfirmedCandidateInfo>,
+
+    // TODO
+    // candidateを付与する段階で後のキーストロークの制約を満たすもののみを選択しているが、チャンク構築時にありえるもの全てを付与しておいて後続のチャンクを追加する際に制約を満たさないものを無効にするというやり方もありえる。
+    // インクリメンタルなチャンク追加がやりやすくなるかもしれない
+    /// Whether this candidate is target of typing.
+    /// Inactive candidate is reduced due to other candidate is hit and so on.
+    is_active: bool,
+
+    // TODO
+    cursor_position: Option<usize>,
 }
 
 impl ChunkKeyStrokeCandidate {
@@ -24,11 +34,15 @@ impl ChunkKeyStrokeCandidate {
         key_stroke_elements: Vec<KeyStrokeString>,
         next_chunk_head_constraint: Option<KeyStrokeChar>,
         delayed_confirmed_candidate_info: Option<DelayedConfirmedCandidateInfo>,
+        is_active: bool,
+        cursor_position: Option<usize>,
     ) -> Self {
         Self {
             key_stroke_elements,
             next_chunk_head_constraint,
             delayed_confirmed_candidate_info,
+            is_active,
+            cursor_position,
         }
     }
 
@@ -40,6 +54,30 @@ impl ChunkKeyStrokeCandidate {
     /// Returns delay confirmed candidate information of this candidate.
     pub(crate) fn delayed_confirmed_candiate_info(&self) -> &Option<DelayedConfirmedCandidateInfo> {
         &self.delayed_confirmed_candidate_info
+    }
+
+    /// Returns current cursor position of this candidate.
+    pub(crate) fn cursor_position(&self) -> Option<usize> {
+        self.cursor_position
+    }
+
+    /// Returns if this candidate is active.
+    pub(crate) fn is_active(&self) -> bool {
+        self.is_active
+    }
+
+    /// Inactivate this candidate.
+    pub(crate) fn inactivate(&mut self) {
+        self.is_active = false;
+    }
+
+    /// Returns if this candidate is confirmed.
+    /// This distinction is done by comparing cursor position.
+    pub(crate) fn is_confirmed(&self) -> bool {
+        match self.cursor_position {
+            Some(cursor_position) => cursor_position >= self.calc_key_stroke_count(),
+            None => false,
+        }
     }
 
     /// Returns if chunk of this candidate is double characters and each character is input
@@ -126,6 +164,29 @@ impl ChunkKeyStrokeCandidate {
             .unwrap()
             .try_into()
             .unwrap()
+    }
+
+    /// Returns if passed key stroke is valid for this candidate current cursor position.
+    pub(super) fn is_hit(&self, key_stroke: &KeyStrokeChar) -> bool {
+        match self.cursor_position {
+            Some(cursor_position) => {
+                self.key_stroke_char_at_position(cursor_position) == *key_stroke
+            }
+            None => false,
+        }
+    }
+
+    /// Advance cursor position of this candidate.
+    /// If cursor position is None, this function reset cursor position to 0.
+    pub(super) fn advance_cursor(&mut self) {
+        match self.cursor_position {
+            Some(cursor_position) => {
+                self.cursor_position = Some(cursor_position + 1);
+            }
+            None => {
+                self.cursor_position = Some(0);
+            }
+        }
     }
 
     /// Return how many key strokes are needed to type this candidate.

@@ -12,8 +12,6 @@ mod test;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct TypedChunk {
     chunk: Chunk,
-    // キーストローク候補のそれぞれに対するカーソル位置
-    cursor_positions_of_candidates: Vec<usize>,
     // ミスタイプも含めた実際のキーストローク
     key_strokes: Vec<ActualKeyStroke>,
     // 遅延確定候補がある場合にはキーストロークが最終的にこのチャンクに属するのか次のチャンクに属するのかが確定しないのでそれを一時的に保持しておく
@@ -24,13 +22,11 @@ impl TypedChunk {
     #[cfg(test)]
     pub(crate) fn new(
         chunk: Chunk,
-        cursor_positions_of_candidates: Vec<usize>,
         key_strokes: Vec<ActualKeyStroke>,
         pending_key_strokes: Vec<ActualKeyStroke>,
     ) -> Self {
         Self {
             chunk,
-            cursor_positions_of_candidates,
             key_strokes,
             pending_key_strokes,
         }
@@ -44,7 +40,7 @@ impl TypedChunk {
     /// 遅延確定候補自体を打ち終えても確定自体はまだのとき確定としてはいけない
     pub(crate) fn is_confirmed(&mut self) -> bool {
         assert!(self.chunk.key_stroke_candidates().is_some());
-        let key_stroke_candidates = self.chunk.key_stroke_candidates().as_ref().unwrap();
+        let key_stroke_candidates = self.chunk.key_stroke_candidates().unwrap();
 
         // 確定している条件は
         // * 候補が1つである
@@ -56,16 +52,12 @@ impl TypedChunk {
 
         let mut is_confirmed = false;
 
-        key_stroke_candidates
-            .iter()
-            .zip(&self.cursor_positions_of_candidates)
-            .for_each(|(candidate, cursor_position)| {
-                if *cursor_position >= candidate.calc_key_stroke_count() {
-                    assert!(!is_confirmed);
-
-                    is_confirmed = true;
-                }
-            });
+        key_stroke_candidates.iter().for_each(|candidate| {
+            if candidate.is_confirmed() {
+                assert!(!is_confirmed);
+                is_confirmed = true;
+            }
+        });
 
         is_confirmed
     }
@@ -74,19 +66,18 @@ impl TypedChunk {
     /// ないときには常にfalseを返す
     pub(crate) fn is_delayed_confirmable(&self) -> bool {
         assert!(self.chunk.key_stroke_candidates().is_some());
-        let key_stroke_candidates = self.chunk.key_stroke_candidates().as_ref().unwrap();
 
         let mut is_delayed_confirmable = false;
 
-        key_stroke_candidates
+        self.chunk
+            .key_stroke_candidates()
+            .unwrap()
             .iter()
-            .zip(&self.cursor_positions_of_candidates)
-            .filter(|(candidate, _)| candidate.is_delayed_confirmed_candidate())
-            .for_each(|(candidate, cursor_position)| {
-                if *cursor_position >= candidate.calc_key_stroke_count() {
-                    // 同時に２つの遅延確定候補が終了することはないはずである
+            .filter(|candidate| candidate.is_delayed_confirmed_candidate())
+            .for_each(|candidate| {
+                if candidate.is_confirmed() {
+                    // 同時に遅延確定候補が複数あることはない
                     assert!(!is_delayed_confirmable);
-
                     is_delayed_confirmable = true;
                 }
             });
@@ -143,20 +134,12 @@ impl TypedChunk {
         assert!(!self.is_delayed_confirmable());
 
         assert!(self.chunk.key_stroke_candidates().is_some());
-        let key_stroke_candidates = self.chunk.key_stroke_candidates().as_ref().unwrap();
-
-        assert_eq!(
-            key_stroke_candidates.len(),
-            self.cursor_positions_of_candidates.len()
-        );
+        let key_stroke_candidates = self.chunk.all_key_stroke_candidates().as_ref().unwrap();
 
         // それぞれの候補においてタイプされたキーストロークが有効かどうか
         let candidate_hit_miss: Vec<bool> = key_stroke_candidates
             .iter()
-            .zip(self.cursor_positions_of_candidates.iter())
-            .map(|(candidate, cursor_position)| {
-                candidate.key_stroke_char_at_position(*cursor_position) == key_stroke
-            })
+            .map(|candidate| candidate.is_active() && candidate.is_hit(&key_stroke))
             .collect();
 
         let is_hit = candidate_hit_miss.contains(&true);
@@ -165,16 +148,13 @@ impl TypedChunk {
         if is_hit {
             self.chunk.reduce_candidate(&candidate_hit_miss);
 
-            let mut index = 0;
-            self.cursor_positions_of_candidates.retain(|_| {
-                let is_hit = *candidate_hit_miss.get(index).unwrap();
-                index += 1;
-                is_hit
-            });
-
-            self.cursor_positions_of_candidates
+            self.chunk
+                .key_stroke_candidates_mut()
+                .unwrap()
                 .iter_mut()
-                .for_each(|cursor_position| *cursor_position += 1);
+                .for_each(|candidate| {
+                    candidate.advance_cursor();
+                });
         }
 
         self.key_strokes
@@ -197,12 +177,7 @@ impl TypedChunk {
         assert!(self.is_delayed_confirmable());
 
         assert!(self.chunk.key_stroke_candidates().is_some());
-        let key_stroke_candidates = self.chunk.key_stroke_candidates().as_ref().unwrap();
-
-        assert_eq!(
-            key_stroke_candidates.len(),
-            self.cursor_positions_of_candidates.len()
-        );
+        let key_stroke_candidates = self.chunk.all_key_stroke_candidates().as_ref().unwrap();
 
         // 打ち終えている遅延確定候補がある場合にはキーストロークが有効かの比較は遅延確定候補とそうでない候補で比較の仕方が異なる
         // 遅延確定候補の比較は次のチャンク先頭との比較で行う
@@ -228,14 +203,6 @@ impl TypedChunk {
 
             self.chunk.reduce_candidate(&candidate_reduce_vec);
 
-            // 遅延確定候補以外のカーソル位置も削除する
-            let mut index = 0;
-            self.cursor_positions_of_candidates.retain(|_| {
-                let is_hit = *candidate_reduce_vec.get(index).unwrap();
-                index += 1;
-                is_hit
-            });
-
             self.pending_key_strokes
                 .push(ActualKeyStroke::new(elapsed_time, key_stroke, true));
 
@@ -245,13 +212,12 @@ impl TypedChunk {
         // それぞれの候補においてタイプされたキーストロークが有効かどうか
         let candidate_hit_miss: Vec<bool> = key_stroke_candidates
             .iter()
-            .zip(self.cursor_positions_of_candidates.iter())
-            .map(|(candidate, cursor_position)| {
+            .map(|candidate| {
                 // 遅延確定候補は既にミスであることが確定している
                 if candidate.is_delayed_confirmed_candidate() {
                     false
                 } else {
-                    candidate.key_stroke_char_at_position(*cursor_position) == key_stroke
+                    candidate.is_active() && candidate.is_hit(&key_stroke)
                 }
             })
             .collect();
@@ -262,16 +228,13 @@ impl TypedChunk {
         if is_hit {
             self.chunk.reduce_candidate(&candidate_hit_miss);
 
-            let mut index = 0;
-            self.cursor_positions_of_candidates.retain(|_| {
-                let is_hit = *candidate_hit_miss.get(index).unwrap();
-                index += 1;
-                is_hit
-            });
-
-            self.cursor_positions_of_candidates
+            self.chunk
+                .key_stroke_candidates_mut()
+                .unwrap()
                 .iter_mut()
-                .for_each(|cursor_position| *cursor_position += 1);
+                .for_each(|candidate| {
+                    candidate.advance_cursor();
+                });
         }
 
         self.pending_key_strokes
@@ -290,9 +253,15 @@ impl TypedChunk {
 
     // チャンクのキーストロークのどこにカーソルを当てるべきか
     pub(crate) fn current_key_stroke_cursor_position(&self) -> usize {
-        *self
-            .cursor_positions_of_candidates
+        self.chunk
+            .key_stroke_candidates()
+            .as_ref()
+            .unwrap()
             .iter()
+            .map(|candidate| {
+                assert!(candidate.cursor_position().is_some());
+                candidate.cursor_position().unwrap().clone()
+            })
             .reduce(|cursor_position, cursor_position_of_candidate| {
                 // XXX 適切に候補を削減していれば全ての候補でカーソル位置は同じなはず
                 assert!(cursor_position == cursor_position_of_candidate);
@@ -343,14 +312,8 @@ impl ChunkHasActualKeyStrokes for TypedChunk {
 
 impl From<Chunk> for TypedChunk {
     fn from(chunk: Chunk) -> Self {
-        let key_stroke_candidates_count = match chunk.key_stroke_candidates_count() {
-            Some(c) => c,
-            None => panic!(),
-        };
-
         Self {
             chunk,
-            cursor_positions_of_candidates: vec![0; key_stroke_candidates_count],
             key_strokes: vec![],
             pending_key_strokes: vec![],
         }

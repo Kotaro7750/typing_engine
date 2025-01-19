@@ -40,16 +40,30 @@ fn construct_query_1() {
             vec![
                 gen_chunk!(
                     "い",
-                    vec![gen_candidate!(["i"]), gen_candidate!(["yi"])],
-                    gen_candidate!(["i"])
+                    vec![
+                        gen_candidate!(["i"], true, None),
+                        gen_candidate!(["yi"], true, None)
+                    ],
+                    gen_candidate!(["i"], true, None)
                 ),
-                gen_chunk!("お", vec![gen_candidate!(["o"])], gen_candidate!(["o"])),
+                gen_chunk!(
+                    "お",
+                    vec![gen_candidate!(["o"], true, None)],
+                    gen_candidate!(["o"], true, None)
+                ),
                 gen_chunk!(
                     "ん",
-                    vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])],
-                    gen_candidate!(["nn"])
+                    vec![
+                        gen_candidate!(["nn"], true, None),
+                        gen_candidate!(["xn"], true, None)
+                    ],
+                    gen_candidate!(["nn"], true, None)
                 ),
-                gen_chunk!(" ", vec![gen_candidate!([" "])], gen_candidate!([" "])),
+                gen_chunk!(
+                    " ",
+                    vec![gen_candidate!([" "], true, None)],
+                    gen_candidate!([" "], true, None)
+                ),
             ]
         )
     );
@@ -100,19 +114,32 @@ fn construct_query_2() {
             vec![
                 gen_chunk!(
                     "い",
-                    vec![gen_candidate!(["i"]), gen_candidate!(["yi"])],
-                    gen_candidate!(["i"])
+                    vec![
+                        gen_candidate!(["i"], true, None),
+                        gen_candidate!(["yi"], true, None)
+                    ],
+                    gen_candidate!(["i"], true, None)
                 ),
-                gen_chunk!("お", vec![gen_candidate!(["o"])], gen_candidate!(["o"])),
+                gen_chunk!(
+                    "お",
+                    vec![gen_candidate!(["o"], true, None)],
+                    gen_candidate!(["o"], true, None)
+                ),
                 gen_chunk!(
                     "ん",
-                    vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])],
-                    gen_candidate!(["nn"])
+                    vec![
+                        gen_candidate!(["nn"], true, None),
+                        gen_candidate!(["xn"], true, None)
+                    ],
+                    gen_candidate!(["nn"], true, None)
                 ),
                 gen_chunk!(
                     "い",
-                    vec![gen_candidate!(["i"]), gen_candidate!(["y"])],
-                    gen_candidate!(["i"])
+                    vec![
+                        gen_candidate!(["i"], true, None),
+                        gen_candidate!(["y"], true, None)
+                    ],
+                    gen_candidate!(["i"], true, None)
                 ),
             ]
         )
@@ -175,41 +202,62 @@ fn construct_query_3() {
             vec![
                 gen_chunk!(
                     "い",
-                    vec![gen_candidate!(["i"]), gen_candidate!(["yi"])],
-                    gen_candidate!(["i"])
+                    vec![
+                        gen_candidate!(["i"], true, None),
+                        gen_candidate!(["yi"], true, None)
+                    ],
+                    gen_candidate!(["i"], true, None)
                 ),
-                gen_chunk!("お", vec![gen_candidate!(["o"])], gen_candidate!(["o"])),
+                gen_chunk!(
+                    "お",
+                    vec![gen_candidate!(["o"], true, None)],
+                    gen_candidate!(["o"], true, None)
+                ),
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], ['k', 'c']),
-                        gen_candidate!(["nn"]),
-                        gen_candidate!(["xn"])
+                        gen_candidate!(["n"], true, None, ['k', 'c']),
+                        gen_candidate!(["nn"], true, None),
+                        gen_candidate!(["xn"], true, None)
                     ],
-                    gen_candidate!(["n"], ['k', 'c'])
+                    gen_candidate!(["n"], true, None, ['k', 'c'])
                 ),
                 gen_chunk!(
                     "か",
-                    vec![gen_candidate!(["ka"]), gen_candidate!(["ca"])],
-                    gen_candidate!(["ka"])
+                    vec![
+                        gen_candidate!(["ka"], true, None),
+                        gen_candidate!(["ca"], true, None)
+                    ],
+                    gen_candidate!(["ka"], true, None)
                 ),
                 gen_chunk!(
                     "っ",
                     vec![
-                        gen_candidate!(["t"], 't'),
-                        gen_candidate!(["ltu"]),
-                        gen_candidate!(["xtu"]),
-                        gen_candidate!(["ltsu"]),
+                        gen_candidate!(["t"], true, None, 't'),
+                        gen_candidate!(["ltu"], true, None),
+                        gen_candidate!(["xtu"], true, None),
+                        gen_candidate!(["ltsu"], true, None),
                     ],
-                    gen_candidate!(["t"], 't')
+                    gen_candidate!(["t"], true, None, 't')
                 ),
-                gen_chunk!("た", vec![gen_candidate!(["ta"])], gen_candidate!(["ta"])),
+                gen_chunk!(
+                    "た",
+                    vec![gen_candidate!(["ta"], true, None)],
+                    gen_candidate!(["ta"], true, None)
+                ),
                 gen_chunk!(
                     "い",
-                    vec![gen_candidate!(["i"]), gen_candidate!(["yi"])],
-                    gen_candidate!(["i"])
+                    vec![
+                        gen_candidate!(["i"], true, None),
+                        gen_candidate!(["yi"], true, None)
+                    ],
+                    gen_candidate!(["i"], true, None)
                 ),
-                gen_chunk!("お", vec![gen_candidate!(["o"])], gen_candidate!(["o"])),
+                gen_chunk!(
+                    "お",
+                    vec![gen_candidate!(["o"], true, None)],
+                    gen_candidate!(["o"], true, None)
+                ),
             ]
         )
     );
@@ -254,9 +302,21 @@ fn construct_query_4() {
                 gen_vocabulary_info!("1", "1", vec![gen_view_position!(0)], 1),
             ],
             vec![
-                gen_chunk!("2", vec![gen_candidate!(["2"])], gen_candidate!(["2"])),
-                gen_chunk!(" ", vec![gen_candidate!([" "])], gen_candidate!([" "])),
-                gen_chunk!("1", vec![gen_candidate!(["1"])], gen_candidate!(["1"])),
+                gen_chunk!(
+                    "2",
+                    vec![gen_candidate!(["2"], true, None)],
+                    gen_candidate!(["2"], true, None)
+                ),
+                gen_chunk!(
+                    " ",
+                    vec![gen_candidate!([" "], true, None)],
+                    gen_candidate!([" "], true, None)
+                ),
+                gen_chunk!(
+                    "1",
+                    vec![gen_candidate!(["1"], true, None)],
+                    gen_candidate!(["1"], true, None)
+                ),
             ]
         )
     );
@@ -298,16 +358,30 @@ fn construct_query_5() {
             vec![
                 gen_chunk!(
                     "い",
-                    vec![gen_candidate!(["i"]), gen_candidate!(["yi"])],
-                    gen_candidate!(["i"])
+                    vec![
+                        gen_candidate!(["i"], true, None),
+                        gen_candidate!(["yi"], true, None)
+                    ],
+                    gen_candidate!(["i"], true, None)
                 ),
-                gen_chunk!("お", vec![gen_candidate!(["o"])], gen_candidate!(["o"])),
+                gen_chunk!(
+                    "お",
+                    vec![gen_candidate!(["o"], true, None)],
+                    gen_candidate!(["o"], true, None)
+                ),
                 gen_chunk!(
                     "ん",
-                    vec![gen_candidate!(["nn"]), gen_candidate!(["xn"])],
-                    gen_candidate!(["nn"])
+                    vec![
+                        gen_candidate!(["nn"], true, None),
+                        gen_candidate!(["xn"], true, None)
+                    ],
+                    gen_candidate!(["nn"], true, None)
                 ),
-                gen_chunk!(" ", vec![gen_candidate!([" "])], gen_candidate!([" "])),
+                gen_chunk!(
+                    " ",
+                    vec![gen_candidate!([" "], true, None)],
+                    gen_candidate!([" "], true, None)
+                ),
             ]
         )
     );
@@ -346,22 +420,28 @@ fn construct_query_6() {
             vec![
                 gen_chunk!(
                     "い",
-                    vec![gen_candidate!(["i"]), gen_candidate!(["yi"])],
-                    gen_candidate!(["i"])
+                    vec![
+                        gen_candidate!(["i"], true, None),
+                        gen_candidate!(["yi"], true, None)
+                    ],
+                    gen_candidate!(["i"], true, None)
                 ),
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], ['z', 'j']),
-                        gen_candidate!(["nn"]),
-                        gen_candidate!(["xn"])
+                        gen_candidate!(["n"], true, None, ['z', 'j']),
+                        gen_candidate!(["nn"], true, None),
+                        gen_candidate!(["xn"], true, None)
                     ],
-                    gen_candidate!(["n"], ['z', 'j'])
+                    gen_candidate!(["n"], true, None, ['z', 'j'])
                 ),
                 gen_chunk!(
                     "じ",
-                    vec![gen_candidate!(["z"]), gen_candidate!(["j"])],
-                    gen_candidate!(["z"])
+                    vec![
+                        gen_candidate!(["z"], true, None),
+                        gen_candidate!(["j"], true, None)
+                    ],
+                    gen_candidate!(["z"], true, None)
                 ),
             ]
         )
@@ -401,13 +481,19 @@ fn construct_query_7() {
             vec![
                 gen_chunk!(
                     "い",
-                    vec![gen_candidate!(["i"]), gen_candidate!(["yi"])],
-                    gen_candidate!(["i"])
+                    vec![
+                        gen_candidate!(["i"], true, None),
+                        gen_candidate!(["yi"], true, None)
+                    ],
+                    gen_candidate!(["i"], true, None)
                 ),
                 gen_chunk!(
                     "ん",
-                    vec![gen_candidate!(["n"]), gen_candidate!(["x"])],
-                    gen_candidate!(["n"])
+                    vec![
+                        gen_candidate!(["n"], true, None),
+                        gen_candidate!(["x"], true, None)
+                    ],
+                    gen_candidate!(["n"], true, None)
                 ),
             ]
         )

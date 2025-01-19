@@ -38,8 +38,9 @@ impl ProcessedChunkInfo {
 
         // 終了している状態で追加されたら先頭のチャンクを処理中にする必要がある
         if self.unprocessed_chunks.is_empty() && self.inflight_chunk.is_none() {
-            self.inflight_chunk
-                .replace(chunks.pop_front().unwrap().into());
+            let mut next_inflight_chunk = chunks.pop_front().unwrap();
+            next_inflight_chunk.change_state_to_typed();
+            self.inflight_chunk.replace(next_inflight_chunk.into());
         }
 
         self.unprocessed_chunks.append(&mut chunks);
@@ -69,6 +70,7 @@ impl ProcessedChunkInfo {
                 next_inflight_chunk.strict_chunk_head(next_chunk_head_constraint);
             }
 
+            next_inflight_chunk.change_state_to_typed();
             self.inflight_chunk.replace(next_inflight_chunk.into());
         }
     }
