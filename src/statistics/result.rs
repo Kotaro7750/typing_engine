@@ -7,6 +7,9 @@ use crate::typing_primitive_types::chunk::confirmed::ConfirmedChunk;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use crate::LapRequest;
 
+#[cfg(test)]
+mod test;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TypingResultStatistics {
     key_stroke: TypingResultStatisticsTarget,
@@ -15,6 +18,19 @@ pub struct TypingResultStatistics {
 }
 
 impl TypingResultStatistics {
+    #[cfg(test)]
+    pub(crate) fn new(
+        key_stroke: TypingResultStatisticsTarget,
+        ideal_key_stroke: TypingResultStatisticsTarget,
+        total_time: Duration,
+    ) -> Self {
+        Self {
+            key_stroke,
+            ideal_key_stroke,
+            total_time,
+        }
+    }
+
     pub fn key_stroke(&self) -> &TypingResultStatisticsTarget {
         &self.key_stroke
     }
@@ -36,6 +52,19 @@ pub struct TypingResultStatisticsTarget {
 }
 
 impl TypingResultStatisticsTarget {
+    #[cfg(test)]
+    pub(crate) fn new(
+        whole_count: usize,
+        completely_correct_count: usize,
+        missed_count: usize,
+    ) -> Self {
+        Self {
+            whole_count,
+            completely_correct_count,
+            missed_count,
+        }
+    }
+
     pub fn whole_count(&self) -> usize {
         self.whole_count
     }
