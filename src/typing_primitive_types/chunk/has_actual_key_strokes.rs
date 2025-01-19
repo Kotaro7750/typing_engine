@@ -104,23 +104,6 @@ pub(crate) trait ChunkHasActualKeyStrokes: AsRef<Chunk> {
         spell_end_vector
     }
 
-    /// チャンクの綴り要素のそれぞれ（基本的には1つだが複数文字を個別で打った場合には2つ）の初期化済みboolベクタを構築する
-    fn initialized_spell_element_vector(&self) -> Vec<bool> {
-        vec![
-            false;
-            if self.effective_candidate().is_splitted() {
-                2
-            } else {
-                1
-            }
-        ]
-    }
-
-    /// チャンクのキーストロークのそれぞれの初期化済みboolベクタを構築する
-    fn initialized_key_strokes_vector(&self) -> Vec<bool> {
-        vec![false; self.effective_candidate().calc_key_stroke_count()]
-    }
-
     /// キーストロークが何個の綴りに対するものなのか
     /// 基本的には1だが複数文字の綴りをまとめて打つ場合には2となる
     fn effective_spell_count(&self) -> usize {
