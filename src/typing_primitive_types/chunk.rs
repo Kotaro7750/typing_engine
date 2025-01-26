@@ -125,29 +125,23 @@ impl Chunk {
     pub(crate) fn key_stroke_candidates_mut(
         &mut self,
     ) -> Option<Vec<&mut ChunkKeyStrokeCandidate>> {
-        match self.key_stroke_candidates.as_mut() {
-            Some(key_stroke_candidates) => Some(
-                key_stroke_candidates
-                    .as_mut_slice()
-                    .iter_mut()
-                    .filter(|candidate| candidate.is_active())
-                    .collect(),
-            ),
-            None => None,
-        }
+        self.key_stroke_candidates.as_mut().map(|candidates| {
+            candidates
+                .as_mut_slice()
+                .iter_mut()
+                .filter(|candidate| candidate.is_active())
+                .collect()
+        })
     }
 
     pub(crate) fn key_stroke_candidates(&self) -> Option<Vec<&ChunkKeyStrokeCandidate>> {
-        match self.key_stroke_candidates.as_ref() {
-            Some(key_stroke_candidates) => Some(
-                key_stroke_candidates
-                    .as_slice()
-                    .iter()
-                    .filter(|candidate| candidate.is_active())
-                    .collect(),
-            ),
-            None => None,
-        }
+        self.key_stroke_candidates.as_ref().map(|candidates| {
+            candidates
+                .as_slice()
+                .iter()
+                .filter(|candidate| candidate.is_active())
+                .collect()
+        })
     }
 
     pub(crate) fn change_state_to_typed(&mut self) {
