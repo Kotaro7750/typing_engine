@@ -182,7 +182,6 @@ impl ProcessedChunkInfo {
 
         // 1. 確定したチャンク
         self.confirmed_chunks.iter().for_each(|confirmed_chunk| {
-            let mut in_candidate_cursor_position = 0;
             // 複数文字の綴りをまとめて打つ場合には綴りの統計は2文字分カウントする必要がある
             let spell_count = confirmed_chunk.effective_spell_count();
 
@@ -215,8 +214,6 @@ impl ProcessedChunkInfo {
                     );
 
                     if actual_key_stroke.is_correct() {
-                        in_candidate_cursor_position += 1;
-
                         if let Some(delta) = spell_end {
                             on_typing_stat_manager.finish_spell(*delta);
                         }
@@ -226,7 +223,9 @@ impl ProcessedChunkInfo {
             // Update cursor positions and wrong positions for key stroke
             key_stroke_wrong_positions
                 .extend(confirmed_chunk.wrong_key_stroke_positions(key_stroke_cursor_position));
-            key_stroke_cursor_position += in_candidate_cursor_position;
+            key_stroke_cursor_position += confirmed_chunk
+                .confirmed_candidate()
+                .calc_key_stroke_count();
 
             // Update cursor positions and wrong positions for spell
             spell_wrong_positions
@@ -261,7 +260,6 @@ impl ProcessedChunkInfo {
             let inflight_chunk = self.inflight_chunk.as_ref().unwrap();
 
             let spell_count = inflight_chunk.effective_spell_count();
-            let mut in_candidate_cursor_position = 0;
 
             on_typing_stat_manager.set_this_candidate_key_stroke_count(
                 inflight_chunk
@@ -293,8 +291,6 @@ impl ProcessedChunkInfo {
                     );
 
                     if actual_key_stroke.is_correct() {
-                        in_candidate_cursor_position += 1;
-
                         if let Some(delta) = spell_end {
                             on_typing_stat_manager.finish_spell(*delta);
                         }

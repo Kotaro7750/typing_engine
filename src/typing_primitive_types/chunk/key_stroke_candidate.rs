@@ -190,14 +190,8 @@ impl ChunkKeyStrokeCandidate {
     }
 
     /// Return how many key strokes are needed to type this candidate.
-    pub(super) fn calc_key_stroke_count(&self) -> usize {
-        let mut s = String::new();
-
-        for key_stroke in &self.key_stroke_elements {
-            s.push_str(key_stroke);
-        }
-
-        s.chars().count()
+    pub(crate) fn calc_key_stroke_count(&self) -> usize {
+        self.whole_key_stroke().chars().count()
     }
 
     /// Restrics the key stroke count of this candidate to key_stroke_count_striction.
