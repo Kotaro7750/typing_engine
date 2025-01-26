@@ -11,7 +11,6 @@ use has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use key_stroke_candidate::{ChunkKeyStrokeCandidate, DelayedConfirmedCandidateInfo};
 use single_n_availability::SingleNAvailability;
 
-pub(crate) mod confirmed;
 pub(crate) mod has_actual_key_strokes;
 pub(crate) mod key_stroke_candidate;
 mod single_n_availability;
@@ -529,6 +528,25 @@ impl Chunk {
         }
 
         cursor_positions
+    }
+
+    /// Returns a candidate that confirm this chunk.
+    pub(crate) fn confirmed_candidate(&self) -> &ChunkKeyStrokeCandidate {
+        assert_eq!(self.state, ChunkState::Confirmed);
+        assert!(self.key_stroke_candidates().as_ref().unwrap().len() == 1);
+
+        self.key_stroke_candidates()
+            .as_ref()
+            .unwrap()
+            .first()
+            .unwrap()
+    }
+
+    /// Returns a constraint for the next chunk head based on the confirmed candidate.
+    pub(crate) fn next_chunk_head_constraint(&self) -> Option<KeyStrokeChar> {
+        self.confirmed_candidate()
+            .next_chunk_head_constraint()
+            .clone()
     }
 }
 

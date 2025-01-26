@@ -3,8 +3,8 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 
 use crate::statistics::OnTypingStatisticsManager;
-use crate::typing_primitive_types::chunk::confirmed::ConfirmedChunk;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
+use crate::typing_primitive_types::chunk::Chunk;
 use crate::LapRequest;
 
 #[cfg(test)]
@@ -79,7 +79,7 @@ impl TypingResultStatisticsTarget {
 }
 
 pub(crate) fn construct_result(
-    confirmed_chunks: &[ConfirmedChunk],
+    confirmed_chunks: &[Chunk],
     lap_request: LapRequest,
 ) -> TypingResultStatistics {
     assert!(!confirmed_chunks.is_empty());

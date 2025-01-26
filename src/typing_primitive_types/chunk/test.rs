@@ -420,7 +420,6 @@ fn stroke_key_1() {
         gen_candidate!(["jo"], true, None),
         []
     );
-    // pending_key_strokes: vec![],
 
     let stroke_result = typed_chunk.stroke_key('j'.try_into().unwrap(), Duration::new(1, 0));
     assert_eq!(stroke_result, KeyStrokeResult::Correct);
@@ -445,7 +444,7 @@ fn stroke_key_1() {
                 'j'.try_into().unwrap(),
                 true
             )]
-        ) // pending_key_strokes: vec![],
+        )
     );
 
     let stroke_result = typed_chunk.stroke_key('j'.try_into().unwrap(), Duration::new(2, 0));
@@ -470,7 +469,7 @@ fn stroke_key_1() {
                 ActualKeyStroke::new(Duration::new(1, 0), 'j'.try_into().unwrap(), true),
                 ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), false)
             ]
-        ) // pending_key_strokes: vec![],
+        )
     );
 
     let stroke_result = typed_chunk.stroke_key('o'.try_into().unwrap(), Duration::new(3, 0));
@@ -496,7 +495,7 @@ fn stroke_key_1() {
                 ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), false),
                 ActualKeyStroke::new(Duration::new(3, 0), 'o'.try_into().unwrap(), true)
             ]
-        ) // pending_key_strokes: vec![],
+        )
     );
 }
 
@@ -513,7 +512,6 @@ fn stroke_key_2() {
         gen_candidate!(["n"], true, None, ['j']),
         []
     );
-    // pending_key_strokes: vec![],
 
     let stroke_result = typed_chunk.stroke_key('n'.try_into().unwrap(), Duration::new(1, 0));
     assert_eq!(stroke_result, KeyStrokeResult::Correct);
@@ -535,7 +533,6 @@ fn stroke_key_2() {
                 true
             )]
         ),
-        // pending_key_strokes: vec![]
     );
 
     assert!(!typed_chunk.is_confirmed());
@@ -560,11 +557,7 @@ fn stroke_key_2() {
                 'n'.try_into().unwrap(),
                 true
             )]
-        ) // pending_key_strokes: vec![ActualKeyStroke::new(
-          //     Duration::new(2, 0),
-          //     'm'.try_into().unwrap(),
-          //     false
-          // )]
+        )
     );
 
     let stroke_result = typed_chunk.stroke_key('n'.try_into().unwrap(), Duration::new(3, 0));
@@ -581,11 +574,12 @@ fn stroke_key_2() {
             ],
             ChunkState::Inflight,
             gen_candidate!(["n"], true, None, ['j']),
-            [
-                ActualKeyStroke::new(Duration::new(1, 0), 'n'.try_into().unwrap(), true) // ActualKeyStroke::new(Duration::new(2, 0), 'm'.try_into().unwrap(), false),
-                                                                                         // ActualKeyStroke::new(Duration::new(3, 0), 'n'.try_into().unwrap(), true)
-            ]
-        ) // pending_key_strokes: vec![]
+            [ActualKeyStroke::new(
+                Duration::new(1, 0),
+                'n'.try_into().unwrap(),
+                true
+            )]
+        )
     );
 
     assert!(typed_chunk.is_confirmed());
@@ -604,7 +598,6 @@ fn stroke_key_3() {
         gen_candidate!(["n"], true, None, ['j']),
         []
     );
-    // pending_key_strokes: vec![],
 
     let stroke_result = typed_chunk.stroke_key('n'.try_into().unwrap(), Duration::new(1, 0));
     assert_eq!(stroke_result, KeyStrokeResult::Correct);
@@ -625,7 +618,7 @@ fn stroke_key_3() {
                 'n'.try_into().unwrap(),
                 true
             )]
-        ) // pending_key_strokes: vec![]
+        )
     );
 
     assert!(!typed_chunk.is_confirmed());
@@ -650,11 +643,7 @@ fn stroke_key_3() {
                 'n'.try_into().unwrap(),
                 true
             )]
-        ) // pending_key_strokes: vec![ActualKeyStroke::new(
-          //     Duration::new(2, 0),
-          //     'm'.try_into().unwrap(),
-          //     false
-          // ),]
+        )
     );
 
     let stroke_result = typed_chunk.stroke_key('j'.try_into().unwrap(), Duration::new(3, 0));
@@ -676,11 +665,61 @@ fn stroke_key_3() {
                 'n'.try_into().unwrap(),
                 true
             )]
-        ) // pending_key_strokes: vec![
-          //     ActualKeyStroke::new(Duration::new(2, 0), 'm'.try_into().unwrap(), false),
-          //     ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), true)
-          // ]
+        )
     );
 
     assert!(typed_chunk.is_confirmed());
+}
+
+#[test]
+fn construct_spell_end_vector_1() {
+    let cc = gen_chunk!(
+        "きょ",
+        vec![
+            gen_candidate!(["kyo"], false, Some(1)),
+            gen_candidate!(["ki", "lyo"], false, Some(2)),
+            gen_candidate!(["ki", "xyo"], true, Some(5))
+        ],
+        ChunkState::Confirmed,
+        gen_candidate!(["kyo"], true, None),
+        [
+            ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
+            ActualKeyStroke::new(Duration::new(2, 0), 'i'.try_into().unwrap(), true),
+            ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), false),
+            ActualKeyStroke::new(Duration::new(4, 0), 'x'.try_into().unwrap(), true),
+            ActualKeyStroke::new(Duration::new(5, 0), 'y'.try_into().unwrap(), true),
+            ActualKeyStroke::new(Duration::new(6, 0), 'o'.try_into().unwrap(), true)
+        ]
+    );
+
+    let spell_end_vector = cc.construct_spell_end_vector();
+
+    assert_eq!(
+        spell_end_vector,
+        vec![None, Some(1), None, None, None, Some(1)]
+    );
+}
+
+#[test]
+fn construct_spell_end_vector_2() {
+    let cc = gen_chunk!(
+        "きょ",
+        vec![
+            gen_candidate!(["kyo"], true, Some(3)),
+            gen_candidate!(["ki", "lyo"], false, Some(1)),
+            gen_candidate!(["ki", "xyo"], false, Some(1))
+        ],
+        ChunkState::Confirmed,
+        gen_candidate!(["kyo"], true, None),
+        [
+            ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
+            ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), false),
+            ActualKeyStroke::new(Duration::new(3, 0), 'y'.try_into().unwrap(), true),
+            ActualKeyStroke::new(Duration::new(4, 0), 'o'.try_into().unwrap(), true)
+        ]
+    );
+
+    let spell_end_vector = cc.construct_spell_end_vector();
+
+    assert_eq!(spell_end_vector, vec![None, None, None, Some(2)]);
 }

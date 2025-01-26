@@ -3,7 +3,6 @@ use std::time::Duration;
 
 use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
 use crate::statistics::{LapRequest, OnTypingStatisticsManager};
-use crate::typing_primitive_types::chunk::confirmed::ConfirmedChunk;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use crate::typing_primitive_types::chunk::Chunk;
 use crate::typing_primitive_types::chunk::ChunkState;
@@ -17,7 +16,7 @@ mod test;
 pub(crate) struct ProcessedChunkInfo {
     unprocessed_chunks: VecDeque<Chunk>,
     inflight_chunk: Option<Chunk>,
-    confirmed_chunks: Vec<ConfirmedChunk>,
+    confirmed_chunks: Vec<Chunk>,
     pending_key_strokes: Vec<ActualKeyStroke>,
 }
 
@@ -57,9 +56,8 @@ impl ProcessedChunkInfo {
             assert!(current_inflight_chunk.is_confirmed());
             current_inflight_chunk.change_state(ChunkState::Confirmed);
 
-            let mut current_confirmed_chunk: ConfirmedChunk = current_inflight_chunk.into();
-            let next_chunk_head_constraint = current_confirmed_chunk.next_chunk_head_constraint();
-            self.confirmed_chunks.push(current_confirmed_chunk);
+            let next_chunk_head_constraint = current_inflight_chunk.next_chunk_head_constraint();
+            self.confirmed_chunks.push(current_inflight_chunk);
 
             next_chunk_head_constraint
         } else {
@@ -158,7 +156,7 @@ impl ProcessedChunkInfo {
         result
     }
 
-    pub(crate) fn confirmed_chunks(&self) -> &Vec<ConfirmedChunk> {
+    pub(crate) fn confirmed_chunks(&self) -> &Vec<Chunk> {
         &self.confirmed_chunks
     }
 
