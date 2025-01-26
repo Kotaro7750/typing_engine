@@ -1,5 +1,6 @@
 use super::*;
 
+use crate::typing_primitive_types::chunk::ChunkState;
 use crate::{
     gen_candidate, gen_chunk, gen_view_position, gen_vocabulary_entry, gen_vocabulary_info,
 };
@@ -44,11 +45,13 @@ fn construct_query_1() {
                         gen_candidate!(["i"], true, None),
                         gen_candidate!(["yi"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["i"], true, None)
                 ),
                 gen_chunk!(
                     "お",
                     vec![gen_candidate!(["o"], true, None)],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["o"], true, None)
                 ),
                 gen_chunk!(
@@ -57,11 +60,13 @@ fn construct_query_1() {
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["nn"], true, None)
                 ),
                 gen_chunk!(
                     " ",
                     vec![gen_candidate!([" "], true, None)],
+                    ChunkState::Unprocessed,
                     gen_candidate!([" "], true, None)
                 ),
             ]
@@ -118,11 +123,13 @@ fn construct_query_2() {
                         gen_candidate!(["i"], true, None),
                         gen_candidate!(["yi"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["i"], true, None)
                 ),
                 gen_chunk!(
                     "お",
                     vec![gen_candidate!(["o"], true, None)],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["o"], true, None)
                 ),
                 gen_chunk!(
@@ -131,6 +138,7 @@ fn construct_query_2() {
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["nn"], true, None)
                 ),
                 gen_chunk!(
@@ -139,6 +147,7 @@ fn construct_query_2() {
                         gen_candidate!(["i"], true, None),
                         gen_candidate!(["y"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["i"], true, None)
                 ),
             ]
@@ -206,11 +215,13 @@ fn construct_query_3() {
                         gen_candidate!(["i"], true, None),
                         gen_candidate!(["yi"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["i"], true, None)
                 ),
                 gen_chunk!(
                     "お",
                     vec![gen_candidate!(["o"], true, None)],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["o"], true, None)
                 ),
                 gen_chunk!(
@@ -220,6 +231,7 @@ fn construct_query_3() {
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["n"], true, None, ['k', 'c'])
                 ),
                 gen_chunk!(
@@ -228,6 +240,7 @@ fn construct_query_3() {
                         gen_candidate!(["ka"], true, None),
                         gen_candidate!(["ca"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["ka"], true, None)
                 ),
                 gen_chunk!(
@@ -238,11 +251,13 @@ fn construct_query_3() {
                         gen_candidate!(["xtu"], true, None),
                         gen_candidate!(["ltsu"], true, None),
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["t"], true, None, 't')
                 ),
                 gen_chunk!(
                     "た",
                     vec![gen_candidate!(["ta"], true, None)],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["ta"], true, None)
                 ),
                 gen_chunk!(
@@ -251,11 +266,13 @@ fn construct_query_3() {
                         gen_candidate!(["i"], true, None),
                         gen_candidate!(["yi"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["i"], true, None)
                 ),
                 gen_chunk!(
                     "お",
                     vec![gen_candidate!(["o"], true, None)],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["o"], true, None)
                 ),
             ]
@@ -305,16 +322,19 @@ fn construct_query_4() {
                 gen_chunk!(
                     "2",
                     vec![gen_candidate!(["2"], true, None)],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["2"], true, None)
                 ),
                 gen_chunk!(
                     " ",
                     vec![gen_candidate!([" "], true, None)],
+                    ChunkState::Unprocessed,
                     gen_candidate!([" "], true, None)
                 ),
                 gen_chunk!(
                     "1",
                     vec![gen_candidate!(["1"], true, None)],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["1"], true, None)
                 ),
             ]
@@ -362,11 +382,13 @@ fn construct_query_5() {
                         gen_candidate!(["i"], true, None),
                         gen_candidate!(["yi"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["i"], true, None)
                 ),
                 gen_chunk!(
                     "お",
                     vec![gen_candidate!(["o"], true, None)],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["o"], true, None)
                 ),
                 gen_chunk!(
@@ -375,11 +397,13 @@ fn construct_query_5() {
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["nn"], true, None)
                 ),
                 gen_chunk!(
                     " ",
                     vec![gen_candidate!([" "], true, None)],
+                    ChunkState::Unprocessed,
                     gen_candidate!([" "], true, None)
                 ),
             ]
@@ -424,6 +448,7 @@ fn construct_query_6() {
                         gen_candidate!(["i"], true, None),
                         gen_candidate!(["yi"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["i"], true, None)
                 ),
                 gen_chunk!(
@@ -433,6 +458,7 @@ fn construct_query_6() {
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["n"], true, None, ['z', 'j'])
                 ),
                 gen_chunk!(
@@ -441,6 +467,7 @@ fn construct_query_6() {
                         gen_candidate!(["z"], true, None),
                         gen_candidate!(["j"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["z"], true, None)
                 ),
             ]
@@ -485,6 +512,7 @@ fn construct_query_7() {
                         gen_candidate!(["i"], true, None),
                         gen_candidate!(["yi"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["i"], true, None)
                 ),
                 gen_chunk!(
@@ -493,6 +521,7 @@ fn construct_query_7() {
                         gen_candidate!(["n"], true, None),
                         gen_candidate!(["x"], true, None)
                     ],
+                    ChunkState::Unprocessed,
                     gen_candidate!(["n"], true, None)
                 ),
             ]

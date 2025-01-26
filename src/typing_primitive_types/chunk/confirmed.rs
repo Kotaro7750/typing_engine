@@ -11,6 +11,7 @@ pub(crate) struct ConfirmedChunk {
 }
 
 impl ConfirmedChunk {
+    #[cfg(test)]
     pub(crate) fn new(chunk: Chunk, key_strokes: Vec<ActualKeyStroke>) -> Self {
         Self {
             chunk,
@@ -38,6 +39,16 @@ impl ConfirmedChunk {
     }
 }
 
+impl From<Chunk> for ConfirmedChunk {
+    fn from(chunk: Chunk) -> Self {
+        let actual_key_strokes = chunk.actual_key_strokes().to_vec();
+        Self {
+            chunk,
+            actual_key_strokes,
+        }
+    }
+}
+
 impl ChunkHasActualKeyStrokes for ConfirmedChunk {
     fn actual_key_strokes(&self) -> &[ActualKeyStroke] {
         &self.actual_key_strokes
@@ -57,6 +68,7 @@ impl AsRef<Chunk> for ConfirmedChunk {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::typing_primitive_types::chunk::ChunkState;
     use crate::{gen_candidate, gen_chunk};
     use std::time::Duration;
 
@@ -70,6 +82,7 @@ mod test {
                     gen_candidate!(["ki", "lyo"], false, Some(2)),
                     gen_candidate!(["ki", "xyo"], true, Some(5))
                 ],
+                ChunkState::Confirmed,
                 gen_candidate!(["kyo"], true, None)
             ),
             vec![
@@ -100,6 +113,7 @@ mod test {
                     gen_candidate!(["ki", "lyo"], false, Some(1)),
                     gen_candidate!(["ki", "xyo"], false, Some(1))
                 ],
+                ChunkState::Confirmed,
                 gen_candidate!(["kyo"], true, None)
             ),
             vec![

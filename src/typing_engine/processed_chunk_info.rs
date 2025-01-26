@@ -5,9 +5,10 @@ use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
 use crate::statistics::{LapRequest, OnTypingStatisticsManager};
 use crate::typing_primitive_types::chunk::confirmed::ConfirmedChunk;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
-use crate::typing_primitive_types::chunk::typed::{KeyStrokeResult, TypedChunk};
 use crate::typing_primitive_types::chunk::Chunk;
-use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
+use crate::typing_primitive_types::chunk::ChunkState;
+use crate::typing_primitive_types::key_stroke::KeyStrokeResult;
+use crate::typing_primitive_types::key_stroke::{ActualKeyStroke, KeyStrokeChar};
 
 #[cfg(test)]
 mod test;
@@ -15,8 +16,9 @@ mod test;
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub(crate) struct ProcessedChunkInfo {
     unprocessed_chunks: VecDeque<Chunk>,
-    inflight_chunk: Option<TypedChunk>,
+    inflight_chunk: Option<Chunk>,
     confirmed_chunks: Vec<ConfirmedChunk>,
+    pending_key_strokes: Vec<ActualKeyStroke>,
 }
 
 impl ProcessedChunkInfo {
@@ -25,6 +27,7 @@ impl ProcessedChunkInfo {
             unprocessed_chunks: chunks.into(),
             inflight_chunk: None,
             confirmed_chunks: vec![],
+            pending_key_strokes: vec![],
         }
     }
 
@@ -39,8 +42,8 @@ impl ProcessedChunkInfo {
         // 終了している状態で追加されたら先頭のチャンクを処理中にする必要がある
         if self.unprocessed_chunks.is_empty() && self.inflight_chunk.is_none() {
             let mut next_inflight_chunk = chunks.pop_front().unwrap();
-            next_inflight_chunk.change_state_to_typed();
-            self.inflight_chunk.replace(next_inflight_chunk.into());
+            next_inflight_chunk.change_state(ChunkState::Inflight);
+            self.inflight_chunk.replace(next_inflight_chunk);
         }
 
         self.unprocessed_chunks.append(&mut chunks);
@@ -52,6 +55,7 @@ impl ProcessedChunkInfo {
         let next_chunk_head_constraint = if self.inflight_chunk.is_some() {
             let mut current_inflight_chunk = self.inflight_chunk.take().unwrap();
             assert!(current_inflight_chunk.is_confirmed());
+            current_inflight_chunk.change_state(ChunkState::Confirmed);
 
             let mut current_confirmed_chunk: ConfirmedChunk = current_inflight_chunk.into();
             let next_chunk_head_constraint = current_confirmed_chunk.next_chunk_head_constraint();
@@ -70,9 +74,25 @@ impl ProcessedChunkInfo {
                 next_inflight_chunk.strict_chunk_head(next_chunk_head_constraint);
             }
 
-            next_inflight_chunk.change_state_to_typed();
-            self.inflight_chunk.replace(next_inflight_chunk.into());
+            next_inflight_chunk.change_state(ChunkState::Inflight);
+            self.inflight_chunk.replace(next_inflight_chunk);
         }
+    }
+
+    /// Clear and drain all pending key strokes
+    fn take_pending_key_strokes(&mut self) -> Vec<ActualKeyStroke> {
+        let pending_key_strokes = self.pending_key_strokes.clone();
+        self.pending_key_strokes.clear();
+        pending_key_strokes
+    }
+
+    /// 遅延確定候補のために保持しているキーストロークの中にミスタイプがあるかどうか
+    fn has_wrong_stroke_in_pending_key_strokes(&self) -> bool {
+        self.pending_key_strokes
+            .iter()
+            .map(|actual_key_stroke| !actual_key_stroke.is_correct())
+            .reduce(|accum, is_correct| accum || is_correct)
+            .map_or(false, |r| r)
     }
 
     // 1タイプのキーストロークを与える
@@ -84,12 +104,32 @@ impl ProcessedChunkInfo {
         assert!(self.inflight_chunk.is_some());
 
         let inflight_chunk = self.inflight_chunk.as_mut().unwrap();
-        let result = inflight_chunk.stroke_key(key_stroke, elapsed_time);
+        let need_add_to_pending = inflight_chunk.is_delayed_confirmable();
+        let result = inflight_chunk.stroke_key(key_stroke.clone(), elapsed_time);
+
+        // Add key stroke to pending list if the chunk is delayed confirmable
+        if need_add_to_pending {
+            self.pending_key_strokes.push(ActualKeyStroke::new(
+                elapsed_time,
+                key_stroke,
+                matches!(result, KeyStrokeResult::Correct),
+            ));
+        }
 
         // このキーストロークでチャンクが確定したら次のチャンクの処理に移る
+        // Key strokes in pending list should be added to chunk.
+        // What chunk to be added is determined whether it is delayed confirmable or not.
         if inflight_chunk.is_confirmed() {
-            let pending_key_strokes = inflight_chunk.take_pending_key_strokes();
             let is_delayed_confirmable = inflight_chunk.is_delayed_confirmable();
+            let pending_key_strokes = self.take_pending_key_strokes();
+
+            // 遅延確定候補でない場合にはpendingしていたキーストロークを現在のチャンクに入力する
+            if !is_delayed_confirmable {
+                let inflight_chunk = self.inflight_chunk.as_mut().unwrap();
+                pending_key_strokes.iter().for_each(|actual_key_stroke| {
+                    inflight_chunk.append_actual_key_stroke(actual_key_stroke.clone());
+                });
+            }
 
             self.move_next_chunk();
 
@@ -112,8 +152,6 @@ impl ProcessedChunkInfo {
 
                     self.move_next_chunk();
                 }
-            } else {
-                assert!(pending_key_strokes.is_empty());
             }
         }
 
@@ -347,22 +385,22 @@ impl ProcessedChunkInfo {
                             }
 
                             // 保留中のミスタイプは次のチャンクのミスタイプとみなす
-                            if inflight_chunk.has_wrong_stroke_in_pending_key_strokes() {
+                            if self.has_wrong_stroke_in_pending_key_strokes() {
                                 key_stroke_wrong_positions.push(key_stroke_cursor_position);
                                 for i in 0..spell_count {
                                     spell_wrong_positions.push(spell_head_position + i);
                                 }
                             }
 
-                            inflight_chunk.pending_key_strokes().iter().for_each(
-                                |actual_key_stroke| {
+                            self.pending_key_strokes
+                                .iter()
+                                .for_each(|actual_key_stroke| {
                                     on_typing_stat_manager.on_actual_key_stroke(
                                         actual_key_stroke.is_correct(),
                                         spell_count,
                                         *actual_key_stroke.elapsed_time(),
                                     );
-                                },
-                            );
+                                });
                         }
                     }
                 }

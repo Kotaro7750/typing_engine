@@ -124,3 +124,12 @@ impl ActualKeyStroke {
         self.is_correct
     }
 }
+
+/// An enum representing the result of a key stroke.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub(crate) enum KeyStrokeResult {
+    // キーストロークが正しかったケース
+    Correct,
+    // キーストロークが間違っていたケース
+    Wrong,
+}

@@ -4,6 +4,7 @@ use std::time::Duration;
 use crate::statistics::result::construct_result;
 use crate::statistics::result::{TypingResultStatistics, TypingResultStatisticsTarget};
 use crate::typing_primitive_types::chunk::confirmed::ConfirmedChunk;
+use crate::typing_primitive_types::chunk::ChunkState;
 use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
 use crate::LapRequest;
 use crate::{gen_candidate, gen_chunk};
@@ -19,6 +20,7 @@ fn construct_result_1() {
                     gen_candidate!(["ki", "lyo"], false, Some(1)),
                     gen_candidate!(["ki", "xyo"], false, Some(1))
                 ],
+                ChunkState::Confirmed,
                 gen_candidate!(["kyo"], true, None)
             ),
             vec![
@@ -37,6 +39,7 @@ fn construct_result_1() {
                     gen_candidate!(["ki", "lyo"], false, Some(2)),
                     gen_candidate!(["ki", "xyo"], true, Some(5))
                 ],
+                ChunkState::Confirmed,
                 gen_candidate!(["kyo"], true, None)
             ),
             vec![
