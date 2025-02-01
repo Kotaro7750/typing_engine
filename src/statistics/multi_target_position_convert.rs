@@ -11,51 +11,61 @@ pub(crate) enum BaseTarget {
     KeyStroke,
 }
 
-/// チャンク・チャンク内の綴り・理想的なキーストローク系列・キーストローク系列間の位置の変換を行う
+/// A struct that converts the position between chunk, spell in chunk, ideal key stroke sequence,
+/// and key stroke sequence.
 pub(crate) struct MultiTargetDeltaConverter {
-    spell: usize,
-    // Vecになっているのは綴り要素のそれぞれに対応させるため
-    ideal_key_stroke: KeyStrokeElementCount,
-    key_stroke: KeyStrokeElementCount,
+    /// Conversion base.
     base: BaseTarget,
+    /// Spell count in a target chunk.
+    spell_count: usize,
+    /// Ideal key stroke count in a target chunk.
+    ideal_key_stroke_count: KeyStrokeElementCount,
+    /// Key stroke count in a target chunk.
+    key_stroke_count: KeyStrokeElementCount,
 }
 
 impl MultiTargetDeltaConverter {
     pub(crate) fn new(
-        spell: usize,
-        ideal_key_stroke: KeyStrokeElementCount,
-        key_stroke: KeyStrokeElementCount,
+        spell_count: usize,
+        ideal_key_stroke_count: KeyStrokeElementCount,
+        key_stroke_count: KeyStrokeElementCount,
         base: BaseTarget,
     ) -> Self {
-        assert!(spell == 1 || spell == 2);
-        assert!(!key_stroke.is_double() || (key_stroke.is_double() && spell == 2));
-        assert!(!ideal_key_stroke.is_double() || (ideal_key_stroke.is_double() && spell == 2));
+        assert!(spell_count == 1 || spell_count == 2);
+        assert!(
+            !key_stroke_count.is_double() || (key_stroke_count.is_double() && spell_count == 2)
+        );
+        assert!(
+            !ideal_key_stroke_count.is_double()
+                || (ideal_key_stroke_count.is_double() && spell_count == 2)
+        );
 
         Self {
-            spell,
-            ideal_key_stroke,
-            key_stroke,
+            spell_count,
+            ideal_key_stroke_count,
+            key_stroke_count,
             base,
         }
     }
 
-    /// 基準の位置はチャンクでいうとどこか
+    /// Convert the position delta of base to the position delta of chunk.
+    /// Because the unit of this converter is a chunk, the delta is always 1.
     pub(crate) fn chunk_delta(&self, base_deltas: &[usize]) -> Vec<usize> {
         // 他の対象のどこに位置があったとしてもそのチャンク末であることには変わりない
         base_deltas.iter().map(|_| 1).collect()
     }
 
-    /// 基準の位置は綴りでいうとどこか
+    /// Convert the position delta of base to the position delta of spell.
     pub(crate) fn spell_delta(&self, base_deltas: &[usize]) -> Vec<usize> {
         match self.base {
-            BaseTarget::Chunk => base_deltas.iter().map(|_| self.spell).collect(),
+            BaseTarget::Chunk => base_deltas.iter().map(|_| self.spell_count).collect(),
             BaseTarget::Spell => base_deltas.to_vec(),
             BaseTarget::IdealKeyStroke => base_deltas
                 .iter()
                 .map(|ideal_key_stroke_delta| {
-                    self.ideal_key_stroke
+                    self.ideal_key_stroke_count
                         .convert_key_stroke_delta_to_spell_delta(
-                            self.spell,
+                            self.spell_count,
                             *ideal_key_stroke_delta,
                         )
                 })
@@ -63,25 +73,28 @@ impl MultiTargetDeltaConverter {
             BaseTarget::KeyStroke => base_deltas
                 .iter()
                 .map(|key_stroke_delta| {
-                    self.key_stroke
-                        .convert_key_stroke_delta_to_spell_delta(self.spell, *key_stroke_delta)
+                    self.key_stroke_count
+                        .convert_key_stroke_delta_to_spell_delta(
+                            self.spell_count,
+                            *key_stroke_delta,
+                        )
                 })
                 .collect(),
         }
     }
 
-    /// 基準の位置は理想的なキーストローク系列でいうとどこか
+    /// Convert the position delta of base to the position delta of ideal key strokes.
     pub(crate) fn ideal_key_stroke_delta(&self, base_deltas: &[usize]) -> Vec<usize> {
         match self.base {
             BaseTarget::Chunk => base_deltas
                 .iter()
-                .map(|_| self.ideal_key_stroke.whole_count())
+                .map(|_| self.ideal_key_stroke_count.whole_count())
                 .collect(),
             BaseTarget::Spell => base_deltas
                 .iter()
                 .map(|spell_delta| {
-                    self.ideal_key_stroke
-                        .convert_spell_delta_to_key_stroke_delta(self.spell, *spell_delta)
+                    self.ideal_key_stroke_count
+                        .convert_spell_delta_to_key_stroke_delta(self.spell_count, *spell_delta)
                 })
                 .collect(),
             BaseTarget::IdealKeyStroke => base_deltas.to_vec(),
@@ -89,9 +102,9 @@ impl MultiTargetDeltaConverter {
                 .iter()
                 .map(|key_stroke_delta| {
                     convert_between_key_stroke_delta(
-                        &self.key_stroke,
-                        &self.ideal_key_stroke,
-                        self.spell,
+                        &self.key_stroke_count,
+                        &self.ideal_key_stroke_count,
+                        self.spell_count,
                         *key_stroke_delta,
                     )
                 })
@@ -99,27 +112,27 @@ impl MultiTargetDeltaConverter {
         }
     }
 
-    /// 基準の位置はキーストローク系列でいうとどこか
+    /// Convert the position delta of base to the position delta of key strokes.
     pub(crate) fn key_stroke_delta(&self, base_deltas: &[usize]) -> Vec<usize> {
         match self.base {
             BaseTarget::Chunk => base_deltas
                 .iter()
-                .map(|_| self.key_stroke.whole_count())
+                .map(|_| self.key_stroke_count.whole_count())
                 .collect(),
             BaseTarget::Spell => base_deltas
                 .iter()
                 .map(|spell_delta| {
-                    self.key_stroke
-                        .convert_spell_delta_to_key_stroke_delta(self.spell, *spell_delta)
+                    self.key_stroke_count
+                        .convert_spell_delta_to_key_stroke_delta(self.spell_count, *spell_delta)
                 })
                 .collect(),
             BaseTarget::IdealKeyStroke => base_deltas
                 .iter()
                 .map(|key_stroke_delta| {
                     convert_between_key_stroke_delta(
-                        &self.ideal_key_stroke,
-                        &self.key_stroke,
-                        self.spell,
+                        &self.ideal_key_stroke_count,
+                        &self.key_stroke_count,
+                        self.spell_count,
                         *key_stroke_delta,
                     )
                 })
@@ -129,16 +142,16 @@ impl MultiTargetDeltaConverter {
     }
 }
 
+/// Convert the position delta between key strokes and ideal key strokes.
 fn convert_between_key_stroke_delta(
-    from_count_of_spell_elements: &KeyStrokeElementCount,
-    to_count_of_spell_elements: &KeyStrokeElementCount,
-    spell: usize,
+    from: &KeyStrokeElementCount,
+    to: &KeyStrokeElementCount,
+    spell_count: usize,
     from_delta: usize,
 ) -> usize {
-    let pseudo_from_cose =
-        from_count_of_spell_elements.construct_pseudo_count_of_spell_elements(spell);
+    let pseudo_from_cose = from.construct_pseudo_count_of_spell_elements(spell_count);
 
-    let pseudo_to_cose = to_count_of_spell_elements.construct_pseudo_count_of_spell_elements(spell);
+    let pseudo_to_cose = to.construct_pseudo_count_of_spell_elements(spell_count);
 
     let i = pseudo_from_cose.spell_elements_index_of_delta(from_delta);
 

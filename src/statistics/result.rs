@@ -11,6 +11,7 @@ use crate::LapRequest;
 mod test;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+/// An struct representing the result statistics of typing.
 pub struct TypingResultStatistics {
     key_stroke: TypingResultStatisticsTarget,
     ideal_key_stroke: TypingResultStatisticsTarget,
