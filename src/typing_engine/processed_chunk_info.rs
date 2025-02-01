@@ -2,7 +2,9 @@ use std::collections::VecDeque;
 use std::time::Duration;
 
 use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
-use crate::statistics::{LapRequest, OnTypingStatisticsManager};
+use crate::statistics::lap_statistics::LapStatiticsBuilder;
+use crate::statistics::statistics_counter::StatisticsCounter;
+use crate::statistics::{construct_on_typing_statistics_target, LapRequest};
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use crate::typing_primitive_types::chunk::Chunk;
 use crate::typing_primitive_types::chunk::ChunkState;
@@ -18,6 +20,14 @@ pub(crate) struct ProcessedChunkInfo {
     inflight_chunk: Option<Chunk>,
     confirmed_chunks: Vec<Chunk>,
     pending_key_strokes: Vec<ActualKeyStroke>,
+    /// `StatisticsCounter` only for confirmed chunks.
+    /// This limitation is because the statistics counter for key stroke is not deterministic prior
+    /// to the chunk is confirmed.
+    /// Simply put, the statistics counter for key stroke depends on active candidate and active
+    /// candidate is fixed when the chunk is confirmed.
+    ///
+    /// Although additional counts for inflight and unprocessed chunk are needed for completing statistics counter, there is no need to count for confirmed chunks and calculation cost is reduced.
+    confirmed_only_statistics_counter: StatisticsCounter,
 }
 
 impl ProcessedChunkInfo {
@@ -27,6 +37,7 @@ impl ProcessedChunkInfo {
             inflight_chunk: None,
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new(),
         }
     }
 
@@ -56,6 +67,8 @@ impl ProcessedChunkInfo {
             assert!(current_inflight_chunk.is_confirmed());
             current_inflight_chunk.change_state(ChunkState::Confirmed);
 
+            self.update_statistics_for_confirmed_chunk(current_inflight_chunk.as_ref());
+
             let next_chunk_head_constraint = current_inflight_chunk.next_chunk_head_constraint();
             self.confirmed_chunks.push(current_inflight_chunk);
 
@@ -75,6 +88,57 @@ impl ProcessedChunkInfo {
             next_inflight_chunk.change_state(ChunkState::Inflight);
             self.inflight_chunk.replace(next_inflight_chunk);
         }
+    }
+
+    fn update_statistics_for_confirmed_chunk(&mut self, confirmed_chunk: &Chunk) {
+        self.confirmed_only_statistics_counter.on_add_chunk(
+            confirmed_chunk
+                .as_ref()
+                .min_candidate(None)
+                .construct_key_stroke_element_count(),
+            confirmed_chunk
+                .as_ref()
+                .ideal_key_stroke_candidate()
+                .as_ref()
+                .unwrap()
+                .construct_key_stroke_element_count(),
+            confirmed_chunk.as_ref().spell().count(),
+        );
+        self.confirmed_only_statistics_counter.on_start_chunk(
+            confirmed_chunk
+                .confirmed_candidate()
+                .whole_key_stroke()
+                .chars()
+                .count(),
+            confirmed_chunk
+                .as_ref()
+                .ideal_key_stroke_candidate()
+                .as_ref()
+                .unwrap()
+                .whole_key_stroke()
+                .chars()
+                .count(),
+        );
+
+        confirmed_chunk
+            .actual_key_strokes()
+            .iter()
+            .zip(confirmed_chunk.construct_spell_end_vector().iter())
+            .for_each(|(actual_key_stroke, spell_end)| {
+                self.confirmed_only_statistics_counter.on_stroke_key(
+                    actual_key_stroke.is_correct(),
+                    confirmed_chunk.effective_spell_count(),
+                );
+
+                if actual_key_stroke.is_correct() {
+                    if let Some(delta) = spell_end {
+                        self.confirmed_only_statistics_counter
+                            .on_finish_spell(*delta);
+                    }
+                }
+            });
+
+        self.confirmed_only_statistics_counter.on_finish_chunk();
     }
 
     /// Clear and drain all pending key strokes
@@ -172,7 +236,8 @@ impl ProcessedChunkInfo {
         let mut key_stroke = String::new();
         let mut key_stroke_cursor_position = 0;
         let mut key_stroke_wrong_positions: Vec<usize> = vec![];
-        let mut on_typing_stat_manager = OnTypingStatisticsManager::new(lap_request);
+        let mut realtime_statistics_counter = self.confirmed_only_statistics_counter.clone();
+        let mut lap_statistics_builder = LapStatiticsBuilder::new(lap_request);
 
         // 1. 確定したチャンク
         // 2. タイプ中のチャンク
@@ -182,10 +247,20 @@ impl ProcessedChunkInfo {
 
         // 1. 確定したチャンク
         self.confirmed_chunks.iter().for_each(|confirmed_chunk| {
-            // 複数文字の綴りをまとめて打つ場合には綴りの統計は2文字分カウントする必要がある
-            let spell_count = confirmed_chunk.effective_spell_count();
-
-            on_typing_stat_manager.set_this_candidate_key_stroke_count(
+            lap_statistics_builder.on_add_chunk(
+                confirmed_chunk
+                    .as_ref()
+                    .min_candidate(None)
+                    .construct_key_stroke_element_count(),
+                confirmed_chunk
+                    .as_ref()
+                    .ideal_key_stroke_candidate()
+                    .as_ref()
+                    .unwrap()
+                    .construct_key_stroke_element_count(),
+                confirmed_chunk.as_ref().spell().count(),
+            );
+            lap_statistics_builder.on_start_chunk(
                 confirmed_chunk
                     .confirmed_candidate()
                     .whole_key_stroke()
@@ -207,15 +282,14 @@ impl ProcessedChunkInfo {
                 .iter()
                 .zip(confirmed_chunk.construct_spell_end_vector().iter())
                 .for_each(|(actual_key_stroke, spell_end)| {
-                    on_typing_stat_manager.on_actual_key_stroke(
+                    lap_statistics_builder.on_actual_key_stroke(
                         actual_key_stroke.is_correct(),
-                        spell_count,
                         *actual_key_stroke.elapsed_time(),
                     );
 
                     if actual_key_stroke.is_correct() {
                         if let Some(delta) = spell_end {
-                            on_typing_stat_manager.finish_spell(*delta);
+                            lap_statistics_builder.on_finish_spell(*delta);
                         }
                     }
                 });
@@ -236,19 +310,7 @@ impl ProcessedChunkInfo {
             key_stroke.push_str(&confirmed_chunk.confirmed_candidate().whole_key_stroke());
             spell.push_str(confirmed_chunk.as_ref().spell().as_ref());
 
-            on_typing_stat_manager.finish_chunk(
-                confirmed_chunk
-                    .as_ref()
-                    .min_candidate(None)
-                    .construct_key_stroke_element_count(),
-                confirmed_chunk
-                    .as_ref()
-                    .ideal_key_stroke_candidate()
-                    .as_ref()
-                    .unwrap()
-                    .construct_key_stroke_element_count(),
-                confirmed_chunk.as_ref().spell().count(),
-            );
+            lap_statistics_builder.on_finish_chunk();
         });
 
         // 2. タイプ中のチャンク
@@ -261,7 +323,50 @@ impl ProcessedChunkInfo {
 
             let spell_count = inflight_chunk.effective_spell_count();
 
-            on_typing_stat_manager.set_this_candidate_key_stroke_count(
+            realtime_statistics_counter.on_add_chunk(
+                inflight_chunk
+                    .as_ref()
+                    .min_candidate(None)
+                    .construct_key_stroke_element_count(),
+                inflight_chunk
+                    .as_ref()
+                    .ideal_key_stroke_candidate()
+                    .as_ref()
+                    .unwrap()
+                    .construct_key_stroke_element_count(),
+                inflight_chunk.as_ref().spell().count(),
+            );
+            lap_statistics_builder.on_add_chunk(
+                inflight_chunk
+                    .as_ref()
+                    .min_candidate(None)
+                    .construct_key_stroke_element_count(),
+                inflight_chunk
+                    .as_ref()
+                    .ideal_key_stroke_candidate()
+                    .as_ref()
+                    .unwrap()
+                    .construct_key_stroke_element_count(),
+                inflight_chunk.as_ref().spell().count(),
+            );
+
+            realtime_statistics_counter.on_start_chunk(
+                inflight_chunk
+                    .as_ref()
+                    .min_candidate(None)
+                    .whole_key_stroke()
+                    .chars()
+                    .count(),
+                inflight_chunk
+                    .as_ref()
+                    .ideal_key_stroke_candidate()
+                    .as_ref()
+                    .unwrap()
+                    .whole_key_stroke()
+                    .chars()
+                    .count(),
+            );
+            lap_statistics_builder.on_start_chunk(
                 inflight_chunk
                     .as_ref()
                     .min_candidate(None)
@@ -284,15 +389,17 @@ impl ProcessedChunkInfo {
                 .iter()
                 .zip(inflight_chunk.construct_spell_end_vector().iter())
                 .for_each(|(actual_key_stroke, spell_end)| {
-                    on_typing_stat_manager.on_actual_key_stroke(
+                    realtime_statistics_counter
+                        .on_stroke_key(actual_key_stroke.is_correct(), spell_count);
+                    lap_statistics_builder.on_actual_key_stroke(
                         actual_key_stroke.is_correct(),
-                        spell_count,
                         *actual_key_stroke.elapsed_time(),
                     );
 
                     if actual_key_stroke.is_correct() {
                         if let Some(delta) = spell_end {
-                            on_typing_stat_manager.finish_spell(*delta);
+                            realtime_statistics_counter.on_finish_spell(*delta);
+                            lap_statistics_builder.on_finish_spell(*delta);
                         }
                     }
                 });
@@ -322,20 +429,6 @@ impl ProcessedChunkInfo {
                     .whole_key_stroke(),
             );
             spell.push_str(inflight_chunk.as_ref().spell().as_ref());
-
-            on_typing_stat_manager.add_unfinished_chunk(
-                inflight_chunk
-                    .as_ref()
-                    .min_candidate(None)
-                    .construct_key_stroke_element_count(),
-                inflight_chunk
-                    .as_ref()
-                    .ideal_key_stroke_candidate()
-                    .as_ref()
-                    .unwrap()
-                    .construct_key_stroke_element_count(),
-                inflight_chunk.as_ref().spell().count(),
-            );
         }
 
         // 3. 未処理のチャンク
@@ -389,9 +482,10 @@ impl ProcessedChunkInfo {
                             self.pending_key_strokes
                                 .iter()
                                 .for_each(|actual_key_stroke| {
-                                    on_typing_stat_manager.on_actual_key_stroke(
+                                    realtime_statistics_counter
+                                        .on_stroke_key(actual_key_stroke.is_correct(), spell_count);
+                                    lap_statistics_builder.on_actual_key_stroke(
                                         actual_key_stroke.is_correct(),
-                                        spell_count,
                                         *actual_key_stroke.elapsed_time(),
                                     );
                                 });
@@ -413,7 +507,12 @@ impl ProcessedChunkInfo {
                     .unwrap()
                     .construct_key_stroke_element_count();
 
-                on_typing_stat_manager.add_unfinished_chunk(
+                realtime_statistics_counter.on_add_chunk(
+                    key_stroke_element_count.clone(),
+                    key_stroke_element_count.clone(),
+                    unprocessed_chunk.spell().count(),
+                );
+                lap_statistics_builder.on_add_chunk(
                     key_stroke_element_count.clone(),
                     key_stroke_element_count,
                     unprocessed_chunk.spell().count(),
@@ -427,11 +526,17 @@ impl ProcessedChunkInfo {
             });
 
         let (
-            key_stroke_on_typing_statistics,
-            ideal_key_stroke_on_typing_statistics,
-            spell_on_typing_statistics,
+            key_stroke_statistics_counter,
+            ideal_key_stroke_statistics_counter,
+            spell_statistics_counter,
             _,
-        ) = on_typing_stat_manager.emit();
+        ) = realtime_statistics_counter.emit();
+        let (
+            key_stroke_lap_statistics_builder,
+            ideal_key_stroke_lap_statistics_builder,
+            spell_lap_statistics_builder,
+            _,
+        ) = lap_statistics_builder.emit();
 
         (
             SpellDisplayInfo::new(
@@ -439,14 +544,23 @@ impl ProcessedChunkInfo {
                 spell_cursor_positions,
                 spell_wrong_positions,
                 spell_head_position - 1,
-                spell_on_typing_statistics,
+                construct_on_typing_statistics_target(
+                    &spell_statistics_counter,
+                    &spell_lap_statistics_builder,
+                ),
             ),
             KeyStrokeDisplayInfo::new(
                 key_stroke,
                 key_stroke_cursor_position,
                 key_stroke_wrong_positions,
-                key_stroke_on_typing_statistics,
-                ideal_key_stroke_on_typing_statistics,
+                construct_on_typing_statistics_target(
+                    &key_stroke_statistics_counter,
+                    &key_stroke_lap_statistics_builder,
+                ),
+                construct_on_typing_statistics_target(
+                    &ideal_key_stroke_statistics_counter,
+                    &ideal_key_stroke_lap_statistics_builder,
+                ),
             ),
         )
     }

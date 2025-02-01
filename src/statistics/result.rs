@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
-use crate::statistics::OnTypingStatisticsManager;
+use super::statistics_counter::StatisticsCounter;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use crate::typing_primitive_types::chunk::Chunk;
 use crate::LapRequest;
@@ -81,14 +81,27 @@ impl TypingResultStatisticsTarget {
 
 pub(crate) fn construct_result(
     confirmed_chunks: &[Chunk],
-    lap_request: LapRequest,
+    _lap_request: LapRequest,
 ) -> TypingResultStatistics {
     assert!(!confirmed_chunks.is_empty());
 
-    let mut on_typing_stat_manager = OnTypingStatisticsManager::new(lap_request);
+    let mut statistics_counter = StatisticsCounter::new();
 
     confirmed_chunks.iter().for_each(|confirmed_chunk| {
-        on_typing_stat_manager.set_this_candidate_key_stroke_count(
+        statistics_counter.on_add_chunk(
+            confirmed_chunk
+                .as_ref()
+                .min_candidate(None)
+                .construct_key_stroke_element_count(),
+            confirmed_chunk
+                .as_ref()
+                .ideal_key_stroke_candidate()
+                .as_ref()
+                .unwrap()
+                .construct_key_stroke_element_count(),
+            confirmed_chunk.as_ref().spell().count(),
+        );
+        statistics_counter.on_start_chunk(
             confirmed_chunk
                 .confirmed_candidate()
                 .whole_key_stroke()
@@ -109,32 +122,19 @@ pub(crate) fn construct_result(
             .iter()
             .zip(confirmed_chunk.construct_spell_end_vector().iter())
             .for_each(|(actual_key_stroke, spell_end)| {
-                on_typing_stat_manager.on_actual_key_stroke(
+                statistics_counter.on_stroke_key(
                     actual_key_stroke.is_correct(),
                     confirmed_chunk.effective_spell_count(),
-                    *actual_key_stroke.elapsed_time(),
                 );
 
                 if actual_key_stroke.is_correct() {
                     if let Some(delta) = spell_end {
-                        on_typing_stat_manager.finish_spell(*delta);
+                        statistics_counter.on_finish_spell(*delta);
                     }
                 }
             });
 
-        on_typing_stat_manager.finish_chunk(
-            confirmed_chunk
-                .as_ref()
-                .min_candidate(None)
-                .construct_key_stroke_element_count(),
-            confirmed_chunk
-                .as_ref()
-                .ideal_key_stroke_candidate()
-                .as_ref()
-                .unwrap()
-                .construct_key_stroke_element_count(),
-            confirmed_chunk.as_ref().spell().count(),
-        );
+        statistics_counter.on_finish_chunk();
     });
 
     let total_time = *(confirmed_chunks
@@ -145,13 +145,13 @@ pub(crate) fn construct_result(
         .unwrap()
         .elapsed_time());
 
-    let (key_stroke_ots, ideal_key_stroke_ots, _, _) = on_typing_stat_manager.emit();
+    let (key_stroke_ots, ideal_key_stroke_ots, _, _) = statistics_counter.emit();
 
     TypingResultStatistics {
         key_stroke: TypingResultStatisticsTarget {
             whole_count: key_stroke_ots.whole_count(),
             completely_correct_count: key_stroke_ots.completely_correct_count(),
-            missed_count: key_stroke_ots.wrong_count,
+            missed_count: key_stroke_ots.wrong_count(),
         },
         ideal_key_stroke: TypingResultStatisticsTarget {
             whole_count: ideal_key_stroke_ots.whole_count(),

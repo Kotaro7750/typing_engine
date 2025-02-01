@@ -3,6 +3,7 @@ use super::*;
 use std::num::NonZeroUsize;
 use std::time::Duration;
 
+use crate::statistics::statistics_counter::{PrimitiveStatisticsCounter, StatisticsCounter};
 use crate::statistics::OnTypingStatisticsTarget;
 use crate::typing_engine::processed_chunk_info::KeyStrokeDisplayInfo;
 use crate::typing_engine::processed_chunk_info::SpellDisplayInfo;
@@ -87,6 +88,7 @@ fn stroke_key_1() {
             inflight_chunk: None,
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -135,6 +137,7 @@ fn stroke_key_1() {
             ),
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -185,6 +188,19 @@ fn stroke_key_1() {
                 )]
             )],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -242,6 +258,19 @@ fn stroke_key_1() {
                 ),
             ],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -303,6 +332,19 @@ fn stroke_key_1() {
                 ),
             ],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -361,6 +403,19 @@ fn stroke_key_1() {
                 )
             ],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(4, 4, 4, 0),
+                PrimitiveStatisticsCounter::new(4, 4, 4, 0),
+                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
+                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -443,6 +498,19 @@ fn stroke_key_1() {
                 )
             ],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(4, 4, 4, 0),
+                PrimitiveStatisticsCounter::new(4, 4, 4, 0),
+                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
+                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 }
@@ -512,6 +580,7 @@ fn stroke_key_2() {
             inflight_chunk: None,
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -554,6 +623,7 @@ fn stroke_key_2() {
             ),
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -597,6 +667,7 @@ fn stroke_key_2() {
             )),
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -640,6 +711,19 @@ fn stroke_key_2() {
                 ]
             ),],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -687,6 +771,19 @@ fn stroke_key_2() {
                 ]
             )],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -738,7 +835,20 @@ fn stroke_key_2() {
                 Duration::new(4, 0),
                 'j'.try_into().unwrap(),
                 false
-            )]
+            )],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -790,6 +900,19 @@ fn stroke_key_2() {
                 ),
             ],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
+                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -842,6 +965,19 @@ fn stroke_key_2() {
                 ),
             ],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(5, 5, 4, 1),
+                PrimitiveStatisticsCounter::new(5, 5, 4, 1),
+                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
+                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -913,6 +1049,7 @@ fn stroke_key_3() {
             inflight_chunk: None,
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -955,6 +1092,7 @@ fn stroke_key_3() {
             ),
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -998,6 +1136,7 @@ fn stroke_key_3() {
             )),
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -1041,6 +1180,19 @@ fn stroke_key_3() {
                 ]
             ),],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -1088,6 +1240,19 @@ fn stroke_key_3() {
                 ]
             )],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -1139,7 +1304,20 @@ fn stroke_key_3() {
                 Duration::new(4, 0),
                 'j'.try_into().unwrap(),
                 false
-            )]
+            )],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -1191,6 +1369,19 @@ fn stroke_key_3() {
                 ),
             ],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(4, 4, 3, 1),
+                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
+                PrimitiveStatisticsCounter::new(2, 2, 1, 1),
+                PrimitiveStatisticsCounter::new(2, 2, 1, 1),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -1242,6 +1433,19 @@ fn stroke_key_3() {
                 ),
             ],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(4, 4, 3, 1),
+                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
+                PrimitiveStatisticsCounter::new(2, 2, 1, 1),
+                PrimitiveStatisticsCounter::new(2, 2, 1, 1),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -1293,6 +1497,19 @@ fn stroke_key_3() {
                 ),
             ],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(6, 6, 5, 1),
+                PrimitiveStatisticsCounter::new(5, 5, 4, 1),
+                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
+                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -1346,6 +1563,7 @@ fn stroke_key_4() {
             inflight_chunk: None,
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -1377,6 +1595,7 @@ fn stroke_key_4() {
             ),
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -1409,6 +1628,7 @@ fn stroke_key_4() {
             )),
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -1448,6 +1668,19 @@ fn stroke_key_4() {
                 ),
             ],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -1580,6 +1813,19 @@ fn construct_display_info_1() {
                 ),
             ],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(8, 8, 6, 2),
+                PrimitiveStatisticsCounter::new(6, 6, 4, 2),
+                PrimitiveStatisticsCounter::new(4, 4, 1, 3),
+                PrimitiveStatisticsCounter::new(2, 2, 0, 2),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -1750,7 +1996,8 @@ fn construct_display_info_2() {
                 Duration::new(2, 0),
                 'm'.try_into().unwrap(),
                 false
-            ),]
+            ),],
+            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -1879,6 +2126,19 @@ fn construct_display_info_2() {
                 )]
             ),],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -2036,7 +2296,8 @@ fn construct_display_info_3() {
                 Duration::new(2, 0),
                 'm'.try_into().unwrap(),
                 false
-            ),]
+            ),],
+            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -2140,6 +2401,19 @@ fn construct_display_info_3() {
                 ]
             )],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(2, 2, 1, 1),
+                PrimitiveStatisticsCounter::new(1, 1, 0, 1),
+                PrimitiveStatisticsCounter::new(1, 1, 0, 1),
+                PrimitiveStatisticsCounter::new(1, 1, 0, 1),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
@@ -2320,6 +2594,7 @@ fn construct_display_info_4() {
             inflight_chunk: None,
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -2378,6 +2653,19 @@ fn construct_display_info_4() {
                 )]
             ),],
             pending_key_strokes: vec![],
+            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
         }
     );
 
