@@ -81,7 +81,7 @@ impl StatisticalEvent {
                 (
                     actual_key_stroke.is_correct(),
                     if actual_key_stroke.is_correct() {
-                        spell_end.clone()
+                        *spell_end
                     } else {
                         None
                     },
