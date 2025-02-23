@@ -3,7 +3,7 @@ use super::*;
 use std::num::NonZeroUsize;
 use std::time::Duration;
 
-use crate::statistics::statistical_event::ChunkConfirmationInfo;
+use crate::statistics::statistical_event::{ChunkAddedContext, ChunkConfirmationInfo};
 use crate::statistics::statistics_counter::{PrimitiveStatisticsCounter, StatisticsCounter};
 use crate::statistics::OnTypingStatisticsTarget;
 use crate::typing_engine::processed_chunk_info::KeyStrokeDisplayInfo;
@@ -16,7 +16,7 @@ use crate::{gen_candidate, gen_chunk};
 #[test]
 fn stroke_key_1() {
     // 1. 初期化
-    let mut pci = ProcessedChunkInfo::new(vec![
+    let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
         gen_chunk!(
             "う",
             vec![
@@ -91,6 +91,24 @@ fn stroke_key_1() {
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
         }
+    );
+
+    assert_eq!(
+        statistical_events,
+        vec![
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(2)
+            ))
+        ],
     );
 
     // 2. タイピング開始
@@ -420,7 +438,7 @@ fn stroke_key_1() {
 
     assert!(pci.is_finished());
 
-    pci.append_chunks(vec![gen_chunk!(
+    let statistical_events = pci.append_chunks(vec![gen_chunk!(
         "う",
         vec![
             gen_candidate!(["u"], true, None),
@@ -430,6 +448,14 @@ fn stroke_key_1() {
         ChunkState::Unprocessed,
         gen_candidate!(["u"], true, None)
     )]);
+
+    assert_eq!(
+        statistical_events,
+        vec![StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+            1,
+            KeyStrokeElementCount::Sigle(1)
+        )),],
+    );
 
     assert_eq!(
         pci,
@@ -504,7 +530,7 @@ fn stroke_key_1() {
 #[test]
 fn stroke_key_2() {
     // 1. 初期化
-    let mut pci = ProcessedChunkInfo::new(vec![
+    let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
         gen_chunk!(
             "か",
             vec![
@@ -567,6 +593,24 @@ fn stroke_key_2() {
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
         }
+    );
+
+    assert_eq!(
+        statistical_events,
+        vec![
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(2)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(2)
+            ))
+        ],
     );
 
     // 2. タイピング開始
@@ -962,7 +1006,7 @@ fn stroke_key_2() {
 #[test]
 fn stroke_key_3() {
     // 1. 初期化
-    let mut pci = ProcessedChunkInfo::new(vec![
+    let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
         gen_chunk!(
             "か",
             vec![
@@ -1025,6 +1069,24 @@ fn stroke_key_3() {
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
         }
+    );
+
+    assert_eq!(
+        statistical_events,
+        vec![
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(2)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(2)
+            ))
+        ],
     );
 
     // 2. タイピング開始
@@ -1473,7 +1535,7 @@ fn stroke_key_3() {
 #[test]
 fn stroke_key_4() {
     // 1. 初期化
-    let mut pci = ProcessedChunkInfo::new(vec![
+    let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
         gen_chunk!(
             "ん",
             vec![
@@ -1518,6 +1580,20 @@ fn stroke_key_4() {
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
         }
+    );
+
+    assert_eq!(
+        statistical_events,
+        vec![
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1)
+            ))
+        ],
     );
 
     // 2. タイピング開始
@@ -1656,7 +1732,7 @@ fn stroke_key_4() {
 #[test]
 fn construct_display_info_1() {
     // 1. 初期化
-    let mut pci = ProcessedChunkInfo::new(vec![
+    let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
         gen_chunk!(
             "きょ",
             vec![
@@ -1697,6 +1773,28 @@ fn construct_display_info_1() {
             gen_candidate!(["ky"], true, None)
         ),
     ]);
+
+    assert_eq!(
+        statistical_events,
+        vec![
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                2,
+                KeyStrokeElementCount::Sigle(3)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                2,
+                KeyStrokeElementCount::Sigle(3)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                2,
+                KeyStrokeElementCount::Sigle(3)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                2,
+                KeyStrokeElementCount::Sigle(2)
+            ))
+        ],
+    );
 
     // 2. タイピング開始
     assert_eq!(pci.move_next_chunk(), None);
@@ -1960,7 +2058,7 @@ fn construct_display_info_1() {
 #[test]
 fn construct_display_info_2() {
     // 1. 初期化
-    let mut pci = ProcessedChunkInfo::new(vec![
+    let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
         gen_chunk!(
             "ん",
             vec![
@@ -1981,6 +2079,20 @@ fn construct_display_info_2() {
             gen_candidate!(["zi"], true, None)
         ),
     ]);
+
+    assert_eq!(
+        statistical_events,
+        vec![
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(2)
+            ))
+        ],
+    );
 
     // 2. タイピング開始
     assert_eq!(pci.move_next_chunk(), None);
@@ -2286,7 +2398,7 @@ fn construct_display_info_2() {
 #[test]
 fn construct_display_info_3() {
     // 1. 初期化
-    let mut pci = ProcessedChunkInfo::new(vec![
+    let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
         gen_chunk!(
             "ん",
             vec![
@@ -2307,6 +2419,20 @@ fn construct_display_info_3() {
             gen_candidate!(["zi"], true, None)
         ),
     ]);
+
+    assert_eq!(
+        statistical_events,
+        vec![
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(2)
+            ))
+        ],
+    );
 
     // 2. タイピング開始
     assert_eq!(pci.move_next_chunk(), None);
@@ -2602,7 +2728,7 @@ fn construct_display_info_3() {
 #[test]
 fn construct_display_info_4() {
     // 1. 初期化
-    let mut pci = ProcessedChunkInfo::new(vec![
+    let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
         gen_chunk!(
             "あ",
             vec![gen_candidate!(["a"], true, None)],
@@ -2687,6 +2813,28 @@ fn construct_display_info_4() {
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
         }
+    );
+
+    assert_eq!(
+        statistical_events,
+        vec![
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(2)
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(2)
+            ))
+        ],
     );
 
     // 2. タイピング開始

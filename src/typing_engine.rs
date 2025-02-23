@@ -98,9 +98,14 @@ impl TypingEngine {
         let query = query_request.construct_query();
         let (vocabulary_infos, chunks) = query.decompose();
 
+        let (processed_chunk_info, statistical_events) = ProcessedChunkInfo::new(chunks);
+        self.processed_chunk_info.replace(processed_chunk_info);
         self.vocabulary_infos.replace(vocabulary_infos);
-        self.processed_chunk_info
-            .replace(ProcessedChunkInfo::new(chunks));
+
+        statistical_events.iter().for_each(|statistical_event| {
+            self.statistics_manager
+                .consume_event(statistical_event.clone());
+        });
 
         self.state = TypingEngineState::Ready;
     }
@@ -121,10 +126,16 @@ impl TypingEngine {
                 .unwrap()
                 .append(&mut vocabulary_infos);
 
-            self.processed_chunk_info
+            let statistical_events = self
+                .processed_chunk_info
                 .as_mut()
                 .unwrap()
                 .append_chunks(chunks);
+
+            statistical_events.iter().for_each(|statistical_event| {
+                self.statistics_manager
+                    .consume_event(statistical_event.clone());
+            });
 
             Ok(())
         } else {

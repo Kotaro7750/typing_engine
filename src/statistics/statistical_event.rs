@@ -4,7 +4,7 @@ use crate::typing_primitive_types::chunk::{
 };
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
-/// An struct representing the information for updating statistic when chunk is confirmed
+/// A struct representing the information for updating statistics when chunk is confirmed
 pub(crate) struct ChunkConfirmationInfo {
     pub(super) key_stroke_element_count: KeyStrokeElementCount,
     pub(super) ideal_key_stroke_element_count: KeyStrokeElementCount,
@@ -38,13 +38,52 @@ impl ChunkConfirmationInfo {
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
-/// Representing the event ocurred when key is stroked
+/// A struct representing the context for updating statistics when chunk is added
+pub(crate) struct ChunkAddedContext {
+    /// Spell count of added chunk
+    spell_count: usize,
+    /// Ideal key stroke element count of added chunk
+    ideal_key_stroke_element_count: KeyStrokeElementCount,
+}
+
+impl ChunkAddedContext {
+    pub(crate) fn new(
+        spell_count: usize,
+        ideal_key_stroke_element_count: KeyStrokeElementCount,
+    ) -> Self {
+        Self {
+            spell_count,
+            ideal_key_stroke_element_count,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+/// Representing events generated when statistically meaningfull things happened
 pub(crate) enum StatisticalEvent {
-    /// Chunk confirmation
+    /// Event generated when chunk is added
+    ChunkAdded(ChunkAddedContext),
+    /// Event generated when chunk is confirmed
     ChunkConfirmed(ChunkConfirmationInfo),
 }
 
 impl StatisticalEvent {
+    /// Create ChunkAdded event from chunk
+    pub(crate) fn new_from_added_chunk(added_chunk: &Chunk) -> StatisticalEvent {
+        let spell_count = added_chunk.as_ref().spell().count();
+        let ideal_key_stroke_element_count = added_chunk
+            .ideal_key_stroke_candidate()
+            .as_ref()
+            .unwrap()
+            .construct_key_stroke_element_count();
+
+        StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+            spell_count,
+            ideal_key_stroke_element_count,
+        ))
+    }
+
+    /// Create ChunkConfirmed event from chunk
     pub(crate) fn new_from_confirmed_chunk(confirmed_chunk: &Chunk) -> StatisticalEvent {
         let key_stroke_element_count = confirmed_chunk
             .min_candidate(None)

@@ -24,13 +24,22 @@ pub(crate) struct ProcessedChunkInfo {
 }
 
 impl ProcessedChunkInfo {
-    pub(crate) fn new(chunks: Vec<Chunk>) -> Self {
-        Self {
-            unprocessed_chunks: chunks.into(),
-            inflight_chunk: None,
-            confirmed_chunks: vec![],
-            pending_key_strokes: vec![],
-        }
+    #[must_use]
+    pub(crate) fn new(chunks: Vec<Chunk>) -> (Self, Vec<StatisticalEvent>) {
+        let chunk_added_events = chunks
+            .iter()
+            .map(StatisticalEvent::new_from_added_chunk)
+            .collect();
+
+        (
+            Self {
+                unprocessed_chunks: chunks.into(),
+                inflight_chunk: None,
+                confirmed_chunks: vec![],
+                pending_key_strokes: vec![],
+            },
+            chunk_added_events,
+        )
     }
 
     pub(crate) fn is_finished(&self) -> bool {
@@ -38,7 +47,13 @@ impl ProcessedChunkInfo {
         self.unprocessed_chunks.is_empty() && self.inflight_chunk.is_none()
     }
 
-    pub(crate) fn append_chunks(&mut self, chunks: Vec<Chunk>) {
+    #[must_use]
+    pub(crate) fn append_chunks(&mut self, chunks: Vec<Chunk>) -> Vec<StatisticalEvent> {
+        let chunk_added_events = chunks
+            .iter()
+            .map(StatisticalEvent::new_from_added_chunk)
+            .collect();
+
         let mut chunks: VecDeque<Chunk> = chunks.into();
 
         // 終了している状態で追加されたら先頭のチャンクを処理中にする必要がある
@@ -49,6 +64,8 @@ impl ProcessedChunkInfo {
         }
 
         self.unprocessed_chunks.append(&mut chunks);
+
+        chunk_added_events
     }
 
     // 現在打っているチャンクを確定させ未処理のチャンク列の先頭のチャンクの処理を開始する

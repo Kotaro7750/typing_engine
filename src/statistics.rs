@@ -8,6 +8,7 @@ pub(crate) mod result;
 pub(crate) mod statistical_event;
 pub(crate) mod statistics_counter;
 
+use crate::statistics::statistical_event::StatisticalEvent;
 use lap_statistics::PrimitiveLapStatisticsBuilder;
 use statistics_counter::PrimitiveStatisticsCounter;
 use statistics_counter::StatisticsCounter;
@@ -153,7 +154,7 @@ impl StatisticsManager {
     /// Consume event and update statistics.
     pub(crate) fn consume_event(&mut self, event: statistical_event::StatisticalEvent) {
         match event {
-            statistical_event::StatisticalEvent::ChunkConfirmed(chunk_confirmation_info) => {
+            StatisticalEvent::ChunkConfirmed(chunk_confirmation_info) => {
                 self.confirmed_only_statistics_counter.on_add_chunk(
                     chunk_confirmation_info.key_stroke_element_count,
                     chunk_confirmation_info.ideal_key_stroke_element_count,
@@ -183,6 +184,7 @@ impl StatisticsManager {
 
                 self.confirmed_only_statistics_counter.on_finish_chunk();
             }
+            StatisticalEvent::ChunkAdded(_) => todo!(),
         }
     }
 }
