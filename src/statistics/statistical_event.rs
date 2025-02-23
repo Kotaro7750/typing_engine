@@ -15,6 +15,28 @@ pub(crate) struct ChunkConfirmationInfo {
     pub(super) actual_key_stroke_info: Vec<(bool, Option<usize>)>,
 }
 
+impl ChunkConfirmationInfo {
+    pub(crate) fn new(
+        key_stroke_element_count: KeyStrokeElementCount,
+        ideal_key_stroke_element_count: KeyStrokeElementCount,
+        spell_count: usize,
+        candidate_key_stroke_count: usize,
+        ideal_candidate_key_stroke_count: usize,
+        effective_spell_count: usize,
+        actual_key_stroke_info: Vec<(bool, Option<usize>)>,
+    ) -> Self {
+        Self {
+            key_stroke_element_count,
+            ideal_key_stroke_element_count,
+            spell_count,
+            candidate_key_stroke_count,
+            ideal_candidate_key_stroke_count,
+            effective_spell_count,
+            actual_key_stroke_info,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// Representing the event ocurred when key is stroked
 pub(crate) enum StatisticalEvent {
@@ -67,7 +89,7 @@ impl StatisticalEvent {
             })
             .collect();
 
-        StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo {
+        StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
             key_stroke_element_count,
             ideal_key_stroke_element_count,
             spell_count,
@@ -75,6 +97,6 @@ impl StatisticalEvent {
             ideal_candidate_key_stroke_count,
             effective_spell_count,
             actual_key_stroke_info,
-        })
+        ))
     }
 }
