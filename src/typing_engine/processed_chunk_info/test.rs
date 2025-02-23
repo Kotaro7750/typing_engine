@@ -90,7 +90,6 @@ fn stroke_key_1() {
             inflight_chunk: None,
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -139,7 +138,6 @@ fn stroke_key_1() {
             ),
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -206,19 +204,6 @@ fn stroke_key_1() {
                 )]
             )],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -292,19 +277,6 @@ fn stroke_key_1() {
                 ),
             ],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -369,19 +341,6 @@ fn stroke_key_1() {
                 ),
             ],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -456,19 +415,6 @@ fn stroke_key_1() {
                 )
             ],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(4, 4, 4, 0),
-                PrimitiveStatisticsCounter::new(4, 4, 4, 0),
-                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
-                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -551,19 +497,6 @@ fn stroke_key_1() {
                 )
             ],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(4, 4, 4, 0),
-                PrimitiveStatisticsCounter::new(4, 4, 4, 0),
-                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
-                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 }
@@ -633,7 +566,6 @@ fn stroke_key_2() {
             inflight_chunk: None,
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -676,7 +608,6 @@ fn stroke_key_2() {
             ),
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -723,7 +654,6 @@ fn stroke_key_2() {
             )),
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -783,19 +713,6 @@ fn stroke_key_2() {
                 ]
             ),],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -846,19 +763,6 @@ fn stroke_key_2() {
                 ]
             )],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -914,19 +818,6 @@ fn stroke_key_2() {
                 'j'.try_into().unwrap(),
                 false
             )],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -994,19 +885,6 @@ fn stroke_key_2() {
                 ),
             ],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
-                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -1075,19 +953,6 @@ fn stroke_key_2() {
                 ),
             ],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(5, 5, 4, 1),
-                PrimitiveStatisticsCounter::new(5, 5, 4, 1),
-                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
-                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -1159,7 +1024,6 @@ fn stroke_key_3() {
             inflight_chunk: None,
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -1202,7 +1066,6 @@ fn stroke_key_3() {
             ),
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -1249,7 +1112,6 @@ fn stroke_key_3() {
             )),
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -1309,19 +1171,6 @@ fn stroke_key_3() {
                 ]
             ),],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -1372,19 +1221,6 @@ fn stroke_key_3() {
                 ]
             )],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -1440,19 +1276,6 @@ fn stroke_key_3() {
                 'j'.try_into().unwrap(),
                 false
             )],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -1520,19 +1343,6 @@ fn stroke_key_3() {
                 ),
             ],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(4, 4, 3, 1),
-                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
-                PrimitiveStatisticsCounter::new(2, 2, 1, 1),
-                PrimitiveStatisticsCounter::new(2, 2, 1, 1),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -1587,19 +1397,6 @@ fn stroke_key_3() {
                 ),
             ],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(4, 4, 3, 1),
-                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
-                PrimitiveStatisticsCounter::new(2, 2, 1, 1),
-                PrimitiveStatisticsCounter::new(2, 2, 1, 1),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -1667,19 +1464,6 @@ fn stroke_key_3() {
                 ),
             ],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(6, 6, 5, 1),
-                PrimitiveStatisticsCounter::new(5, 5, 4, 1),
-                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
-                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -1733,7 +1517,6 @@ fn stroke_key_4() {
             inflight_chunk: None,
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -1765,7 +1548,6 @@ fn stroke_key_4() {
             ),
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -1801,7 +1583,6 @@ fn stroke_key_4() {
             )),
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -1866,19 +1647,6 @@ fn stroke_key_4() {
                 ),
             ],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
@@ -2063,24 +1831,27 @@ fn construct_display_info_1() {
                 ),
             ],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(8, 8, 6, 2),
-                PrimitiveStatisticsCounter::new(6, 6, 4, 2),
-                PrimitiveStatisticsCounter::new(4, 4, 1, 3),
-                PrimitiveStatisticsCounter::new(2, 2, 0, 2),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
-    let (sdi, ksdi) =
-        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
+    let confirmed_only_statistics_counter = StatisticsCounter::new_with_values(
+        PrimitiveStatisticsCounter::new(8, 8, 6, 2),
+        PrimitiveStatisticsCounter::new(6, 6, 4, 2),
+        PrimitiveStatisticsCounter::new(4, 4, 1, 3),
+        PrimitiveStatisticsCounter::new(2, 2, 0, 2),
+        false,
+        false,
+        false,
+        false,
+        None,
+        None,
+        0,
+    );
+
+    let (sdi, ksdi) = pci.construct_display_info(
+        LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     assert_eq!(
         sdi,
@@ -2117,8 +1888,10 @@ fn construct_display_info_1() {
         )
     );
 
-    let (_, ksdi) =
-        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+    let (_, ksdi) = pci.construct_display_info(
+        LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     assert_eq!(
         ksdi,
@@ -2143,7 +1916,10 @@ fn construct_display_info_1() {
         )
     );
 
-    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+    let (sdi, ksdi) = pci.construct_display_info(
+        LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     assert_eq!(
         sdi,
@@ -2257,12 +2033,15 @@ fn construct_display_info_2() {
                 'm'.try_into().unwrap(),
                 false
             ),],
-            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
-    let (sdi, ksdi) =
-        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
+    let confirmed_only_statistics_counter = StatisticsCounter::new();
+
+    let (sdi, ksdi) = pci.construct_display_info(
+        LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     // 入力を終えた遅延確定候補は表示の上では確定したとみなす
     // pendingにあるミスタイプは表示状は次のチャンクに帰属させる
@@ -2296,8 +2075,10 @@ fn construct_display_info_2() {
         )
     );
 
-    let (_, ksdi) =
-        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+    let (_, ksdi) = pci.construct_display_info(
+        LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     assert_eq!(
         ksdi,
@@ -2318,7 +2099,10 @@ fn construct_display_info_2() {
         )
     );
 
-    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+    let (sdi, ksdi) = pci.construct_display_info(
+        LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     assert_eq!(
         sdi,
@@ -2386,24 +2170,27 @@ fn construct_display_info_2() {
                 )]
             ),],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
-    let (sdi, ksdi) =
-        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
+    let confirmed_only_statistics_counter = StatisticsCounter::new_with_values(
+        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+        false,
+        false,
+        false,
+        false,
+        None,
+        None,
+        0,
+    );
+
+    let (sdi, ksdi) = pci.construct_display_info(
+        LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     // 遅延確定候補で確定したのでミスタイプは引き続き次のチャンクに属する
     assert_eq!(
@@ -2436,8 +2223,10 @@ fn construct_display_info_2() {
         )
     );
 
-    let (_, ksdi) =
-        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+    let (_, ksdi) = pci.construct_display_info(
+        LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     assert_eq!(
         ksdi,
@@ -2458,7 +2247,10 @@ fn construct_display_info_2() {
         )
     );
 
-    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+    let (sdi, ksdi) = pci.construct_display_info(
+        LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     assert_eq!(
         sdi,
@@ -2567,12 +2359,15 @@ fn construct_display_info_3() {
                 'm'.try_into().unwrap(),
                 false
             ),],
-            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
-    let (sdi, ksdi) =
-        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
+    let confirmed_only_statistics_counter = StatisticsCounter::new();
+
+    let (sdi, ksdi) = pci.construct_display_info(
+        LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     // 入力を終えた遅延確定候補は表示の上では確定したとみなす
     // pendingにあるミスタイプは表示状は次のチャンクに帰属させる
@@ -2606,7 +2401,10 @@ fn construct_display_info_3() {
         )
     );
 
-    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+    let (sdi, ksdi) = pci.construct_display_info(
+        LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     assert_eq!(
         sdi,
@@ -2687,24 +2485,27 @@ fn construct_display_info_3() {
                 ]
             )],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(2, 2, 1, 1),
-                PrimitiveStatisticsCounter::new(1, 1, 0, 1),
-                PrimitiveStatisticsCounter::new(1, 1, 0, 1),
-                PrimitiveStatisticsCounter::new(1, 1, 0, 1),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
-    let (sdi, ksdi) =
-        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
+    let confirmed_only_statistics_counter = StatisticsCounter::new_with_values(
+        PrimitiveStatisticsCounter::new(2, 2, 1, 1),
+        PrimitiveStatisticsCounter::new(1, 1, 0, 1),
+        PrimitiveStatisticsCounter::new(1, 1, 0, 1),
+        PrimitiveStatisticsCounter::new(1, 1, 0, 1),
+        false,
+        false,
+        false,
+        false,
+        None,
+        None,
+        0,
+    );
+
+    let (sdi, ksdi) = pci.construct_display_info(
+        LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     // 遅延確定候補ではない候補で確定したのでミスタイプはその候補に属する
     assert_eq!(
@@ -2737,8 +2538,10 @@ fn construct_display_info_3() {
         )
     );
 
-    let (_, ksdi) =
-        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+    let (_, ksdi) = pci.construct_display_info(
+        LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     assert_eq!(
         ksdi,
@@ -2759,7 +2562,10 @@ fn construct_display_info_3() {
         )
     );
 
-    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+    let (sdi, ksdi) = pci.construct_display_info(
+        LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     // 遅延確定候補ではない候補で確定したのでミスタイプはその候補に属する
     assert_eq!(
@@ -2880,7 +2686,6 @@ fn construct_display_info_4() {
             inflight_chunk: None,
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new()
         }
     );
 
@@ -2955,24 +2760,27 @@ fn construct_display_info_4() {
                 )]
             ),],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         }
     );
 
-    let (sdi, ksdi) =
-        pci.construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()));
+    let confirmed_only_statistics_counter = StatisticsCounter::new_with_values(
+        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
+        false,
+        false,
+        false,
+        false,
+        None,
+        None,
+        0,
+    );
+
+    let (sdi, ksdi) = pci.construct_display_info(
+        LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     assert_eq!(
         sdi,
@@ -3004,8 +2812,10 @@ fn construct_display_info_4() {
         )
     );
 
-    let (_, ksdi) =
-        pci.construct_display_info(LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()));
+    let (_, ksdi) = pci.construct_display_info(
+        LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     assert_eq!(
         ksdi,
@@ -3026,7 +2836,10 @@ fn construct_display_info_4() {
         )
     );
 
-    let (sdi, ksdi) = pci.construct_display_info(LapRequest::Spell(NonZeroUsize::new(1).unwrap()));
+    let (sdi, ksdi) = pci.construct_display_info(
+        LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
+        &confirmed_only_statistics_counter,
+    );
 
     assert_eq!(
         sdi,

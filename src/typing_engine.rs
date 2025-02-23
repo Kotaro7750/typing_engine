@@ -199,7 +199,10 @@ impl TypingEngine {
                 .as_ref()
                 .unwrap()
                 // XXX 引数で指定するようにする
-                .construct_display_info(lap_request);
+                .construct_display_info(
+                    lap_request,
+                    self.statistics_manager.confirmed_only_statistics_counter(),
+                );
 
             let view_position_of_spell = view_position_of_spell_for_vocabulary_infos(
                 self.vocabulary_infos.as_ref().unwrap(),

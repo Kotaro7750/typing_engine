@@ -129,6 +129,13 @@ pub(crate) fn construct_on_typing_statistics_target(
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// Holding and updating whole realtime statistics.
 pub(crate) struct StatisticsManager {
+    /// `StatisticsCounter` only for confirmed chunks.
+    /// This limitation is because the statistics counter for key stroke is not deterministic prior
+    /// to the chunk is confirmed.
+    /// Simply put, the statistics counter for key stroke depends on active candidate and active
+    /// candidate is fixed when the chunk is confirmed.
+    ///
+    /// Although additional counts for inflight and unprocessed chunk are needed for completing statistics counter, there is no need to count for confirmed chunks and calculation cost is reduced.
     confirmed_only_statistics_counter: StatisticsCounter,
 }
 

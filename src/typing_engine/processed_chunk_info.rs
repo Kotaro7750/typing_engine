@@ -21,14 +21,6 @@ pub(crate) struct ProcessedChunkInfo {
     inflight_chunk: Option<Chunk>,
     confirmed_chunks: Vec<Chunk>,
     pending_key_strokes: Vec<ActualKeyStroke>,
-    /// `StatisticsCounter` only for confirmed chunks.
-    /// This limitation is because the statistics counter for key stroke is not deterministic prior
-    /// to the chunk is confirmed.
-    /// Simply put, the statistics counter for key stroke depends on active candidate and active
-    /// candidate is fixed when the chunk is confirmed.
-    ///
-    /// Although additional counts for inflight and unprocessed chunk are needed for completing statistics counter, there is no need to count for confirmed chunks and calculation cost is reduced.
-    confirmed_only_statistics_counter: StatisticsCounter,
 }
 
 impl ProcessedChunkInfo {
@@ -38,7 +30,6 @@ impl ProcessedChunkInfo {
             inflight_chunk: None,
             confirmed_chunks: vec![],
             pending_key_strokes: vec![],
-            confirmed_only_statistics_counter: StatisticsCounter::new(),
         }
     }
 
@@ -70,8 +61,6 @@ impl ProcessedChunkInfo {
             assert!(current_inflight_chunk.is_confirmed());
             current_inflight_chunk.change_state(ChunkState::Confirmed);
 
-            self.update_statistics_for_confirmed_chunk(current_inflight_chunk.as_ref());
-
             let next_chunk_head_constraint = current_inflight_chunk.next_chunk_head_constraint();
             self.confirmed_chunks.push(current_inflight_chunk);
 
@@ -95,57 +84,6 @@ impl ProcessedChunkInfo {
         }
 
         confirmed_chunk
-    }
-
-    fn update_statistics_for_confirmed_chunk(&mut self, confirmed_chunk: &Chunk) {
-        self.confirmed_only_statistics_counter.on_add_chunk(
-            confirmed_chunk
-                .as_ref()
-                .min_candidate(None)
-                .construct_key_stroke_element_count(),
-            confirmed_chunk
-                .as_ref()
-                .ideal_key_stroke_candidate()
-                .as_ref()
-                .unwrap()
-                .construct_key_stroke_element_count(),
-            confirmed_chunk.as_ref().spell().count(),
-        );
-        self.confirmed_only_statistics_counter.on_start_chunk(
-            confirmed_chunk
-                .confirmed_candidate()
-                .whole_key_stroke()
-                .chars()
-                .count(),
-            confirmed_chunk
-                .as_ref()
-                .ideal_key_stroke_candidate()
-                .as_ref()
-                .unwrap()
-                .whole_key_stroke()
-                .chars()
-                .count(),
-        );
-
-        confirmed_chunk
-            .actual_key_strokes()
-            .iter()
-            .zip(confirmed_chunk.construct_spell_end_vector().iter())
-            .for_each(|(actual_key_stroke, spell_end)| {
-                self.confirmed_only_statistics_counter.on_stroke_key(
-                    actual_key_stroke.is_correct(),
-                    confirmed_chunk.effective_spell_count(),
-                );
-
-                if actual_key_stroke.is_correct() {
-                    if let Some(delta) = spell_end {
-                        self.confirmed_only_statistics_counter
-                            .on_finish_spell(*delta);
-                    }
-                }
-            });
-
-        self.confirmed_only_statistics_counter.on_finish_chunk();
     }
 
     /// Clear and drain all pending key strokes
@@ -239,6 +177,7 @@ impl ProcessedChunkInfo {
     pub(crate) fn construct_display_info(
         &self,
         lap_request: LapRequest,
+        confirmed_only_statistics_counter: &StatisticsCounter,
     ) -> (SpellDisplayInfo, KeyStrokeDisplayInfo) {
         let mut spell = String::new();
         let mut spell_head_position = 0;
@@ -248,7 +187,7 @@ impl ProcessedChunkInfo {
         let mut key_stroke = String::new();
         let mut key_stroke_cursor_position = 0;
         let mut key_stroke_wrong_positions: Vec<usize> = vec![];
-        let mut realtime_statistics_counter = self.confirmed_only_statistics_counter.clone();
+        let mut realtime_statistics_counter = confirmed_only_statistics_counter.clone();
         let mut lap_statistics_builder = LapStatiticsBuilder::new(lap_request);
 
         // 1. 確定したチャンク
