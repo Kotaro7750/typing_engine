@@ -139,6 +139,10 @@ impl StatisticsManager {
         }
     }
 
+    pub(crate) fn confirmed_only_statistics_counter(&self) -> &StatisticsCounter {
+        &self.confirmed_only_statistics_counter
+    }
+
     /// Consume event and update statistics.
     pub(crate) fn consume_event(&mut self, event: statistical_event::StatisticalEvent) {
         match event {
@@ -173,5 +177,300 @@ impl StatisticsManager {
                 self.confirmed_only_statistics_counter.on_finish_chunk();
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::statistics::statistical_event::ChunkConfirmationInfo;
+    use crate::statistics::statistical_event::StatisticalEvent;
+    use crate::statistics::PrimitiveStatisticsCounter;
+    use crate::statistics::StatisticsCounter;
+    use crate::typing_primitive_types::chunk::key_stroke_candidate::KeyStrokeElementCount;
+
+    use super::StatisticsManager;
+
+    #[test]
+    fn consume_event_1() {
+        let mut statistics_manager = StatisticsManager::new();
+
+        // These events are same with typing_engin::processed_chunk_info::test::stroke_key_1
+        // In short, stroke u -> w -> w -> u for 「うっう」
+
+        let events = vec![
+            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
+                KeyStrokeElementCount::Sigle(1),
+                KeyStrokeElementCount::Sigle(1),
+                1,
+                1,
+                1,
+                1,
+                vec![(true, Some(1))],
+            )),
+            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
+                KeyStrokeElementCount::Sigle(1),
+                KeyStrokeElementCount::Sigle(1),
+                1,
+                1,
+                1,
+                1,
+                vec![(true, Some(1))],
+            )),
+            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
+                KeyStrokeElementCount::Sigle(2),
+                KeyStrokeElementCount::Sigle(2),
+                1,
+                2,
+                2,
+                1,
+                vec![(true, None), (true, Some(1))],
+            )),
+        ];
+
+        events.iter().for_each(|statistical_event| {
+            statistics_manager.consume_event(statistical_event.clone());
+        });
+
+        assert_eq!(
+            *statistics_manager.confirmed_only_statistics_counter(),
+            StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(4, 4, 4, 0),
+                PrimitiveStatisticsCounter::new(4, 4, 4, 0),
+                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
+                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0,
+            )
+        );
+    }
+
+    #[test]
+    fn consume_event_2() {
+        let mut statistics_manager = StatisticsManager::new();
+
+        // These events are same with typing_engin::processed_chunk_info::test::stroke_key_2
+        // In short, stroke k-> a -> n -> j -> k -> i for 「かんき」
+
+        let events = vec![
+            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
+                KeyStrokeElementCount::Sigle(2),
+                KeyStrokeElementCount::Sigle(2),
+                1,
+                2,
+                2,
+                1,
+                vec![(true, None), (true, Some(1))],
+            )),
+            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
+                KeyStrokeElementCount::Sigle(1),
+                KeyStrokeElementCount::Sigle(1),
+                1,
+                1,
+                1,
+                1,
+                vec![(true, Some(1))],
+            )),
+            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
+                KeyStrokeElementCount::Sigle(2),
+                KeyStrokeElementCount::Sigle(2),
+                1,
+                2,
+                2,
+                1,
+                vec![(false, None), (true, None), (true, Some(1))],
+            )),
+        ];
+
+        events.iter().for_each(|statistical_event| {
+            statistics_manager.consume_event(statistical_event.clone());
+        });
+
+        assert_eq!(
+            *statistics_manager.confirmed_only_statistics_counter(),
+            StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(5, 5, 4, 1),
+                PrimitiveStatisticsCounter::new(5, 5, 4, 1),
+                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
+                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0,
+            )
+        );
+    }
+
+    #[test]
+    fn consume_event_3() {
+        let mut statistics_manager = StatisticsManager::new();
+
+        // These events are same with typing_engin::processed_chunk_info::test::stroke_key_3
+        // In short, stroke k-> a -> n -> j -> n -> k -> i for 「かんき」
+
+        let events = vec![
+            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
+                KeyStrokeElementCount::Sigle(2),
+                KeyStrokeElementCount::Sigle(2),
+                1,
+                2,
+                2,
+                1,
+                vec![(true, None), (true, Some(1))],
+            )),
+            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
+                KeyStrokeElementCount::Sigle(2),
+                KeyStrokeElementCount::Sigle(1),
+                1,
+                2,
+                1,
+                1,
+                vec![(true, None), (false, None), (true, Some(1))],
+            )),
+            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
+                KeyStrokeElementCount::Sigle(2),
+                KeyStrokeElementCount::Sigle(2),
+                1,
+                2,
+                2,
+                1,
+                vec![(true, None), (true, Some(1))],
+            )),
+        ];
+
+        events.iter().for_each(|statistical_event| {
+            statistics_manager.consume_event(statistical_event.clone());
+        });
+
+        assert_eq!(
+            *statistics_manager.confirmed_only_statistics_counter(),
+            StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(6, 6, 5, 1),
+                PrimitiveStatisticsCounter::new(5, 5, 4, 1),
+                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
+                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0,
+            )
+        );
+    }
+
+    #[test]
+    fn consume_event_4() {
+        let mut statistics_manager = StatisticsManager::new();
+
+        // These events are same with typing_engin::processed_chunk_info::test::stroke_key_4
+        // In short, stroke n -> p for reduced 「んぴ」
+
+        let events = vec![
+            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
+                KeyStrokeElementCount::Sigle(1),
+                KeyStrokeElementCount::Sigle(1),
+                1,
+                1,
+                1,
+                1,
+                vec![(true, Some(1))],
+            )),
+            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
+                KeyStrokeElementCount::Sigle(1),
+                KeyStrokeElementCount::Sigle(1),
+                1,
+                1,
+                1,
+                1,
+                vec![(true, Some(1))],
+            )),
+        ];
+
+        events.iter().for_each(|statistical_event| {
+            statistics_manager.consume_event(statistical_event.clone());
+        });
+
+        assert_eq!(
+            *statistics_manager.confirmed_only_statistics_counter(),
+            StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
+        );
+    }
+
+    #[test]
+    fn consume_event_5() {
+        let mut statistics_manager = StatisticsManager::new();
+
+        // These events are same with typing_engin::processed_chunk_info::test::construst_display_info_1
+        // In short, stroke k -> u -> y -> o -> k -> i -> j -> x -> y -> o -> c -> k for reduced 「きょきょきょ」
+
+        let events = vec![
+            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
+                KeyStrokeElementCount::Sigle(3),
+                KeyStrokeElementCount::Sigle(3),
+                2,
+                3,
+                3,
+                2,
+                vec![(true, None), (false, None), (true, None), (true, Some(2))],
+            )),
+            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
+                KeyStrokeElementCount::Double((2, 3)),
+                KeyStrokeElementCount::Sigle(3),
+                2,
+                5,
+                3,
+                1,
+                vec![
+                    (true, None),
+                    (true, Some(1)),
+                    (false, None),
+                    (true, None),
+                    (true, None),
+                    (true, Some(1)),
+                ],
+            )),
+        ];
+
+        events.iter().for_each(|statistical_event| {
+            statistics_manager.consume_event(statistical_event.clone());
+        });
+
+        assert_eq!(
+            *statistics_manager.confirmed_only_statistics_counter(),
+            StatisticsCounter::new_with_values(
+                PrimitiveStatisticsCounter::new(8, 8, 6, 2),
+                PrimitiveStatisticsCounter::new(6, 6, 4, 2),
+                PrimitiveStatisticsCounter::new(4, 4, 1, 3),
+                PrimitiveStatisticsCounter::new(2, 2, 0, 2),
+                false,
+                false,
+                false,
+                false,
+                None,
+                None,
+                0
+            )
+        );
     }
 }
