@@ -5,7 +5,7 @@ use std::time::Instant;
 use crate::display_info::{DisplayInfo, ViewDisplayInfo};
 use crate::query::QueryRequest;
 use crate::statistics::result::{construct_result, TypingResultStatistics};
-use crate::statistics::LapRequest;
+use crate::statistics::{LapRequest, StatisticsManager};
 use crate::typing_engine::processed_chunk_info::ProcessedChunkInfo;
 use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
 use crate::typing_primitive_types::vocabulary::{
@@ -75,6 +75,7 @@ pub struct TypingEngine {
     start_time: Option<Instant>,
     processed_chunk_info: Option<ProcessedChunkInfo>,
     vocabulary_infos: Option<Vec<VocabularyInfo>>,
+    statistics_manager: StatisticsManager,
 }
 
 impl TypingEngine {
@@ -88,6 +89,7 @@ impl TypingEngine {
             start_time: None,
             processed_chunk_info: None,
             vocabulary_infos: None,
+            statistics_manager: StatisticsManager::new(),
         }
     }
 
@@ -171,7 +173,11 @@ impl TypingEngine {
 
             let elapsed_time = self.start_time.as_ref().unwrap().elapsed();
 
-            pci.stroke_key(key_stroke, elapsed_time);
+            let (_, statistical_events) = pci.stroke_key(key_stroke, elapsed_time);
+            statistical_events.iter().for_each(|statistical_event| {
+                self.statistics_manager
+                    .consume_event(statistical_event.clone());
+            });
 
             Ok(pci.is_finished())
         } else {

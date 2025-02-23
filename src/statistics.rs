@@ -5,10 +5,12 @@ use serde::{Deserialize, Serialize};
 pub(crate) mod lap_statistics;
 mod multi_target_position_convert;
 pub(crate) mod result;
+pub(crate) mod statistical_event;
 pub(crate) mod statistics_counter;
 
 use lap_statistics::PrimitiveLapStatisticsBuilder;
 use statistics_counter::PrimitiveStatisticsCounter;
+use statistics_counter::StatisticsCounter;
 
 use self::multi_target_position_convert::BaseTarget;
 
@@ -122,4 +124,54 @@ pub(crate) fn construct_on_typing_statistics_target(
         plb.lap_end_time().cloned(),
         plb.lap_end_positions().clone(),
     )
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+/// Holding and updating whole realtime statistics.
+pub(crate) struct StatisticsManager {
+    confirmed_only_statistics_counter: StatisticsCounter,
+}
+
+impl StatisticsManager {
+    pub(crate) fn new() -> Self {
+        Self {
+            confirmed_only_statistics_counter: StatisticsCounter::new(),
+        }
+    }
+
+    /// Consume event and update statistics.
+    pub(crate) fn consume_event(&mut self, event: statistical_event::StatisticalEvent) {
+        match event {
+            statistical_event::StatisticalEvent::ChunkConfirmed(chunk_confirmation_info) => {
+                self.confirmed_only_statistics_counter.on_add_chunk(
+                    chunk_confirmation_info.key_stroke_element_count,
+                    chunk_confirmation_info.ideal_key_stroke_element_count,
+                    chunk_confirmation_info.spell_count,
+                );
+
+                self.confirmed_only_statistics_counter.on_start_chunk(
+                    chunk_confirmation_info.candidate_key_stroke_count,
+                    chunk_confirmation_info.ideal_candidate_key_stroke_count,
+                );
+
+                chunk_confirmation_info
+                    .actual_key_stroke_info
+                    .iter()
+                    .for_each(|(is_correct, spell_end)| {
+                        self.confirmed_only_statistics_counter.on_stroke_key(
+                            *is_correct,
+                            chunk_confirmation_info.effective_spell_count,
+                        );
+                        if *is_correct {
+                            if let Some(delta) = spell_end {
+                                self.confirmed_only_statistics_counter
+                                    .on_finish_spell(*delta);
+                            }
+                        }
+                    });
+
+                self.confirmed_only_statistics_counter.on_finish_chunk();
+            }
+        }
+    }
 }

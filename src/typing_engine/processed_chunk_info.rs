@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
 use crate::statistics::lap_statistics::LapStatiticsBuilder;
+use crate::statistics::statistical_event::StatisticalEvent;
 use crate::statistics::statistics_counter::StatisticsCounter;
 use crate::statistics::{construct_on_typing_statistics_target, LapRequest};
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
@@ -60,7 +61,9 @@ impl ProcessedChunkInfo {
     }
 
     // 現在打っているチャンクを確定させ未処理のチャンク列の先頭のチャンクの処理を開始する
-    pub(crate) fn move_next_chunk(&mut self) {
+    pub(crate) fn move_next_chunk(&mut self) -> Option<&Chunk> {
+        let mut confirmed_chunk: Option<&Chunk> = None;
+
         // まずは現在打っているチャンクを確定済みチャンク列に追加する
         let next_chunk_head_constraint = if self.inflight_chunk.is_some() {
             let mut current_inflight_chunk = self.inflight_chunk.take().unwrap();
@@ -71,6 +74,8 @@ impl ProcessedChunkInfo {
 
             let next_chunk_head_constraint = current_inflight_chunk.next_chunk_head_constraint();
             self.confirmed_chunks.push(current_inflight_chunk);
+
+            confirmed_chunk.replace(self.confirmed_chunks.last().unwrap());
 
             next_chunk_head_constraint
         } else {
@@ -88,6 +93,8 @@ impl ProcessedChunkInfo {
             next_inflight_chunk.change_state(ChunkState::Inflight);
             self.inflight_chunk.replace(next_inflight_chunk);
         }
+
+        confirmed_chunk
     }
 
     fn update_statistics_for_confirmed_chunk(&mut self, confirmed_chunk: &Chunk) {
@@ -162,8 +169,10 @@ impl ProcessedChunkInfo {
         &mut self,
         key_stroke: KeyStrokeChar,
         elapsed_time: Duration,
-    ) -> KeyStrokeResult {
+    ) -> (KeyStrokeResult, Vec<StatisticalEvent>) {
         assert!(self.inflight_chunk.is_some());
+
+        let mut statistical_events = vec![];
 
         let inflight_chunk = self.inflight_chunk.as_mut().unwrap();
         let need_add_to_pending = inflight_chunk.is_delayed_confirmable();
@@ -193,7 +202,8 @@ impl ProcessedChunkInfo {
                 });
             }
 
-            self.move_next_chunk();
+            let confirmed_chunk = self.move_next_chunk().unwrap();
+            statistical_events.push(StatisticalEvent::new_from_confirmed_chunk(confirmed_chunk));
 
             // 遅延確定候補で確定した場合にはpendingしていたキーストロークを次のチャンクに入力する必要がある
             if is_delayed_confirmable {
@@ -212,12 +222,14 @@ impl ProcessedChunkInfo {
                     // pendingしていたキーストローク中には正しいキーストロークは一つしか無いはずなので遅延確定候補が終了することはない
                     assert!(!inflight_chunk.is_delayed_confirmable());
 
-                    self.move_next_chunk();
+                    let confirmed_chunk = self.move_next_chunk().unwrap();
+                    statistical_events
+                        .push(StatisticalEvent::new_from_confirmed_chunk(confirmed_chunk));
                 }
             }
         }
 
-        result
+        (result, statistical_events)
     }
 
     pub(crate) fn confirmed_chunks(&self) -> &Vec<Chunk> {
