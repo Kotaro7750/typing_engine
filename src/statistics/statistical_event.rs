@@ -56,6 +56,14 @@ impl ChunkAddedContext {
             ideal_key_stroke_element_count,
         }
     }
+
+    pub(crate) fn spell_count(&self) -> usize {
+        self.spell_count
+    }
+
+    pub(crate) fn ideal_key_stroke_element_count(&self) -> &KeyStrokeElementCount {
+        &self.ideal_key_stroke_element_count
+    }
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]

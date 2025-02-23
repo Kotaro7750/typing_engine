@@ -130,6 +130,9 @@ pub(crate) fn construct_on_typing_statistics_target(
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// Holding and updating whole realtime statistics.
 pub(crate) struct StatisticsManager {
+    ideal_key_stroke: PrimitiveStatisticsCounter,
+    spell: PrimitiveStatisticsCounter,
+    chunk: PrimitiveStatisticsCounter,
     /// `StatisticsCounter` only for confirmed chunks.
     /// This limitation is because the statistics counter for key stroke is not deterministic prior
     /// to the chunk is confirmed.
@@ -143,6 +146,9 @@ pub(crate) struct StatisticsManager {
 impl StatisticsManager {
     pub(crate) fn new() -> Self {
         Self {
+            ideal_key_stroke: PrimitiveStatisticsCounter::empty_counter(),
+            spell: PrimitiveStatisticsCounter::empty_counter(),
+            chunk: PrimitiveStatisticsCounter::empty_counter(),
             confirmed_only_statistics_counter: StatisticsCounter::new(),
         }
     }
@@ -155,6 +161,9 @@ impl StatisticsManager {
     pub(crate) fn consume_event(&mut self, event: statistical_event::StatisticalEvent) {
         match event {
             StatisticalEvent::ChunkConfirmed(chunk_confirmation_info) => {
+                // TODO completely correct must be treated correctly.
+                self.chunk.on_finished(1, false);
+
                 self.confirmed_only_statistics_counter.on_add_chunk(
                     chunk_confirmation_info.key_stroke_element_count,
                     chunk_confirmation_info.ideal_key_stroke_element_count,
@@ -184,7 +193,15 @@ impl StatisticsManager {
 
                 self.confirmed_only_statistics_counter.on_finish_chunk();
             }
-            StatisticalEvent::ChunkAdded(_) => todo!(),
+            StatisticalEvent::ChunkAdded(chunk_added_context) => {
+                self.chunk.on_target_add(1);
+                self.spell.on_target_add(chunk_added_context.spell_count());
+                self.ideal_key_stroke.on_target_add(
+                    chunk_added_context
+                        .ideal_key_stroke_element_count()
+                        .whole_count(),
+                );
+            }
         }
     }
 }
@@ -192,7 +209,7 @@ impl StatisticsManager {
 #[cfg(test)]
 mod test {
     use crate::statistics::statistical_event::ChunkConfirmationInfo;
-    use crate::statistics::statistical_event::StatisticalEvent;
+    use crate::statistics::statistical_event::{ChunkAddedContext, StatisticalEvent};
     use crate::statistics::PrimitiveStatisticsCounter;
     use crate::statistics::StatisticsCounter;
     use crate::typing_primitive_types::chunk::key_stroke_candidate::KeyStrokeElementCount;
@@ -204,9 +221,21 @@ mod test {
         let mut statistics_manager = StatisticsManager::new();
 
         // These events are same with typing_engin::processed_chunk_info::test::stroke_key_1
-        // In short, stroke u -> w -> w -> u for 「うっう」
+        // In short, stroke u -> w -> w -> u for 「うっう」 and append 「う」
 
         let events = vec![
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1),
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1),
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(2),
+            )),
             StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
                 KeyStrokeElementCount::Sigle(1),
                 KeyStrokeElementCount::Sigle(1),
@@ -234,11 +263,28 @@ mod test {
                 1,
                 vec![(true, None), (true, Some(1))],
             )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1),
+            )),
         ];
 
         events.iter().for_each(|statistical_event| {
             statistics_manager.consume_event(statistical_event.clone());
         });
+
+        assert_eq!(
+            statistics_manager.chunk,
+            PrimitiveStatisticsCounter::new(3, 4, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell,
+            PrimitiveStatisticsCounter::new(0, 4, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke,
+            PrimitiveStatisticsCounter::new(0, 5, 0, 0)
+        );
 
         assert_eq!(
             *statistics_manager.confirmed_only_statistics_counter(),
@@ -266,6 +312,18 @@ mod test {
         // In short, stroke k-> a -> n -> j -> k -> i for 「かんき」
 
         let events = vec![
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(2),
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1),
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(2),
+            )),
             StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
                 KeyStrokeElementCount::Sigle(2),
                 KeyStrokeElementCount::Sigle(2),
@@ -300,6 +358,19 @@ mod test {
         });
 
         assert_eq!(
+            statistics_manager.chunk,
+            PrimitiveStatisticsCounter::new(3, 3, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell,
+            PrimitiveStatisticsCounter::new(0, 3, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke,
+            PrimitiveStatisticsCounter::new(0, 5, 0, 0)
+        );
+
+        assert_eq!(
             *statistics_manager.confirmed_only_statistics_counter(),
             StatisticsCounter::new_with_values(
                 PrimitiveStatisticsCounter::new(5, 5, 4, 1),
@@ -325,6 +396,18 @@ mod test {
         // In short, stroke k-> a -> n -> j -> n -> k -> i for 「かんき」
 
         let events = vec![
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(2),
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1),
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(2),
+            )),
             StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
                 KeyStrokeElementCount::Sigle(2),
                 KeyStrokeElementCount::Sigle(2),
@@ -359,6 +442,19 @@ mod test {
         });
 
         assert_eq!(
+            statistics_manager.chunk,
+            PrimitiveStatisticsCounter::new(3, 3, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell,
+            PrimitiveStatisticsCounter::new(0, 3, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke,
+            PrimitiveStatisticsCounter::new(0, 5, 0, 0)
+        );
+
+        assert_eq!(
             *statistics_manager.confirmed_only_statistics_counter(),
             StatisticsCounter::new_with_values(
                 PrimitiveStatisticsCounter::new(6, 6, 5, 1),
@@ -384,6 +480,14 @@ mod test {
         // In short, stroke n -> p for reduced 「んぴ」
 
         let events = vec![
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1),
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                1,
+                KeyStrokeElementCount::Sigle(1),
+            )),
             StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
                 KeyStrokeElementCount::Sigle(1),
                 KeyStrokeElementCount::Sigle(1),
@@ -409,6 +513,19 @@ mod test {
         });
 
         assert_eq!(
+            statistics_manager.chunk,
+            PrimitiveStatisticsCounter::new(2, 2, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell,
+            PrimitiveStatisticsCounter::new(0, 2, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke,
+            PrimitiveStatisticsCounter::new(0, 2, 0, 0)
+        );
+
+        assert_eq!(
             *statistics_manager.confirmed_only_statistics_counter(),
             StatisticsCounter::new_with_values(
                 PrimitiveStatisticsCounter::new(2, 2, 2, 0),
@@ -431,9 +548,25 @@ mod test {
         let mut statistics_manager = StatisticsManager::new();
 
         // These events are same with typing_engin::processed_chunk_info::test::construst_display_info_1
-        // In short, stroke k -> u -> y -> o -> k -> i -> j -> x -> y -> o -> c -> k for reduced 「きょきょきょ」
+        // In short, stroke k -> u -> y -> o -> k -> i -> j -> x -> y -> o -> c -> k for reduced 「きょきょきょきょ」
 
         let events = vec![
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                2,
+                KeyStrokeElementCount::Sigle(3),
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                2,
+                KeyStrokeElementCount::Sigle(3),
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                2,
+                KeyStrokeElementCount::Sigle(3),
+            )),
+            StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+                2,
+                KeyStrokeElementCount::Sigle(2),
+            )),
             StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
                 KeyStrokeElementCount::Sigle(3),
                 KeyStrokeElementCount::Sigle(3),
@@ -464,6 +597,19 @@ mod test {
         events.iter().for_each(|statistical_event| {
             statistics_manager.consume_event(statistical_event.clone());
         });
+
+        assert_eq!(
+            statistics_manager.chunk,
+            PrimitiveStatisticsCounter::new(2, 4, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell,
+            PrimitiveStatisticsCounter::new(0, 8, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke,
+            PrimitiveStatisticsCounter::new(0, 11, 0, 0)
+        );
 
         assert_eq!(
             *statistics_manager.confirmed_only_statistics_counter(),

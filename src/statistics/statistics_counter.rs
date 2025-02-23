@@ -32,7 +32,7 @@ impl PrimitiveStatisticsCounter {
     }
 
     /// Create an empty counter.
-    fn empty_counter() -> Self {
+    pub(crate) fn empty_counter() -> Self {
         Self::new(0, 0, 0, 0)
     }
 
@@ -58,12 +58,12 @@ impl PrimitiveStatisticsCounter {
     }
 
     /// Update statistics when entities are took into account.
-    fn on_target_add(&mut self, delta: usize) {
+    pub(crate) fn on_target_add(&mut self, delta: usize) {
         self.whole_count += delta;
     }
 
     /// Update statistics when entities are finished.
-    fn on_finished(&mut self, delta: usize, completely_correct: bool) {
+    pub(crate) fn on_finished(&mut self, delta: usize, completely_correct: bool) {
         self.finished_count += delta;
 
         if completely_correct {
