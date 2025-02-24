@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-use std::num::NonZeroUsize;
 use std::time::Duration;
 
 use super::key_stroke::KeyStrokeResult;
@@ -13,6 +11,7 @@ pub(crate) mod chunk_candidate_unappended;
 pub(crate) mod has_actual_key_strokes;
 pub(crate) mod key_stroke_candidate;
 mod single_n_availability;
+pub(crate) mod unprocessed;
 
 #[cfg(test)]
 mod test;
@@ -211,64 +210,6 @@ impl Chunk {
         assert!(min_candidate.is_some());
 
         min_candidate.as_ref().unwrap()
-    }
-
-    /// Calculate the minimum number of key strokes required to type this chunk.
-    /// This is calculated by selecting the shortest key stroke candidate.
-    pub fn calc_min_key_stroke_count(&self) -> usize {
-        self.min_candidate(None).calc_key_stroke_count()
-    }
-
-    /// 最後のチャンクに使うことを想定している
-    /// Restrict the candidates of this chunk by the number of key strokes.
-    /// Ex. When chunk is "し", there are candidates like "si", "shi", "ci", but when restricted to
-    /// 1 key stroke, candidates becomes "s" and "c".
-    ///
-    /// This is assumed to be used for the last chunk.
-    pub(crate) fn strict_key_stroke_count(&mut self, key_stroke_count_striction: NonZeroUsize) {
-        // 制限によって必要キーストローク数が増えてはいけない
-        assert!(key_stroke_count_striction.get() <= self.calc_min_key_stroke_count());
-
-        let mut new_key_stroke_candidates = self.key_stroke_candidates.clone();
-
-        new_key_stroke_candidates
-            .iter_mut()
-            // 変更するのは基本的には制限よりも長い候補のみでいい
-            // 遅延確定候補は制限と同じタイプ数であっても通常の候補にする必要がある
-            // 通常の候補にしないと制限だけタイプしても確定しなくなってしまう
-            .filter(|candidate| {
-                candidate.calc_key_stroke_count() > key_stroke_count_striction.get()
-                    || candidate.is_delayed_confirmed_candidate()
-            })
-            .for_each(|candidate| candidate.strict_key_stroke_count(key_stroke_count_striction));
-
-        // 制限の結果重複するキーストロークが生じる可能性があるので縮退させる
-        let mut exists_in_candidates: HashSet<String> = HashSet::new();
-        new_key_stroke_candidates.retain(|candidate| {
-            let whole_key_stroke = candidate.whole_key_stroke().to_string();
-            if exists_in_candidates.contains(&whole_key_stroke) {
-                false
-            } else {
-                exists_in_candidates.insert(whole_key_stroke);
-                true
-            }
-        });
-
-        self.ideal_candidate = new_key_stroke_candidates.first().unwrap().clone();
-
-        self.key_stroke_candidates = new_key_stroke_candidates;
-    }
-
-    /// Restrict the candidates of this chunk by the key stroke of chunk head.
-    /// Ex. If the chunk_head_striction is "s", the candidates that do not start with "s" are removed.
-    pub(crate) fn strict_chunk_head(&mut self, chunk_head_striction: KeyStrokeChar) {
-        self.key_stroke_candidates_mut()
-            .iter_mut()
-            .for_each(|candidate| {
-                if candidate.key_stroke_char_at_position(0) != chunk_head_striction {
-                    candidate.inactivate();
-                }
-            });
     }
 
     /// Reduce the candidates of this chunk.

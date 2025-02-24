@@ -4,7 +4,7 @@ use std::num::NonZeroUsize;
 use crate::typing_primitive_types::{
     chunk::{
         chunk_candidate_unappended::{append_key_stroke_to_chunks, ChunkCandidateUnappended},
-        Chunk,
+        unprocessed::ChunkUnprocessed,
     },
     vocabulary::{VocabularyEntry, VocabularyInfo, VocabularySpellElement},
 };
@@ -318,18 +318,18 @@ impl<'this, 'vocabulary> Iterator for NextVocabularyGenerator<'this, 'vocabulary
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Query {
     vocabulary_infos: Vec<VocabularyInfo>,
-    chunks: Vec<Chunk>,
+    chunks: Vec<ChunkUnprocessed>,
 }
 
 impl Query {
-    fn new(vocabulary_infos: Vec<VocabularyInfo>, chunks: Vec<Chunk>) -> Self {
+    fn new(vocabulary_infos: Vec<VocabularyInfo>, chunks: Vec<ChunkUnprocessed>) -> Self {
         Self {
             vocabulary_infos,
             chunks,
         }
     }
 
-    pub(crate) fn decompose(self) -> (Vec<VocabularyInfo>, Vec<Chunk>) {
+    pub(crate) fn decompose(self) -> (Vec<VocabularyInfo>, Vec<ChunkUnprocessed>) {
         (self.vocabulary_infos, self.chunks)
     }
 }

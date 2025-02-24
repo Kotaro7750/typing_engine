@@ -7,6 +7,7 @@ use crate::statistics::statistical_event::StatisticalEvent;
 use crate::statistics::statistics_counter::StatisticsCounter;
 use crate::statistics::{construct_on_typing_statistics_target, LapRequest};
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
+use crate::typing_primitive_types::chunk::unprocessed::ChunkUnprocessed;
 use crate::typing_primitive_types::chunk::Chunk;
 use crate::typing_primitive_types::chunk::ChunkState;
 use crate::typing_primitive_types::key_stroke::KeyStrokeResult;
@@ -17,7 +18,7 @@ mod test;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub(crate) struct ProcessedChunkInfo {
-    unprocessed_chunks: VecDeque<Chunk>,
+    unprocessed_chunks: VecDeque<ChunkUnprocessed>,
     inflight_chunk: Option<Chunk>,
     confirmed_chunks: Vec<Chunk>,
     pending_key_strokes: Vec<ActualKeyStroke>,
@@ -25,7 +26,7 @@ pub(crate) struct ProcessedChunkInfo {
 
 impl ProcessedChunkInfo {
     #[must_use]
-    pub(crate) fn new(chunks: Vec<Chunk>) -> (Self, Vec<StatisticalEvent>) {
+    pub(crate) fn new(chunks: Vec<ChunkUnprocessed>) -> (Self, Vec<StatisticalEvent>) {
         let chunk_added_events = chunks
             .iter()
             .map(StatisticalEvent::new_from_added_chunk)
@@ -48,19 +49,19 @@ impl ProcessedChunkInfo {
     }
 
     #[must_use]
-    pub(crate) fn append_chunks(&mut self, chunks: Vec<Chunk>) -> Vec<StatisticalEvent> {
+    pub(crate) fn append_chunks(&mut self, chunks: Vec<ChunkUnprocessed>) -> Vec<StatisticalEvent> {
         let chunk_added_events = chunks
             .iter()
             .map(StatisticalEvent::new_from_added_chunk)
             .collect();
 
-        let mut chunks: VecDeque<Chunk> = chunks.into();
+        let mut chunks: VecDeque<ChunkUnprocessed> = chunks.into();
 
         // 終了している状態で追加されたら先頭のチャンクを処理中にする必要がある
         if self.unprocessed_chunks.is_empty() && self.inflight_chunk.is_none() {
-            let mut next_inflight_chunk = chunks.pop_front().unwrap();
-            next_inflight_chunk.change_state(ChunkState::Inflight);
-            self.inflight_chunk.replace(next_inflight_chunk);
+            let next_inflight_chunk = chunks.pop_front().unwrap();
+            self.inflight_chunk
+                .replace(next_inflight_chunk.into_inflight());
         }
 
         self.unprocessed_chunks.append(&mut chunks);
@@ -96,8 +97,8 @@ impl ProcessedChunkInfo {
                 next_inflight_chunk.strict_chunk_head(next_chunk_head_constraint);
             }
 
-            next_inflight_chunk.change_state(ChunkState::Inflight);
-            self.inflight_chunk.replace(next_inflight_chunk);
+            self.inflight_chunk
+                .replace(next_inflight_chunk.into_inflight());
         }
 
         confirmed_chunk

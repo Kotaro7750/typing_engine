@@ -1,6 +1,6 @@
 use crate::typing_primitive_types::chunk::{
     has_actual_key_strokes::ChunkHasActualKeyStrokes, key_stroke_candidate::KeyStrokeElementCount,
-    Chunk,
+    unprocessed::ChunkUnprocessed, Chunk,
 };
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -77,8 +77,8 @@ pub(crate) enum StatisticalEvent {
 
 impl StatisticalEvent {
     /// Create ChunkAdded event from chunk
-    pub(crate) fn new_from_added_chunk(added_chunk: &Chunk) -> StatisticalEvent {
-        let spell_count = added_chunk.as_ref().spell().count();
+    pub(crate) fn new_from_added_chunk(added_chunk: &ChunkUnprocessed) -> StatisticalEvent {
+        let spell_count = added_chunk.spell().count();
         let ideal_key_stroke_element_count = added_chunk
             .ideal_key_stroke_candidate()
             .construct_key_stroke_element_count();

@@ -1,10 +1,11 @@
 use std::collections::{HashSet, VecDeque};
 
+use super::unprocessed::ChunkUnprocessed;
 use crate::typing_primitive_types::chunk::key_stroke_candidate::{
     ChunkKeyStrokeCandidate, DelayedConfirmedCandidateInfo,
 };
 use crate::typing_primitive_types::chunk::single_n_availability::SingleNAvailability;
-use crate::typing_primitive_types::chunk::{Chunk, ChunkSpell, ChunkState};
+use crate::typing_primitive_types::chunk::ChunkSpell;
 use crate::typing_primitive_types::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
 use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
 use crate::typing_primitive_types::spell::SpellString;
@@ -115,7 +116,7 @@ impl ChunkIdealCandidateUnappended {
 // 綴りのみの不完全なチャンク列にキーストローク候補を追加する
 pub(crate) fn append_key_stroke_to_chunks(
     chunks_key_stroke_unappended: &[ChunkCandidateUnappended],
-) -> Vec<Chunk> {
+) -> Vec<ChunkUnprocessed> {
     let mut chunks_ideal_candidate_unappended = VecDeque::<ChunkIdealCandidateUnappended>::new();
 
     // Because key stroke candidate of chunk are depend on the next chunk, we need to process
@@ -376,7 +377,7 @@ pub(crate) fn append_key_stroke_to_chunks(
 /// 候補が削減されていないことを前提とする
 fn append_ideal_candidates_to_chunks(
     chunks_ideal_candidate_unappended: Vec<ChunkIdealCandidateUnappended>,
-) -> Vec<Chunk> {
+) -> Vec<ChunkUnprocessed> {
     // 本来なら理想的なキーストローク候補は全探索によって付与されるべきであるが計算量の観点から前のチャンクから貪欲に行うことで付与している
     // このことによって理想的ではないキーストローク候補が付与されてしまう可能性は以下の理由からないと言える
     //
@@ -401,12 +402,10 @@ fn append_ideal_candidates_to_chunks(
                 .clone();
             next_chunk_head_constraint = ideal_candidate.next_chunk_head_constraint().clone();
 
-            Chunk::new(
+            ChunkUnprocessed::new(
                 chunk_ideal_candidate_unappended.spell.into(),
                 chunk_ideal_candidate_unappended.key_stroke_candidates,
                 ideal_candidate,
-                ChunkState::Unprocessed,
-                None,
             )
         })
         .collect()
@@ -416,7 +415,7 @@ fn append_ideal_candidates_to_chunks(
 mod test {
     use super::*;
 
-    use crate::{gen_candidate, gen_chunk, gen_chunk_candidate_unappended};
+    use crate::{gen_candidate, gen_chunk_candidate_unappended, gen_chunk_unprocessed};
 
     #[test]
     fn append_key_stroke_to_chunks_1() {
@@ -430,7 +429,7 @@ mod test {
         assert_eq!(
             chunks,
             vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "じょ",
                     vec![
                         gen_candidate!(["jo"], true, None),
@@ -441,16 +440,14 @@ mod test {
                         gen_candidate!(["ji", "lyo"], true, None),
                         gen_candidate!(["ji", "xyo"], true, None),
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["jo"], true, None)
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "ん",
                     vec![
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None),
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["nn"], true, None)
                 )
             ]
@@ -470,17 +467,16 @@ mod test {
         assert_eq!(
             chunks,
             vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "う",
                     vec![
                         gen_candidate!(["u"], true, None),
                         gen_candidate!(["wu"], true, None),
                         gen_candidate!(["whu"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["u"], true, None)
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "っ",
                     vec![
                         gen_candidate!(["w"], true, None, 'w'),
@@ -488,17 +484,15 @@ mod test {
                         gen_candidate!(["xtu"], true, None),
                         gen_candidate!(["ltsu"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["w"], true, None, 'w')
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "う",
                     vec![
                         gen_candidate!(["u"], true, None),
                         gen_candidate!(["wu"], true, None),
                         gen_candidate!(["whu"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["wu"], true, None)
                 ),
             ]
@@ -518,32 +512,29 @@ mod test {
         assert_eq!(
             chunks,
             vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "か",
                     vec![
                         gen_candidate!(["ka"], true, None),
                         gen_candidate!(["ca"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["ka"], true, None)
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "ん",
                     vec![
                         gen_candidate!(["n"], true, None, ['z', 'j']),
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["n"], true, None, ['z', 'j'])
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "じ",
                     vec![
                         gen_candidate!(["zi"], true, None),
                         gen_candidate!(["ji"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["zi"], true, None)
                 ),
             ]
@@ -563,22 +554,19 @@ mod test {
         assert_eq!(
             chunks,
             vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "B",
                     vec![gen_candidate!(["B"], true, None)],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["B"], true, None)
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "i",
                     vec![gen_candidate!(["i"], true, None)],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["i"], true, None)
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "g",
                     vec![gen_candidate!(["g"], true, None)],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["g"], true, None)
                 ),
             ]
@@ -597,7 +585,7 @@ mod test {
         assert_eq!(
             chunks,
             vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "っ",
                     vec![
                         gen_candidate!(["l"], true, None, 'l', ['l']),
@@ -606,17 +594,15 @@ mod test {
                         gen_candidate!(["xtu"], true, None),
                         gen_candidate!(["ltsu"], true, None),
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["l"], true, None, 'l', ['l'])
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "っ",
                     vec![
                         gen_candidate!(["ltu"], true, None),
                         gen_candidate!(["xtu"], true, None),
                         gen_candidate!(["ltsu"], true, None),
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["ltu"], true, None)
                 ),
             ]
@@ -635,7 +621,7 @@ mod test {
         assert_eq!(
             chunks,
             vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "っ",
                     vec![
                         gen_candidate!(["k"], true, None, 'k'),
@@ -644,16 +630,14 @@ mod test {
                         gen_candidate!(["xtu"], true, None),
                         gen_candidate!(["ltsu"], true, None),
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["k"], true, None, 'k')
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "か",
                     vec![
                         gen_candidate!(["ka"], true, None),
                         gen_candidate!(["ca"], true, None),
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["ka"], true, None)
                 ),
             ]
@@ -674,26 +658,24 @@ mod test {
         assert_eq!(
             chunks,
             vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "い",
                     vec![
                         gen_candidate!(["i"], true, None),
                         gen_candidate!(["yi"], true, None),
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["i"], true, None)
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "ん",
                     vec![
                         gen_candidate!(["n"], true, None, ['s', 'c']),
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["n"], true, None, ['s', 'c'])
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "しょ",
                     vec![
                         gen_candidate!(["syo"], true, None),
@@ -705,17 +687,15 @@ mod test {
                         gen_candidate!(["shi", "lyo"], true, None),
                         gen_candidate!(["shi", "xyo"], true, None),
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["syo"], true, None)
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "う",
                     vec![
                         gen_candidate!(["u"], true, None),
                         gen_candidate!(["wu"], true, None),
                         gen_candidate!(["whu"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["u"], true, None)
                 ),
             ]
@@ -734,24 +714,22 @@ mod test {
         assert_eq!(
             chunks,
             vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "ん",
                     vec![
                         gen_candidate!(["n"], true, None, 'w', ['w']),
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None),
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["n"], true, None, 'w', ['w'])
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "う",
                     vec![
                         gen_candidate!(["u"], true, None),
                         gen_candidate!(["wu"], true, None),
                         gen_candidate!(["whu"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["wu"], true, None)
                 ),
             ]

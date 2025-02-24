@@ -11,23 +11,22 @@ use crate::typing_engine::processed_chunk_info::SpellDisplayInfo;
 use crate::typing_primitive_types::chunk::key_stroke_candidate::KeyStrokeElementCount;
 use crate::typing_primitive_types::chunk::ChunkState;
 use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
-use crate::{gen_candidate, gen_chunk};
+use crate::{gen_candidate, gen_chunk, gen_chunk_unprocessed};
 
 #[test]
 fn stroke_key_1() {
     // 1. 初期化
     let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "う",
             vec![
                 gen_candidate!(["u"], true, None),
                 gen_candidate!(["wu"], true, None),
                 gen_candidate!(["whu"], true, None)
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["u"], true, None)
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "っ",
             vec![
                 gen_candidate!(["w"], true, None, 'w'),
@@ -35,17 +34,15 @@ fn stroke_key_1() {
                 gen_candidate!(["xtu"], true, None),
                 gen_candidate!(["ltsu"], true, None)
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["w"], true, None, 'w')
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "う",
             vec![
                 gen_candidate!(["u"], true, None),
                 gen_candidate!(["wu"], true, None),
                 gen_candidate!(["whu"], true, None)
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["wu"], true, None)
         ),
     ]);
@@ -54,17 +51,16 @@ fn stroke_key_1() {
         pci,
         ProcessedChunkInfo {
             unprocessed_chunks: vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "う",
                     vec![
                         gen_candidate!(["u"], true, None),
                         gen_candidate!(["wu"], true, None),
                         gen_candidate!(["whu"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["u"], true, None)
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "っ",
                     vec![
                         gen_candidate!(["w"], true, None, 'w'),
@@ -72,17 +68,15 @@ fn stroke_key_1() {
                         gen_candidate!(["xtu"], true, None),
                         gen_candidate!(["ltsu"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["w"], true, None, 'w')
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "う",
                     vec![
                         gen_candidate!(["u"], true, None),
                         gen_candidate!(["wu"], true, None),
                         gen_candidate!(["whu"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["wu"], true, None)
                 ),
             ]
@@ -117,7 +111,7 @@ fn stroke_key_1() {
         pci,
         ProcessedChunkInfo {
             unprocessed_chunks: vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "っ",
                     vec![
                         gen_candidate!(["w"], true, None, 'w'),
@@ -125,17 +119,15 @@ fn stroke_key_1() {
                         gen_candidate!(["xtu"], true, None),
                         gen_candidate!(["ltsu"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["w"], true, None, 'w')
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "う",
                     vec![
                         gen_candidate!(["u"], true, None),
                         gen_candidate!(["wu"], true, None),
                         gen_candidate!(["whu"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["wu"], true, None)
                 ),
             ]
@@ -180,14 +172,13 @@ fn stroke_key_1() {
     assert_eq!(
         pci,
         ProcessedChunkInfo {
-            unprocessed_chunks: vec![gen_chunk!(
+            unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "う",
                 vec![
                     gen_candidate!(["u"], true, None),
                     gen_candidate!(["wu"], true, None),
                     gen_candidate!(["whu"], true, None)
                 ],
-                ChunkState::Unprocessed,
                 gen_candidate!(["wu"], true, None)
             ),]
             .into(),
@@ -438,14 +429,13 @@ fn stroke_key_1() {
 
     assert!(pci.is_finished());
 
-    let statistical_events = pci.append_chunks(vec![gen_chunk!(
+    let statistical_events = pci.append_chunks(vec![gen_chunk_unprocessed!(
         "う",
         vec![
             gen_candidate!(["u"], true, None),
             gen_candidate!(["wu"], true, None),
             gen_candidate!(["whu"], true, None)
         ],
-        ChunkState::Unprocessed,
         gen_candidate!(["u"], true, None)
     )]);
 
@@ -531,29 +521,26 @@ fn stroke_key_1() {
 fn stroke_key_2() {
     // 1. 初期化
     let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "か",
             vec![
                 gen_candidate!(["ka"], true, None),
                 gen_candidate!(["ca"], true, None),
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["ka"], true, None)
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "ん",
             vec![
                 gen_candidate!(["n"], true, None, ['k']),
                 gen_candidate!(["nn"], true, None),
                 gen_candidate!(["xn"], true, None)
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["n"], true, None, ['k'])
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "き",
             vec![gen_candidate!(["ki"], true, None),],
-            ChunkState::Unprocessed,
             gen_candidate!(["ki"], true, None)
         ),
     ]);
@@ -562,29 +549,26 @@ fn stroke_key_2() {
         pci,
         ProcessedChunkInfo {
             unprocessed_chunks: vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "か",
                     vec![
                         gen_candidate!(["ka"], true, None),
                         gen_candidate!(["ca"], true, None),
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["ka"], true, None)
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "ん",
                     vec![
                         gen_candidate!(["n"], true, None, ['k']),
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["n"], true, None, ['k'])
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "き",
                     vec![gen_candidate!(["ki"], true, None),],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["ki"], true, None)
                 ),
             ]
@@ -619,20 +603,18 @@ fn stroke_key_2() {
         pci,
         ProcessedChunkInfo {
             unprocessed_chunks: vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "ん",
                     vec![
                         gen_candidate!(["n"], true, None, ['k']),
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["n"], true, None, ['k'])
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "き",
                     vec![gen_candidate!(["ki"], true, None),],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["ki"], true, None)
                 ),
             ]
@@ -664,20 +646,18 @@ fn stroke_key_2() {
         pci,
         ProcessedChunkInfo {
             unprocessed_chunks: vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "ん",
                     vec![
                         gen_candidate!(["n"], true, None, ['k']),
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["n"], true, None, ['k'])
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "き",
                     vec![gen_candidate!(["ki"], true, None),],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["ki"], true, None)
                 ),
             ]
@@ -722,10 +702,9 @@ fn stroke_key_2() {
     assert_eq!(
         pci,
         ProcessedChunkInfo {
-            unprocessed_chunks: vec![gen_chunk!(
+            unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "き",
                 vec![gen_candidate!(["ki"], true, None),],
-                ChunkState::Unprocessed,
                 gen_candidate!(["ki"], true, None)
             ),]
             .into(),
@@ -768,10 +747,9 @@ fn stroke_key_2() {
     assert_eq!(
         pci,
         ProcessedChunkInfo {
-            unprocessed_chunks: vec![gen_chunk!(
+            unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "き",
                 vec![gen_candidate!(["ki"], true, None),],
-                ChunkState::Unprocessed,
                 gen_candidate!(["ki"], true, None)
             ),]
             .into(),
@@ -819,10 +797,9 @@ fn stroke_key_2() {
     assert_eq!(
         pci,
         ProcessedChunkInfo {
-            unprocessed_chunks: vec![gen_chunk!(
+            unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "き",
                 vec![gen_candidate!(["ki"], true, None),],
-                ChunkState::Unprocessed,
                 gen_candidate!(["ki"], true, None)
             ),]
             .into(),
@@ -1007,29 +984,26 @@ fn stroke_key_2() {
 fn stroke_key_3() {
     // 1. 初期化
     let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "か",
             vec![
                 gen_candidate!(["ka"], true, None),
                 gen_candidate!(["ca"], true, None),
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["ka"], true, None)
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "ん",
             vec![
                 gen_candidate!(["n"], true, None, ['k']),
                 gen_candidate!(["nn"], true, None),
                 gen_candidate!(["xn"], true, None)
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["n"], true, None, ['k'])
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "き",
             vec![gen_candidate!(["ki"], true, None),],
-            ChunkState::Unprocessed,
             gen_candidate!(["ki"], true, None)
         ),
     ]);
@@ -1038,29 +1012,26 @@ fn stroke_key_3() {
         pci,
         ProcessedChunkInfo {
             unprocessed_chunks: vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "か",
                     vec![
                         gen_candidate!(["ka"], true, None),
                         gen_candidate!(["ca"], true, None),
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["ka"], true, None)
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "ん",
                     vec![
                         gen_candidate!(["n"], true, None, ['k']),
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["n"], true, None, ['k'])
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "き",
                     vec![gen_candidate!(["ki"], true, None),],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["ki"], true, None)
                 ),
             ]
@@ -1095,20 +1066,18 @@ fn stroke_key_3() {
         pci,
         ProcessedChunkInfo {
             unprocessed_chunks: vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "ん",
                     vec![
                         gen_candidate!(["n"], true, None, ['k']),
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["n"], true, None, ['k'])
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "き",
                     vec![gen_candidate!(["ki"], true, None),],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["ki"], true, None)
                 ),
             ]
@@ -1140,20 +1109,18 @@ fn stroke_key_3() {
         pci,
         ProcessedChunkInfo {
             unprocessed_chunks: vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "ん",
                     vec![
                         gen_candidate!(["n"], true, None, ['k']),
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["n"], true, None, ['k'])
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "き",
                     vec![gen_candidate!(["ki"], true, None),],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["ki"], true, None)
                 ),
             ]
@@ -1198,10 +1165,9 @@ fn stroke_key_3() {
     assert_eq!(
         pci,
         ProcessedChunkInfo {
-            unprocessed_chunks: vec![gen_chunk!(
+            unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "き",
                 vec![gen_candidate!(["ki"], true, None),],
-                ChunkState::Unprocessed,
                 gen_candidate!(["ki"], true, None)
             ),]
             .into(),
@@ -1244,10 +1210,9 @@ fn stroke_key_3() {
     assert_eq!(
         pci,
         ProcessedChunkInfo {
-            unprocessed_chunks: vec![gen_chunk!(
+            unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "き",
                 vec![gen_candidate!(["ki"], true, None),],
-                ChunkState::Unprocessed,
                 gen_candidate!(["ki"], true, None)
             ),]
             .into(),
@@ -1295,10 +1260,9 @@ fn stroke_key_3() {
     assert_eq!(
         pci,
         ProcessedChunkInfo {
-            unprocessed_chunks: vec![gen_chunk!(
+            unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "き",
                 vec![gen_candidate!(["ki"], true, None),],
-                ChunkState::Unprocessed,
                 gen_candidate!(["ki"], true, None)
             ),]
             .into(),
@@ -1536,20 +1500,18 @@ fn stroke_key_3() {
 fn stroke_key_4() {
     // 1. 初期化
     let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "ん",
             vec![
                 gen_candidate!(["n"], true, None, ['p']),
                 gen_candidate!(["nn"], true, None),
                 gen_candidate!(["xn"], true, None)
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["n"], true, None, ['p'])
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "ぴ",
             vec![gen_candidate!(["p"], true, None),],
-            ChunkState::Unprocessed,
             gen_candidate!(["p"], true, None)
         ),
     ]);
@@ -1558,20 +1520,18 @@ fn stroke_key_4() {
         pci,
         ProcessedChunkInfo {
             unprocessed_chunks: vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "ん",
                     vec![
                         gen_candidate!(["n"], true, None, ['p']),
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["n"], true, None, ['p'])
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "ぴ",
                     vec![gen_candidate!(["p"], true, None),],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["p"], true, None)
                 ),
             ]
@@ -1601,10 +1561,9 @@ fn stroke_key_4() {
     assert_eq!(
         pci,
         ProcessedChunkInfo {
-            unprocessed_chunks: vec![gen_chunk!(
+            unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "ぴ",
                 vec![gen_candidate!(["p"], true, None),],
-                ChunkState::Unprocessed,
                 gen_candidate!(["p"], true, None)
             ),]
             .into(),
@@ -1635,10 +1594,9 @@ fn stroke_key_4() {
     assert_eq!(
         pci,
         ProcessedChunkInfo {
-            unprocessed_chunks: vec![gen_chunk!(
+            unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "ぴ",
                 vec![gen_candidate!(["p"], true, None),],
-                ChunkState::Unprocessed,
                 gen_candidate!(["p"], true, None)
             ),]
             .into(),
@@ -1733,43 +1691,39 @@ fn stroke_key_4() {
 fn construct_display_info_1() {
     // 1. 初期化
     let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "きょ",
             vec![
                 gen_candidate!(["kyo"], true, None),
                 gen_candidate!(["ki", "lyo"], true, None),
                 gen_candidate!(["ki", "xyo"], true, None)
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["kyo"], true, None)
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "きょ",
             vec![
                 gen_candidate!(["kyo"], true, None),
                 gen_candidate!(["ki", "lyo"], true, None),
                 gen_candidate!(["ki", "xyo"], true, None)
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["kyo"], true, None)
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "きょ",
             vec![
                 gen_candidate!(["kyo"], true, None),
                 gen_candidate!(["ki", "lyo"], true, None),
                 gen_candidate!(["ki", "xyo"], true, None)
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["kyo"], true, None)
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "きょ",
             vec![
                 gen_candidate!(["ky"], true, None),
                 gen_candidate!(["ki"], true, None),
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["ky"], true, None)
         ),
     ]);
@@ -1868,13 +1822,12 @@ fn construct_display_info_1() {
     assert_eq!(
         pci,
         ProcessedChunkInfo {
-            unprocessed_chunks: vec![gen_chunk!(
+            unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "きょ",
                 vec![
                     gen_candidate!(["ky"], true, None),
                     gen_candidate!(["ki"], true, None),
                 ],
-                ChunkState::Unprocessed,
                 gen_candidate!(["ky"], true, None)
             ),]
             .into(),
@@ -2059,23 +2012,21 @@ fn construct_display_info_1() {
 fn construct_display_info_2() {
     // 1. 初期化
     let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "ん",
             vec![
                 gen_candidate!(["n"], true, None, ['z', 'j']),
                 gen_candidate!(["nn"], true, None),
                 gen_candidate!(["xn"], true, None)
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["n"], true, None, ['z', 'j'])
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "じ",
             vec![
                 gen_candidate!(["zi"], true, None),
                 gen_candidate!(["ji"], true, None),
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["zi"], true, None)
         ),
     ]);
@@ -2114,13 +2065,12 @@ fn construct_display_info_2() {
     assert_eq!(
         pci,
         ProcessedChunkInfo {
-            unprocessed_chunks: vec![gen_chunk!(
+            unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "じ",
                 vec![
                     gen_candidate!(["zi"], true, None),
                     gen_candidate!(["ji"], true, None),
                 ],
-                ChunkState::Unprocessed,
                 gen_candidate!(["zi"], true, None)
             ),]
             .into(),
@@ -2399,23 +2349,21 @@ fn construct_display_info_2() {
 fn construct_display_info_3() {
     // 1. 初期化
     let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "ん",
             vec![
                 gen_candidate!(["n"], true, None, ['z', 'j']),
                 gen_candidate!(["nn"], true, None),
                 gen_candidate!(["xn"], true, None)
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["n"], true, None, ['z', 'j'])
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "じ",
             vec![
                 gen_candidate!(["zi"], true, None),
                 gen_candidate!(["ji"], true, None),
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["zi"], true, None)
         ),
     ]);
@@ -2454,13 +2402,12 @@ fn construct_display_info_3() {
     assert_eq!(
         pci,
         ProcessedChunkInfo {
-            unprocessed_chunks: vec![gen_chunk!(
+            unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "じ",
                 vec![
                     gen_candidate!(["zi"], true, None),
                     gen_candidate!(["ji"], true, None),
                 ],
-                ChunkState::Unprocessed,
                 gen_candidate!(["zi"], true, None)
             ),]
             .into(),
@@ -2729,13 +2676,12 @@ fn construct_display_info_3() {
 fn construct_display_info_4() {
     // 1. 初期化
     let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "あ",
             vec![gen_candidate!(["a"], true, None)],
-            ChunkState::Unprocessed,
             gen_candidate!(["a"], true, None)
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "っ",
             vec![
                 gen_candidate!(["k"], true, None, 'k', ['k']),
@@ -2744,25 +2690,22 @@ fn construct_display_info_4() {
                 gen_candidate!(["xtu"], true, None),
                 gen_candidate!(["ltsu"], true, None)
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["k"], true, None, 'k', ['k'])
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "か",
             vec![
                 gen_candidate!(["ka"], true, None),
                 gen_candidate!(["ca"], true, None)
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["ka"], true, None)
         ),
-        gen_chunk!(
+        gen_chunk_unprocessed!(
             "ん",
             vec![
                 gen_candidate!(["nn"], true, None),
                 gen_candidate!(["xn"], true, None)
             ],
-            ChunkState::Unprocessed,
             gen_candidate!(["nn"], true, None)
         ),
     ]);
@@ -2771,13 +2714,12 @@ fn construct_display_info_4() {
         pci,
         ProcessedChunkInfo {
             unprocessed_chunks: vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "あ",
                     vec![gen_candidate!(["a"], true, None)],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["a"], true, None)
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "っ",
                     vec![
                         gen_candidate!(["k"], true, None, 'k', ['k']),
@@ -2786,25 +2728,22 @@ fn construct_display_info_4() {
                         gen_candidate!(["xtu"], true, None),
                         gen_candidate!(["ltsu"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["k"], true, None, 'k', ['k'])
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "か",
                     vec![
                         gen_candidate!(["ka"], true, None),
                         gen_candidate!(["ca"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["ka"], true, None)
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "ん",
                     vec![
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["nn"], true, None)
                 ),
             ]
@@ -2863,22 +2802,20 @@ fn construct_display_info_4() {
         pci,
         ProcessedChunkInfo {
             unprocessed_chunks: vec![
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "か",
                     vec![
                         gen_candidate!(["ka"], true, None),
                         gen_candidate!(["ca"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["ka"], true, None)
                 ),
-                gen_chunk!(
+                gen_chunk_unprocessed!(
                     "ん",
                     vec![
                         gen_candidate!(["nn"], true, None),
                         gen_candidate!(["xn"], true, None)
                     ],
-                    ChunkState::Unprocessed,
                     gen_candidate!(["nn"], true, None)
                 ),
             ]

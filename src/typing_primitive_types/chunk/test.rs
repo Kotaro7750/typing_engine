@@ -3,68 +3,6 @@ use super::*;
 use crate::{gen_candidate, gen_chunk};
 
 #[test]
-fn strict_key_stroke_count_1() {
-    let mut chunk = gen_chunk!(
-        "じょ",
-        vec![
-            gen_candidate!(["jo"], true, None),
-            gen_candidate!(["zyo"], true, None),
-            gen_candidate!(["jyo"], true, None),
-            gen_candidate!(["zi", "lyo"], true, None),
-            gen_candidate!(["zi", "xyo"], true, None),
-            gen_candidate!(["ji", "lyo"], true, None),
-            gen_candidate!(["ji", "xyo"], true, None),
-        ],
-        ChunkState::Unprocessed,
-        gen_candidate!(["jo"], true, None)
-    );
-
-    chunk.strict_key_stroke_count(NonZeroUsize::new(1).unwrap());
-
-    assert_eq!(
-        chunk,
-        gen_chunk!(
-            "じょ",
-            vec![
-                gen_candidate!(["j"], true, None),
-                gen_candidate!(["z"], true, None),
-            ],
-            ChunkState::Unprocessed,
-            gen_candidate!(["j"], true, None)
-        )
-    )
-}
-
-#[test]
-fn strict_key_stroke_count_2() {
-    let mut chunk = gen_chunk!(
-        "ん",
-        vec![
-            gen_candidate!(["n"], true, None, ['j', 'z']),
-            gen_candidate!(["nn"], true, None),
-            gen_candidate!(["xn"], true, None),
-        ],
-        ChunkState::Unprocessed,
-        gen_candidate!(["n"], true, None, ['j', 'z'])
-    );
-
-    chunk.strict_key_stroke_count(NonZeroUsize::new(1).unwrap());
-
-    assert_eq!(
-        chunk,
-        gen_chunk!(
-            "ん",
-            vec![
-                gen_candidate!(["n"], true, None),
-                gen_candidate!(["x"], true, None)
-            ],
-            ChunkState::Unprocessed,
-            gen_candidate!(["n"], true, None)
-        )
-    )
-}
-
-#[test]
 fn is_element_end_at_key_stroke_index_1() {
     let c = gen_candidate!(["ki", "xyo"], true, None);
 

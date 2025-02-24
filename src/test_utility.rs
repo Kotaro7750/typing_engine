@@ -8,6 +8,26 @@ macro_rules! gen_chunk_candidate_unappended {
 }
 
 #[macro_export]
+macro_rules! gen_chunk_unprocessed {
+    (
+            $chunk_spell:literal,
+            $key_stroke_candidates:expr,
+            $ideal_candidate:expr
+        ) => {
+        {
+            let _ideal_candidate: Option<crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate> = None;
+            let _ideal_candidate: crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate = $ideal_candidate;
+
+            crate::typing_primitive_types::chunk::unprocessed::ChunkUnprocessed::new(
+                $chunk_spell.to_string().try_into().unwrap(),
+                $key_stroke_candidates,
+                _ideal_candidate,
+            )
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! gen_chunk {
     (
             $chunk_spell:literal,
