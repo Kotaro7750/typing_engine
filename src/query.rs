@@ -2,7 +2,10 @@ use rand::random;
 use std::num::NonZeroUsize;
 
 use crate::typing_primitive_types::{
-    chunk::{append_key_stroke_to_chunks, Chunk},
+    chunk::{
+        chunk_candidate_unappended::{append_key_stroke_to_chunks, ChunkCandidateUnappended},
+        Chunk,
+    },
     vocabulary::{VocabularyEntry, VocabularyInfo, VocabularySpellElement},
 };
 
@@ -139,7 +142,7 @@ impl<'vocabulary> QueryRequest<'vocabulary> {
         key_stroke_threshold: NonZeroUsize,
         mut next_vocabulary_generator: NextVocabularyGenerator,
     ) -> Query {
-        let mut query_chunks = Vec::<Chunk>::new();
+        let mut query_chunks = Vec::<ChunkCandidateUnappended>::new();
         let mut query_vocabulary_infos = Vec::<VocabularyInfo>::new();
 
         let mut min_key_stroke_count: usize = 0;
@@ -172,7 +175,7 @@ impl<'vocabulary> QueryRequest<'vocabulary> {
         }
 
         // 全ての語彙や語彙区切りが確定してからキーストロークを付与する
-        append_key_stroke_to_chunks(&mut query_chunks);
+        let mut query_chunks = append_key_stroke_to_chunks(&query_chunks);
 
         // キーストロークを付与したので推測ではない実際のキーストローク回数が分かる
         let mut actual_key_stroke_count: usize = 0;
@@ -227,7 +230,7 @@ impl<'vocabulary> QueryRequest<'vocabulary> {
         vocabulary_count: NonZeroUsize,
         mut next_vocabulary_generator: NextVocabularyGenerator,
     ) -> Query {
-        let mut query_chunks = Vec::<Chunk>::new();
+        let mut query_chunks = Vec::<ChunkCandidateUnappended>::new();
         let mut query_vocabulary_infos = Vec::<VocabularyInfo>::new();
 
         // 要求語彙数を満たすまで以下を繰り返す
@@ -256,7 +259,7 @@ impl<'vocabulary> QueryRequest<'vocabulary> {
         }
 
         // 全ての語彙や語彙区切りが確定してからキーストロークを付与する
-        append_key_stroke_to_chunks(&mut query_chunks);
+        let query_chunks = append_key_stroke_to_chunks(&query_chunks);
 
         Query::new(query_vocabulary_infos, query_chunks)
     }

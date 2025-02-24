@@ -5,6 +5,8 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+use super::chunk::ChunkSpell;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// A string only contains characters which can be used as spells.
 ///
@@ -35,6 +37,12 @@ fn usable_in_spell_string(c: char) -> bool {
 impl From<SpellString> for String {
     fn from(ss: SpellString) -> Self {
         ss.0
+    }
+}
+
+impl From<ChunkSpell> for SpellString {
+    fn from(cs: ChunkSpell) -> Self {
+        cs.as_ref().clone()
     }
 }
 

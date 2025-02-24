@@ -1,7 +1,6 @@
 use std::num::NonZeroUsize;
 
-use crate::typing_primitive_types::chunk::Chunk;
-use crate::typing_primitive_types::chunk::ChunkState;
+use crate::typing_primitive_types::chunk::chunk_candidate_unappended::ChunkCandidateUnappended;
 use crate::typing_primitive_types::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_KEY_STROKE_DICTIONARY;
 use crate::typing_primitive_types::spell::SpellString;
 
@@ -122,8 +121,8 @@ impl VocabularyEntry {
 
     /// Construct chunks from this entry.
     /// At this stage, key stroke candidates for each chunk are not set.
-    pub(crate) fn construct_chunks(&self) -> Vec<Chunk> {
-        let mut chunks = Vec::<Chunk>::new();
+    pub(crate) fn construct_chunks(&self) -> Vec<ChunkCandidateUnappended> {
+        let mut chunks = Vec::<ChunkCandidateUnappended>::new();
 
         let spell_chars: Vec<char> = self.construct_whole_spell().chars().collect();
 
@@ -156,7 +155,7 @@ impl VocabularyEntry {
                 .try_into()
                 .unwrap();
 
-            chunks.push(Chunk::new(spell, None, None, ChunkState::Unprocessed, None));
+            chunks.push(ChunkCandidateUnappended::new(spell));
         }
 
         chunks
@@ -283,7 +282,7 @@ pub(crate) fn view_position_of_spell_for_vocabulary_infos(
 
 #[cfg(test)]
 mod test {
-    use crate::{gen_unprocessed_chunk, gen_vocabulary_entry};
+    use crate::{gen_chunk_candidate_unappended, gen_vocabulary_entry};
 
     use super::{corresponding_view_positions_for_spell, ViewPosition};
 
@@ -293,7 +292,7 @@ mod test {
 
             assert_eq!(
                 ve.construct_chunks(),
-                vec![$(gen_unprocessed_chunk!($s)),*]
+                vec![$(gen_chunk_candidate_unappended!($s)),*]
             );
         };
     }
