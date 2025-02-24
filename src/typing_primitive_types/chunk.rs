@@ -98,11 +98,11 @@ pub struct Chunk {
     spell: ChunkSpell,
     /// Candidates of key strokes to type this chunk.
     /// Ex. For a chunk "きょ", there are key strokes like "kyo" and "kilyo".
-    key_stroke_candidates: Option<Vec<ChunkKeyStrokeCandidate>>,
+    key_stroke_candidates: Vec<ChunkKeyStrokeCandidate>,
     /// A key stroke candidate that is the shortest when typed.
     /// This is determined when key strokes are assigned, so it may not be possible to type this
     /// candidate depending on the actual key stroke sequence.
-    ideal_candidate: Option<ChunkKeyStrokeCandidate>,
+    ideal_candidate: ChunkKeyStrokeCandidate,
     /// Actual key strokes that also includes wrong key strokes.
     actual_key_strokes: Option<Vec<ActualKeyStroke>>,
 }
@@ -110,8 +110,8 @@ pub struct Chunk {
 impl Chunk {
     pub fn new(
         spell: SpellString,
-        key_stroke_candidates: Option<Vec<ChunkKeyStrokeCandidate>>,
-        ideal_candidate: Option<ChunkKeyStrokeCandidate>,
+        key_stroke_candidates: Vec<ChunkKeyStrokeCandidate>,
+        ideal_candidate: ChunkKeyStrokeCandidate,
         state: ChunkState,
         actual_key_strokes: Option<Vec<ActualKeyStroke>>,
     ) -> Self {
@@ -130,34 +130,26 @@ impl Chunk {
     }
 
     /// Returns key stroke candidates of this chunk.
-    pub(crate) fn all_key_stroke_candidates(&self) -> &Option<Vec<ChunkKeyStrokeCandidate>> {
+    pub(crate) fn all_key_stroke_candidates(&self) -> &[ChunkKeyStrokeCandidate] {
         &self.key_stroke_candidates
     }
 
-    fn all_key_stroke_candidates_mut(&mut self) -> &mut Option<Vec<ChunkKeyStrokeCandidate>> {
+    fn all_key_stroke_candidates_mut(&mut self) -> &mut [ChunkKeyStrokeCandidate] {
         &mut self.key_stroke_candidates
     }
 
-    pub(crate) fn key_stroke_candidates_mut(
-        &mut self,
-    ) -> Option<Vec<&mut ChunkKeyStrokeCandidate>> {
-        self.key_stroke_candidates.as_mut().map(|candidates| {
-            candidates
-                .as_mut_slice()
-                .iter_mut()
-                .filter(|candidate| candidate.is_active())
-                .collect()
-        })
+    pub(crate) fn key_stroke_candidates_mut(&mut self) -> Vec<&mut ChunkKeyStrokeCandidate> {
+        self.key_stroke_candidates
+            .iter_mut()
+            .filter(|candidate| candidate.is_active())
+            .collect()
     }
 
-    pub(crate) fn key_stroke_candidates(&self) -> Option<Vec<&ChunkKeyStrokeCandidate>> {
-        self.key_stroke_candidates.as_ref().map(|candidates| {
-            candidates
-                .as_slice()
-                .iter()
-                .filter(|candidate| candidate.is_active())
-                .collect()
-        })
+    pub(crate) fn key_stroke_candidates(&self) -> Vec<&ChunkKeyStrokeCandidate> {
+        self.key_stroke_candidates
+            .iter()
+            .filter(|candidate| candidate.is_active())
+            .collect()
     }
 
     pub(crate) fn change_state(&mut self, state: ChunkState) {
@@ -172,8 +164,6 @@ impl Chunk {
                 self.actual_key_strokes = Some(vec![]);
 
                 self.all_key_stroke_candidates_mut()
-                    .as_mut()
-                    .unwrap()
                     .iter_mut()
                     .for_each(|candidate| {
                         candidate.advance_cursor();
@@ -188,7 +178,7 @@ impl Chunk {
     }
 
     /// Returns the ideal key stroke candidate of this chunk.
-    pub(crate) fn ideal_key_stroke_candidate(&self) -> &Option<ChunkKeyStrokeCandidate> {
+    pub(crate) fn ideal_key_stroke_candidate(&self) -> &ChunkKeyStrokeCandidate {
         &self.ideal_candidate
     }
 
@@ -200,11 +190,8 @@ impl Chunk {
         &self,
         chunk_head_striction: Option<KeyStrokeChar>,
     ) -> &ChunkKeyStrokeCandidate {
-        assert!(self.key_stroke_candidates().is_some());
-
         let min_candidate = self
             .key_stroke_candidates()
-            .unwrap()
             .into_iter()
             .filter(|candidate| {
                 if let Some(chunk_head_striction) = &chunk_head_striction {
@@ -242,7 +229,7 @@ impl Chunk {
         // 制限によって必要キーストローク数が増えてはいけない
         assert!(key_stroke_count_striction.get() <= self.calc_min_key_stroke_count());
 
-        let mut new_key_stroke_candidates = self.key_stroke_candidates.as_ref().unwrap().clone();
+        let mut new_key_stroke_candidates = self.key_stroke_candidates.clone();
 
         new_key_stroke_candidates
             .iter_mut()
@@ -267,19 +254,15 @@ impl Chunk {
             }
         });
 
-        self.ideal_candidate
-            .replace(new_key_stroke_candidates.get(0).unwrap().clone());
+        self.ideal_candidate = new_key_stroke_candidates.first().unwrap().clone();
 
-        self.key_stroke_candidates
-            .replace(new_key_stroke_candidates);
+        self.key_stroke_candidates = new_key_stroke_candidates;
     }
 
     /// Restrict the candidates of this chunk by the key stroke of chunk head.
     /// Ex. If the chunk_head_striction is "s", the candidates that do not start with "s" are removed.
     pub(crate) fn strict_chunk_head(&mut self, chunk_head_striction: KeyStrokeChar) {
         self.key_stroke_candidates_mut()
-            .as_mut()
-            .unwrap()
             .iter_mut()
             .for_each(|candidate| {
                 if candidate.key_stroke_char_at_position(0) != chunk_head_striction {
@@ -292,8 +275,6 @@ impl Chunk {
     /// Retain only the candidates whose index is true in the retain_vector.
     pub(crate) fn reduce_candidate(&mut self, retain_vector: &[bool]) {
         self.all_key_stroke_candidates_mut()
-            .as_mut()
-            .unwrap()
             .iter_mut()
             .enumerate()
             .filter(|(i, _)| !retain_vector[*i])
@@ -314,8 +295,7 @@ impl Chunk {
     /// チャンクが確定したか
     /// 遅延確定候補自体を打ち終えても確定自体はまだのとき確定としてはいけない
     pub(crate) fn is_confirmed(&mut self) -> bool {
-        assert!(self.key_stroke_candidates().is_some());
-        let key_stroke_candidates = self.key_stroke_candidates().unwrap();
+        let key_stroke_candidates = self.key_stroke_candidates();
 
         // 確定している条件は
         // * 候補が1つである
@@ -340,12 +320,9 @@ impl Chunk {
     /// 遅延確定候補があるとしたらそれを打ち終えているかどうか
     /// ないときには常にfalseを返す
     pub(crate) fn is_delayed_confirmable(&self) -> bool {
-        assert!(self.key_stroke_candidates().is_some());
-
         let mut is_delayed_confirmable = false;
 
         self.key_stroke_candidates()
-            .unwrap()
             .iter()
             .filter(|candidate| candidate.is_delayed_confirmed_candidate())
             .for_each(|candidate| {
@@ -374,7 +351,7 @@ impl Chunk {
             assert!(&elapsed_time >= last_key_stroke.elapsed_time());
         }
 
-        let key_stroke_candidates = self.all_key_stroke_candidates().as_ref().unwrap();
+        let key_stroke_candidates = self.all_key_stroke_candidates();
         // For confirmation check correctness, save current status.
         // This is required when this key stroke will confirm this chunk.
         let is_delayed_confirmable = self.is_delayed_confirmable();
@@ -429,7 +406,6 @@ impl Chunk {
             self.reduce_candidate(&candidate_hit_miss);
 
             self.key_stroke_candidates_mut()
-                .unwrap()
                 .iter_mut()
                 .for_each(|candidate| {
                     candidate.advance_cursor();
@@ -461,8 +437,6 @@ impl Chunk {
     // チャンクのキーストロークのどこにカーソルを当てるべきか
     pub(crate) fn current_key_stroke_cursor_position(&self) -> usize {
         self.key_stroke_candidates()
-            .as_ref()
-            .unwrap()
             .iter()
             .map(|candidate| {
                 assert!(candidate.cursor_position().is_some());
@@ -506,13 +480,9 @@ impl Chunk {
     /// Returns a candidate that confirm this chunk.
     pub(crate) fn confirmed_candidate(&self) -> &ChunkKeyStrokeCandidate {
         assert_eq!(self.state, ChunkState::Confirmed);
-        assert!(self.key_stroke_candidates().as_ref().unwrap().len() == 1);
+        assert!(self.key_stroke_candidates().len() == 1);
 
-        self.key_stroke_candidates()
-            .as_ref()
-            .unwrap()
-            .first()
-            .unwrap()
+        self.key_stroke_candidates().first().unwrap()
     }
 
     /// Returns a constraint for the next chunk head based on the confirmed candidate.
@@ -532,8 +502,6 @@ impl AsRef<Chunk> for Chunk {
 impl ChunkHasActualKeyStrokes for Chunk {
     fn effective_candidate(&self) -> &ChunkKeyStrokeCandidate {
         self.key_stroke_candidates()
-            .as_ref()
-            .expect("key stroke candidates must be set")
             .first()
             .expect("key stroke candidates must not be empty")
     }

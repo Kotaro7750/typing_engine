@@ -403,8 +403,8 @@ fn append_ideal_candidates_to_chunks(
 
             Chunk::new(
                 chunk_ideal_candidate_unappended.spell.into(),
-                Some(chunk_ideal_candidate_unappended.key_stroke_candidates),
-                Some(ideal_candidate),
+                chunk_ideal_candidate_unappended.key_stroke_candidates,
+                ideal_candidate,
                 ChunkState::Unprocessed,
                 None,
             )

@@ -8,37 +8,23 @@ macro_rules! gen_chunk_candidate_unappended {
 }
 
 #[macro_export]
-macro_rules! gen_unprocessed_chunk {
-    ($chunk_spell:literal) => {
-        crate::typing_primitive_types::chunk::Chunk::new(
-            $chunk_spell.to_string().try_into().unwrap(),
-            None,
-            None,
-            crate::typing_primitive_types::chunk::ChunkState::Unprocessed,
-            None,
-        )
-    };
-}
-
-#[macro_export]
 macro_rules! gen_chunk {
     (
             $chunk_spell:literal,
             $key_stroke_candidates:expr,
-            $state:expr
-            $(,$ideal_candidate:expr)?
+            $state:expr,
+            $ideal_candidate:expr
             $(,[$($actual_key_stroke:expr),*])?
         ) => {
         {
-            let _ideal_candidate: Option<crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate> = None;
-            $(let _ideal_candidate = Some($ideal_candidate);)?
+            let _ideal_candidate: crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate = $ideal_candidate;
 
             let _actual_key_stroke: Option<Vec<crate::typing_primitive_types::key_stroke::ActualKeyStroke>> = None;
             $(let _actual_key_stroke = Some(vec![$($actual_key_stroke.try_into().unwrap()),*]);)?
 
             crate::typing_primitive_types::chunk::Chunk::new(
                 $chunk_spell.to_string().try_into().unwrap(),
-                Some($key_stroke_candidates),
+                $key_stroke_candidates,
                 _ideal_candidate,
                 $state,
                 _actual_key_stroke,

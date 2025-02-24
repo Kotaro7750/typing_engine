@@ -223,8 +223,6 @@ impl ProcessedChunkInfo {
                 confirmed_chunk
                     .as_ref()
                     .ideal_key_stroke_candidate()
-                    .as_ref()
-                    .unwrap()
                     .construct_key_stroke_element_count(),
                 confirmed_chunk.as_ref().spell().count(),
             );
@@ -237,8 +235,6 @@ impl ProcessedChunkInfo {
                 confirmed_chunk
                     .as_ref()
                     .ideal_key_stroke_candidate()
-                    .as_ref()
-                    .unwrap()
                     .whole_key_stroke()
                     .chars()
                     .count(),
@@ -299,8 +295,6 @@ impl ProcessedChunkInfo {
                 inflight_chunk
                     .as_ref()
                     .ideal_key_stroke_candidate()
-                    .as_ref()
-                    .unwrap()
                     .construct_key_stroke_element_count(),
                 inflight_chunk.as_ref().spell().count(),
             );
@@ -312,8 +306,6 @@ impl ProcessedChunkInfo {
                 inflight_chunk
                     .as_ref()
                     .ideal_key_stroke_candidate()
-                    .as_ref()
-                    .unwrap()
                     .construct_key_stroke_element_count(),
                 inflight_chunk.as_ref().spell().count(),
             );
@@ -328,8 +320,6 @@ impl ProcessedChunkInfo {
                 inflight_chunk
                     .as_ref()
                     .ideal_key_stroke_candidate()
-                    .as_ref()
-                    .unwrap()
                     .whole_key_stroke()
                     .chars()
                     .count(),
@@ -344,8 +334,6 @@ impl ProcessedChunkInfo {
                 inflight_chunk
                     .as_ref()
                     .ideal_key_stroke_candidate()
-                    .as_ref()
-                    .unwrap()
                     .whole_key_stroke()
                     .chars()
                     .count(),
@@ -471,8 +459,6 @@ impl ProcessedChunkInfo {
 
                 let key_stroke_element_count = unprocessed_chunk
                     .ideal_key_stroke_candidate()
-                    .as_ref()
-                    .unwrap()
                     .construct_key_stroke_element_count();
 
                 realtime_statistics_counter.on_add_chunk(

@@ -96,8 +96,6 @@ pub(crate) fn construct_result(
             confirmed_chunk
                 .as_ref()
                 .ideal_key_stroke_candidate()
-                .as_ref()
-                .unwrap()
                 .construct_key_stroke_element_count(),
             confirmed_chunk.as_ref().spell().count(),
         );
@@ -110,8 +108,6 @@ pub(crate) fn construct_result(
             confirmed_chunk
                 .as_ref()
                 .ideal_key_stroke_candidate()
-                .as_ref()
-                .unwrap()
                 .whole_key_stroke()
                 .chars()
                 .count(),

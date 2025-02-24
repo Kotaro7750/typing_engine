@@ -81,8 +81,6 @@ impl StatisticalEvent {
         let spell_count = added_chunk.as_ref().spell().count();
         let ideal_key_stroke_element_count = added_chunk
             .ideal_key_stroke_candidate()
-            .as_ref()
-            .unwrap()
             .construct_key_stroke_element_count();
 
         StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
@@ -99,8 +97,6 @@ impl StatisticalEvent {
 
         let ideal_key_stroke_element_count = confirmed_chunk
             .ideal_key_stroke_candidate()
-            .as_ref()
-            .unwrap()
             .construct_key_stroke_element_count();
 
         let spell_count = confirmed_chunk.as_ref().spell().count();
@@ -112,8 +108,6 @@ impl StatisticalEvent {
             .count();
         let ideal_candidate_key_stroke_count = confirmed_chunk
             .ideal_key_stroke_candidate()
-            .as_ref()
-            .unwrap()
             .whole_key_stroke()
             .chars()
             .count();
