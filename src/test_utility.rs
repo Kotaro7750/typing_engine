@@ -121,7 +121,7 @@ macro_rules! gen_vocabulary_info {
 
 #[macro_export]
 macro_rules! gen_candidate {
-        ([$($key_stroke:literal),*], $is_active:literal, $cursor_position:expr$(, $constraint:literal)?$(, [$($delayed:literal),*])?) => {
+        ($key_stroke:expr, $is_active:literal, $cursor_position:expr$(, $constraint:literal)?$(, [$($delayed:literal),*])?) => {
             {
                 let _constraint: Option<crate::typing_primitive_types::key_stroke::KeyStrokeChar> = None;
                 $(let _constraint = Some($constraint.try_into().unwrap());)?
@@ -134,7 +134,7 @@ macro_rules! gen_candidate {
                 let _cursor_position = $cursor_position.try_into().unwrap();
 
                 crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate::new(
-                    vec![$($key_stroke.to_string().try_into().unwrap()),*],
+                    $key_stroke,
                     _constraint,
                     _delayed,
                     _is_active,
@@ -143,3 +143,25 @@ macro_rules! gen_candidate {
             }
         };
     }
+
+#[macro_export]
+macro_rules! gen_candidate_key_stroke {
+    ($key_stroke_string:literal) => {
+        crate::typing_primitive_types::chunk::key_stroke_candidate::CandidateKeyStroke::Normal(
+            String::from($key_stroke_string).try_into().unwrap(),
+        )
+    };
+
+    ([$key_stroke_string:literal]) => {
+        crate::typing_primitive_types::chunk::key_stroke_candidate::CandidateKeyStroke::Double(
+            String::from($key_stroke_string).try_into().unwrap(),
+        )
+    };
+
+    ([$key_stroke_string1:literal, $key_stroke_string2:literal]) => {
+        crate::typing_primitive_types::chunk::key_stroke_candidate::CandidateKeyStroke::DoubleSplitted(
+            String::from($key_stroke_string1).try_into().unwrap(),
+            String::from($key_stroke_string2).try_into().unwrap(),
+        )
+    };
+}

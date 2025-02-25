@@ -4,12 +4,135 @@ use crate::utility::convert_by_weighted_count;
 use std::num::NonZeroUsize;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// An enum representing the key stroke of a candidate.
+pub(crate) enum CandidateKeyStroke {
+    /// Key stroke for a candidate that belongs to single character chunk.
+    /// This includes both displayable ascii and single character chunk.
+    /// Ex. ( "ki" ) for "き" or ( "a" ) for "a"
+    Normal(KeyStrokeString),
+    /// Key stroke for a candidate that belongs to double character chunk.
+    /// Ex. ( "kyo" ) for "きょ"
+    Double(KeyStrokeString),
+    /// Key stroke for a candidate that belongs to double character chunk and input separately.
+    /// Ex. ( "ki", "lyo" ) for "きょ"
+    DoubleSplitted(KeyStrokeString, KeyStrokeString),
+}
+
+impl CandidateKeyStroke {
+    /// Returns if key stroke is double characters and input separately.
+    fn is_double_splitted(&self) -> bool {
+        matches!(self, Self::DoubleSplitted(_, _))
+    }
+
+    /// Returns whole key stroke.
+    fn whole_key_stroke(&self) -> KeyStrokeString {
+        match self {
+            Self::Normal(s) | Self::Double(s) => s.clone(),
+            Self::DoubleSplitted(s1, s2) => {
+                let mut s = String::new();
+                s.push_str(s1);
+                s.push_str(s2);
+                s.try_into().unwrap()
+            }
+        }
+    }
+
+    /// Returns key stroke count of this candidate.
+    fn construct_key_stroke_element_count(&self) -> KeyStrokeElementCount {
+        match self {
+            Self::Normal(s) | Self::Double(s) => KeyStrokeElementCount::new(&[s.chars().count()]),
+            Self::DoubleSplitted(s1, s2) => {
+                KeyStrokeElementCount::new(&[s1.chars().count(), s2.chars().count()])
+            }
+        }
+    }
+
+    /// Returns index of key stroke element which passed key stroke index belongs to.
+    fn belonging_element_index_of_key_stroke(&self, key_stroke_index: usize) -> Result<usize, ()> {
+        if self.whole_key_stroke().chars().count() <= key_stroke_index {
+            return Err(());
+        }
+
+        match self {
+            Self::Normal(_) | Self::Double(_) => Ok(0),
+            Self::DoubleSplitted(s1, _) => {
+                let s1_len = s1.chars().count();
+                if key_stroke_index < s1_len {
+                    Ok(0)
+                } else {
+                    Ok(1)
+                }
+            }
+        }
+    }
+
+    /// Returns if passed key stroke index is at the end of key stroke element.
+    fn is_element_end_at_key_stroke_index(&self, key_stroke_index: usize) -> Result<bool, ()> {
+        if self.whole_key_stroke().chars().count() <= key_stroke_index {
+            return Err(());
+        }
+
+        match self {
+            Self::Normal(s) | Self::Double(s) => Ok(key_stroke_index == s.chars().count() - 1),
+            Self::DoubleSplitted(s1, s2) => {
+                let s1_len = s1.chars().count();
+                let s2_len = s2.chars().count();
+                Ok((key_stroke_index == s1_len - 1) || (key_stroke_index == s1_len + s2_len - 1))
+            }
+        }
+    }
+
+    /// Strict the key stroke count of this candidate to key_stroke_count_striction.
+    fn strict_key_stroke_count(&mut self, key_stroke_count_striction: NonZeroUsize) {
+        match self {
+            Self::Normal(s) => {
+                let mut new_key_stroke = String::new();
+                for (i, c) in s.chars().enumerate() {
+                    if i < key_stroke_count_striction.get() {
+                        new_key_stroke.push(c);
+                    }
+                }
+                *self = Self::Normal(new_key_stroke.try_into().unwrap());
+            }
+            Self::Double(s) => {
+                let mut new_key_stroke = String::new();
+                for (i, c) in s.chars().enumerate() {
+                    if i < key_stroke_count_striction.get() {
+                        new_key_stroke.push(c);
+                    }
+                }
+                *self = Self::Double(new_key_stroke.try_into().unwrap());
+            }
+            Self::DoubleSplitted(s1, s2) => {
+                let mut new_key_stroke1 = String::new();
+                let mut new_key_stroke2 = String::new();
+                let mut count = 0;
+                for c in s1.chars() {
+                    if count < key_stroke_count_striction.get() {
+                        new_key_stroke1.push(c);
+                    }
+                    count += 1;
+                }
+                for c in s2.chars() {
+                    if count < key_stroke_count_striction.get() {
+                        new_key_stroke2.push(c);
+                    }
+                    count += 1;
+                }
+                *self = Self::DoubleSplitted(
+                    new_key_stroke1.try_into().unwrap(),
+                    new_key_stroke2.try_into().unwrap(),
+                );
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// A struct representing single candidate of key strokes for a chunk.
 pub struct ChunkKeyStrokeCandidate {
     /// Key stroke of this candidate.
-    /// Although this vec usually has only one element, it has two elements when the chunk is
-    /// double characters and each character is input separately like "きょ".
-    key_stroke_elements: Vec<KeyStrokeString>,
+    key_stroke: CandidateKeyStroke,
     /// Constraint for the next chunk head key stroke.
     /// This constraint is used when the next chunk head key stroke is restricted by this
     /// candidate.
@@ -31,14 +154,14 @@ pub struct ChunkKeyStrokeCandidate {
 
 impl ChunkKeyStrokeCandidate {
     pub(crate) fn new(
-        key_stroke_elements: Vec<KeyStrokeString>,
+        key_stroke: CandidateKeyStroke,
         next_chunk_head_constraint: Option<KeyStrokeChar>,
         delayed_confirmed_candidate_info: Option<DelayedConfirmedCandidateInfo>,
         is_active: bool,
         cursor_position: Option<usize>,
     ) -> Self {
         Self {
-            key_stroke_elements,
+            key_stroke,
             next_chunk_head_constraint,
             delayed_confirmed_candidate_info,
             is_active,
@@ -83,7 +206,7 @@ impl ChunkKeyStrokeCandidate {
     /// Returns if chunk of this candidate is double characters and each character is input
     /// separately like "きょ".
     pub(crate) fn is_splitted(&self) -> bool {
-        self.key_stroke_elements.len() == 2
+        self.key_stroke.is_double_splitted()
     }
 
     /// Returns if this candidate is a delayed confirmed candidate.
@@ -97,59 +220,28 @@ impl ChunkKeyStrokeCandidate {
     pub(crate) fn belonging_element_index_of_key_stroke(&self, key_stroke_index: usize) -> usize {
         assert!(key_stroke_index < self.calc_key_stroke_count());
 
-        let mut element_index = 0;
-
-        let mut element_head_key_stroke_index = 0;
-        for (i, element) in self.key_stroke_elements.iter().enumerate() {
-            if key_stroke_index < element_head_key_stroke_index + element.chars().count() {
-                element_index = i;
-                break;
-            }
-
-            element_head_key_stroke_index += element.chars().count();
-        }
-
-        element_index
+        self.key_stroke
+            .belonging_element_index_of_key_stroke(key_stroke_index)
+            .unwrap()
     }
 
     /// Returns if passed key stroke index is at the end of key stroke element.
     pub(crate) fn is_element_end_at_key_stroke_index(&self, key_stroke_index: usize) -> bool {
         assert!(key_stroke_index < self.calc_key_stroke_count());
 
-        let mut element_head_key_stroke_index_index = 0;
-
-        for element in &self.key_stroke_elements {
-            let element_len = element.chars().count();
-
-            if key_stroke_index == (element_head_key_stroke_index_index + element_len - 1) {
-                return true;
-            }
-            element_head_key_stroke_index_index += element_len;
-        }
-
-        false
+        self.key_stroke
+            .is_element_end_at_key_stroke_index(key_stroke_index)
+            .unwrap()
     }
 
     /// Returns whole key stroke string of this candidate.
     pub(crate) fn whole_key_stroke(&self) -> KeyStrokeString {
-        let mut s = String::new();
-
-        for key_stroke in &self.key_stroke_elements {
-            s.push_str(key_stroke);
-        }
-
-        s.try_into().unwrap()
+        self.key_stroke.whole_key_stroke()
     }
 
     /// Returns key stroke element count of this candidate.
     pub(crate) fn construct_key_stroke_element_count(&self) -> KeyStrokeElementCount {
-        KeyStrokeElementCount::new(
-            &(self
-                .key_stroke_elements
-                .iter()
-                .map(|s| s.chars().count())
-                .collect::<Vec<usize>>()),
-        )
+        self.key_stroke.construct_key_stroke_element_count()
     }
 
     /// Return key stroke char at the passed position index.
@@ -203,31 +295,9 @@ impl ChunkKeyStrokeCandidate {
                 || self.is_delayed_confirmed_candidate()
         );
 
-        let mut new_key_stroke_elements: Vec<KeyStrokeString> = Vec::new();
+        self.key_stroke
+            .strict_key_stroke_count(key_stroke_count_striction);
 
-        let mut count = 0;
-        for key_stroke_element in &self.key_stroke_elements {
-            let count_of_element = key_stroke_element.chars().count();
-
-            if count + count_of_element > key_stroke_count_striction.get() {
-                let count_after_truncate = key_stroke_count_striction.get() - count;
-
-                let mut truncated = String::new();
-                for (i, c) in key_stroke_element.chars().enumerate() {
-                    if i < count_after_truncate {
-                        truncated.push(c);
-                    }
-                }
-
-                new_key_stroke_elements.push(truncated.try_into().unwrap());
-                break;
-            }
-
-            new_key_stroke_elements.push(key_stroke_element.clone());
-            count += count_of_element;
-        }
-
-        self.key_stroke_elements = new_key_stroke_elements;
         // この候補の属するチャンクが最後のチャンクであることを想定しているので次のチャンクへの制限はなくてもよい
         self.next_chunk_head_constraint.take();
         // 遅延確定候補は普通の候補にする必要がある
@@ -313,10 +383,7 @@ impl KeyStrokeElementCount {
 
     /// Returns whether double key stroke elements or not.
     pub(crate) fn is_double(&self) -> bool {
-        match self {
-            Self::Double(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Double(_))
     }
 
     /// 理想的なキーストローク・キーストロークの位置を綴りの位置に変換する

@@ -11,7 +11,7 @@ use crate::typing_engine::processed_chunk_info::SpellDisplayInfo;
 use crate::typing_primitive_types::chunk::key_stroke_candidate::KeyStrokeElementCount;
 use crate::typing_primitive_types::chunk::ChunkState;
 use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
-use crate::{gen_candidate, gen_chunk, gen_chunk_unprocessed};
+use crate::{gen_candidate, gen_candidate_key_stroke, gen_chunk, gen_chunk_unprocessed};
 
 #[test]
 fn stroke_key_1() {
@@ -20,30 +20,30 @@ fn stroke_key_1() {
         gen_chunk_unprocessed!(
             "う",
             vec![
-                gen_candidate!(["u"], true, None),
-                gen_candidate!(["wu"], true, None),
-                gen_candidate!(["whu"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("whu"), true, None)
             ],
-            gen_candidate!(["u"], true, None)
+            gen_candidate!(gen_candidate_key_stroke!("u"), true, None)
         ),
         gen_chunk_unprocessed!(
             "っ",
             vec![
-                gen_candidate!(["w"], true, None, 'w'),
-                gen_candidate!(["ltu"], true, None),
-                gen_candidate!(["xtu"], true, None),
-                gen_candidate!(["ltsu"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("w"), true, None, 'w'),
+                gen_candidate!(gen_candidate_key_stroke!("ltu"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("xtu"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ltsu"), true, None)
             ],
-            gen_candidate!(["w"], true, None, 'w')
+            gen_candidate!(gen_candidate_key_stroke!("w"), true, None, 'w')
         ),
         gen_chunk_unprocessed!(
             "う",
             vec![
-                gen_candidate!(["u"], true, None),
-                gen_candidate!(["wu"], true, None),
-                gen_candidate!(["whu"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("whu"), true, None)
             ],
-            gen_candidate!(["wu"], true, None)
+            gen_candidate!(gen_candidate_key_stroke!("wu"), true, None)
         ),
     ]);
 
@@ -54,30 +54,30 @@ fn stroke_key_1() {
                 gen_chunk_unprocessed!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], true, None),
-                        gen_candidate!(["wu"], true, None),
-                        gen_candidate!(["whu"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), true, None)
                     ],
-                    gen_candidate!(["u"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("u"), true, None)
                 ),
                 gen_chunk_unprocessed!(
                     "っ",
                     vec![
-                        gen_candidate!(["w"], true, None, 'w'),
-                        gen_candidate!(["ltu"], true, None),
-                        gen_candidate!(["xtu"], true, None),
-                        gen_candidate!(["ltsu"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("w"), true, None, 'w'),
+                        gen_candidate!(gen_candidate_key_stroke!("ltu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xtu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ltsu"), true, None)
                     ],
-                    gen_candidate!(["w"], true, None, 'w')
+                    gen_candidate!(gen_candidate_key_stroke!("w"), true, None, 'w')
                 ),
                 gen_chunk_unprocessed!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], true, None),
-                        gen_candidate!(["wu"], true, None),
-                        gen_candidate!(["whu"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), true, None)
                     ],
-                    gen_candidate!(["wu"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("wu"), true, None)
                 ),
             ]
             .into(),
@@ -114,21 +114,21 @@ fn stroke_key_1() {
                 gen_chunk_unprocessed!(
                     "っ",
                     vec![
-                        gen_candidate!(["w"], true, None, 'w'),
-                        gen_candidate!(["ltu"], true, None),
-                        gen_candidate!(["xtu"], true, None),
-                        gen_candidate!(["ltsu"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("w"), true, None, 'w'),
+                        gen_candidate!(gen_candidate_key_stroke!("ltu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xtu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ltsu"), true, None)
                     ],
-                    gen_candidate!(["w"], true, None, 'w')
+                    gen_candidate!(gen_candidate_key_stroke!("w"), true, None, 'w')
                 ),
                 gen_chunk_unprocessed!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], true, None),
-                        gen_candidate!(["wu"], true, None),
-                        gen_candidate!(["whu"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), true, None)
                     ],
-                    gen_candidate!(["wu"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("wu"), true, None)
                 ),
             ]
             .into(),
@@ -136,12 +136,12 @@ fn stroke_key_1() {
                 gen_chunk!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], true, Some(0)),
-                        gen_candidate!(["wu"], true, Some(0)),
-                        gen_candidate!(["whu"], true, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("u"), true, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), true, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), true, Some(0))
                     ],
                     ChunkState::Inflight,
-                    gen_candidate!(["u"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
                     []
                 )
                 .into()
@@ -175,24 +175,24 @@ fn stroke_key_1() {
             unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "う",
                 vec![
-                    gen_candidate!(["u"], true, None),
-                    gen_candidate!(["wu"], true, None),
-                    gen_candidate!(["whu"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("whu"), true, None)
                 ],
-                gen_candidate!(["wu"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("wu"), true, None)
             ),]
             .into(),
             inflight_chunk: Some(
                 gen_chunk!(
                     "っ",
                     vec![
-                        gen_candidate!(["w"], true, Some(0), 'w'),
-                        gen_candidate!(["ltu"], true, Some(0)),
-                        gen_candidate!(["xtu"], true, Some(0)),
-                        gen_candidate!(["ltsu"], true, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("w"), true, Some(0), 'w'),
+                        gen_candidate!(gen_candidate_key_stroke!("ltu"), true, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("xtu"), true, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("ltsu"), true, Some(0))
                     ],
                     ChunkState::Inflight,
-                    gen_candidate!(["w"], true, None, 'w'),
+                    gen_candidate!(gen_candidate_key_stroke!("w"), true, None, 'w'),
                     []
                 )
                 .into()
@@ -200,12 +200,12 @@ fn stroke_key_1() {
             confirmed_chunks: vec![gen_chunk!(
                 "う",
                 vec![
-                    gen_candidate!(["u"], true, Some(1)),
-                    gen_candidate!(["wu"], false, Some(0)),
-                    gen_candidate!(["whu"], false, Some(0))
+                    gen_candidate!(gen_candidate_key_stroke!("u"), true, Some(1)),
+                    gen_candidate!(gen_candidate_key_stroke!("wu"), false, Some(0)),
+                    gen_candidate!(gen_candidate_key_stroke!("whu"), false, Some(0))
                 ],
                 ChunkState::Confirmed,
-                gen_candidate!(["u"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
                 [ActualKeyStroke::new(
                     Duration::new(1, 0),
                     'u'.try_into().unwrap(),
@@ -242,12 +242,12 @@ fn stroke_key_1() {
                 gen_chunk!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], false, Some(0)),
-                        gen_candidate!(["wu"], true, Some(0)),
-                        gen_candidate!(["whu"], true, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("u"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), true, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), true, Some(0))
                     ],
                     ChunkState::Inflight,
-                    gen_candidate!(["wu"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
                     []
                 )
                 .into()
@@ -256,12 +256,12 @@ fn stroke_key_1() {
                 gen_chunk!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], true, Some(1)),
-                        gen_candidate!(["wu"], false, Some(0)),
-                        gen_candidate!(["whu"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("u"), true, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), false, Some(0))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["u"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
                     [ActualKeyStroke::new(
                         Duration::new(1, 0),
                         'u'.try_into().unwrap(),
@@ -271,13 +271,13 @@ fn stroke_key_1() {
                 gen_chunk!(
                     "っ",
                     vec![
-                        gen_candidate!(["w"], true, Some(1), 'w'),
-                        gen_candidate!(["ltu"], false, Some(0)),
-                        gen_candidate!(["xtu"], false, Some(0)),
-                        gen_candidate!(["ltsu"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("w"), true, Some(1), 'w'),
+                        gen_candidate!(gen_candidate_key_stroke!("ltu"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("xtu"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("ltsu"), false, Some(0))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["w"], true, None, 'w'),
+                    gen_candidate!(gen_candidate_key_stroke!("w"), true, None, 'w'),
                     [ActualKeyStroke::new(
                         Duration::new(2, 0),
                         'w'.try_into().unwrap(),
@@ -302,12 +302,12 @@ fn stroke_key_1() {
                 gen_chunk!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], false, Some(0)),
-                        gen_candidate!(["wu"], true, Some(1)),
-                        gen_candidate!(["whu"], true, Some(1))
+                        gen_candidate!(gen_candidate_key_stroke!("u"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), true, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), true, Some(1))
                     ],
                     ChunkState::Inflight,
-                    gen_candidate!(["wu"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
                     [ActualKeyStroke::new(
                         Duration::new(3, 0),
                         'w'.try_into().unwrap(),
@@ -320,12 +320,12 @@ fn stroke_key_1() {
                 gen_chunk!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], true, Some(1)),
-                        gen_candidate!(["wu"], false, Some(0)),
-                        gen_candidate!(["whu"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("u"), true, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), false, Some(0))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["u"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
                     [ActualKeyStroke::new(
                         Duration::new(1, 0),
                         'u'.try_into().unwrap(),
@@ -335,13 +335,13 @@ fn stroke_key_1() {
                 gen_chunk!(
                     "っ",
                     vec![
-                        gen_candidate!(["w"], true, Some(1), 'w'),
-                        gen_candidate!(["ltu"], false, Some(0)),
-                        gen_candidate!(["xtu"], false, Some(0)),
-                        gen_candidate!(["ltsu"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("w"), true, Some(1), 'w'),
+                        gen_candidate!(gen_candidate_key_stroke!("ltu"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("xtu"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("ltsu"), false, Some(0))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["w"], true, None, 'w'),
+                    gen_candidate!(gen_candidate_key_stroke!("w"), true, None, 'w'),
                     [ActualKeyStroke::new(
                         Duration::new(2, 0),
                         'w'.try_into().unwrap(),
@@ -380,12 +380,12 @@ fn stroke_key_1() {
                 gen_chunk!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], true, Some(1)),
-                        gen_candidate!(["wu"], false, Some(0)),
-                        gen_candidate!(["whu"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("u"), true, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), false, Some(0))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["u"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
                     [ActualKeyStroke::new(
                         Duration::new(1, 0),
                         'u'.try_into().unwrap(),
@@ -395,13 +395,13 @@ fn stroke_key_1() {
                 gen_chunk!(
                     "っ",
                     vec![
-                        gen_candidate!(["w"], true, Some(1), 'w'),
-                        gen_candidate!(["ltu"], false, Some(0)),
-                        gen_candidate!(["xtu"], false, Some(0)),
-                        gen_candidate!(["ltsu"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("w"), true, Some(1), 'w'),
+                        gen_candidate!(gen_candidate_key_stroke!("ltu"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("xtu"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("ltsu"), false, Some(0))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["w"], true, None, 'w'),
+                    gen_candidate!(gen_candidate_key_stroke!("w"), true, None, 'w'),
                     [ActualKeyStroke::new(
                         Duration::new(2, 0),
                         'w'.try_into().unwrap(),
@@ -411,12 +411,12 @@ fn stroke_key_1() {
                 gen_chunk!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], false, Some(0)),
-                        gen_candidate!(["wu"], true, Some(2)),
-                        gen_candidate!(["whu"], false, Some(1))
+                        gen_candidate!(gen_candidate_key_stroke!("u"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), true, Some(2)),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), false, Some(1))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["wu"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
                     [
                         ActualKeyStroke::new(Duration::new(3, 0), 'w'.try_into().unwrap(), true),
                         ActualKeyStroke::new(Duration::new(4, 0), 'u'.try_into().unwrap(), true)
@@ -432,11 +432,11 @@ fn stroke_key_1() {
     let statistical_events = pci.append_chunks(vec![gen_chunk_unprocessed!(
         "う",
         vec![
-            gen_candidate!(["u"], true, None),
-            gen_candidate!(["wu"], true, None),
-            gen_candidate!(["whu"], true, None)
+            gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
+            gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
+            gen_candidate!(gen_candidate_key_stroke!("whu"), true, None)
         ],
-        gen_candidate!(["u"], true, None)
+        gen_candidate!(gen_candidate_key_stroke!("u"), true, None)
     )]);
 
     assert_eq!(
@@ -455,12 +455,12 @@ fn stroke_key_1() {
                 gen_chunk!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], true, Some(0)),
-                        gen_candidate!(["wu"], true, Some(0)),
-                        gen_candidate!(["whu"], true, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("u"), true, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), true, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), true, Some(0))
                     ],
                     ChunkState::Inflight,
-                    gen_candidate!(["u"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
                     []
                 )
                 .into()
@@ -469,12 +469,12 @@ fn stroke_key_1() {
                 gen_chunk!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], true, Some(1)),
-                        gen_candidate!(["wu"], false, Some(0)),
-                        gen_candidate!(["whu"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("u"), true, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), false, Some(0))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["u"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
                     [ActualKeyStroke::new(
                         Duration::new(1, 0),
                         'u'.try_into().unwrap(),
@@ -484,13 +484,13 @@ fn stroke_key_1() {
                 gen_chunk!(
                     "っ",
                     vec![
-                        gen_candidate!(["w"], true, Some(1), 'w'),
-                        gen_candidate!(["ltu"], false, Some(0)),
-                        gen_candidate!(["xtu"], false, Some(0)),
-                        gen_candidate!(["ltsu"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("w"), true, Some(1), 'w'),
+                        gen_candidate!(gen_candidate_key_stroke!("ltu"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("xtu"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("ltsu"), false, Some(0))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["w"], true, None, 'w'),
+                    gen_candidate!(gen_candidate_key_stroke!("w"), true, None, 'w'),
                     [ActualKeyStroke::new(
                         Duration::new(2, 0),
                         'w'.try_into().unwrap(),
@@ -500,12 +500,12 @@ fn stroke_key_1() {
                 gen_chunk!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], false, Some(0)),
-                        gen_candidate!(["wu"], true, Some(2)),
-                        gen_candidate!(["whu"], false, Some(1))
+                        gen_candidate!(gen_candidate_key_stroke!("u"), false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), true, Some(2)),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), false, Some(1))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["wu"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
                     [
                         ActualKeyStroke::new(Duration::new(3, 0), 'w'.try_into().unwrap(), true),
                         ActualKeyStroke::new(Duration::new(4, 0), 'u'.try_into().unwrap(), true)
@@ -524,24 +524,24 @@ fn stroke_key_2() {
         gen_chunk_unprocessed!(
             "か",
             vec![
-                gen_candidate!(["ka"], true, None),
-                gen_candidate!(["ca"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ca"), true, None),
             ],
-            gen_candidate!(["ka"], true, None)
+            gen_candidate!(gen_candidate_key_stroke!("ka"), true, None)
         ),
         gen_chunk_unprocessed!(
             "ん",
             vec![
-                gen_candidate!(["n"], true, None, ['k']),
-                gen_candidate!(["nn"], true, None),
-                gen_candidate!(["xn"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
+                gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
             ],
-            gen_candidate!(["n"], true, None, ['k'])
+            gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k'])
         ),
         gen_chunk_unprocessed!(
             "き",
-            vec![gen_candidate!(["ki"], true, None),],
-            gen_candidate!(["ki"], true, None)
+            vec![gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),],
+            gen_candidate!(gen_candidate_key_stroke!("ki"), true, None)
         ),
     ]);
 
@@ -552,24 +552,24 @@ fn stroke_key_2() {
                 gen_chunk_unprocessed!(
                     "か",
                     vec![
-                        gen_candidate!(["ka"], true, None),
-                        gen_candidate!(["ca"], true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ca"), true, None),
                     ],
-                    gen_candidate!(["ka"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, None)
                 ),
                 gen_chunk_unprocessed!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, None, ['k']),
-                        gen_candidate!(["nn"], true, None),
-                        gen_candidate!(["xn"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
                     ],
-                    gen_candidate!(["n"], true, None, ['k'])
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k'])
                 ),
                 gen_chunk_unprocessed!(
                     "き",
-                    vec![gen_candidate!(["ki"], true, None),],
-                    gen_candidate!(["ki"], true, None)
+                    vec![gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),],
+                    gen_candidate!(gen_candidate_key_stroke!("ki"), true, None)
                 ),
             ]
             .into(),
@@ -606,16 +606,16 @@ fn stroke_key_2() {
                 gen_chunk_unprocessed!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, None, ['k']),
-                        gen_candidate!(["nn"], true, None),
-                        gen_candidate!(["xn"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
                     ],
-                    gen_candidate!(["n"], true, None, ['k'])
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k'])
                 ),
                 gen_chunk_unprocessed!(
                     "き",
-                    vec![gen_candidate!(["ki"], true, None),],
-                    gen_candidate!(["ki"], true, None)
+                    vec![gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),],
+                    gen_candidate!(gen_candidate_key_stroke!("ki"), true, None)
                 ),
             ]
             .into(),
@@ -623,11 +623,11 @@ fn stroke_key_2() {
                 gen_chunk!(
                     "か",
                     vec![
-                        gen_candidate!(["ka"], true, Some(0)),
-                        gen_candidate!(["ca"], true, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("ca"), true, Some(0)),
                     ],
                     ChunkState::Inflight,
-                    gen_candidate!(["ka"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                     []
                 )
                 .into()
@@ -649,27 +649,27 @@ fn stroke_key_2() {
                 gen_chunk_unprocessed!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, None, ['k']),
-                        gen_candidate!(["nn"], true, None),
-                        gen_candidate!(["xn"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
                     ],
-                    gen_candidate!(["n"], true, None, ['k'])
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k'])
                 ),
                 gen_chunk_unprocessed!(
                     "き",
-                    vec![gen_candidate!(["ki"], true, None),],
-                    gen_candidate!(["ki"], true, None)
+                    vec![gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),],
+                    gen_candidate!(gen_candidate_key_stroke!("ki"), true, None)
                 ),
             ]
             .into(),
             inflight_chunk: Some(gen_chunk!(
                 "か",
                 vec![
-                    gen_candidate!(["ka"], true, Some(1)),
-                    gen_candidate!(["ca"], false, Some(0)),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(1)),
+                    gen_candidate!(gen_candidate_key_stroke!("ca"), false, Some(0)),
                 ],
                 ChunkState::Inflight,
-                gen_candidate!(["ka"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                 [ActualKeyStroke::new(
                     Duration::new(1, 0),
                     'k'.try_into().unwrap(),
@@ -704,20 +704,20 @@ fn stroke_key_2() {
         ProcessedChunkInfo {
             unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "き",
-                vec![gen_candidate!(["ki"], true, None),],
-                gen_candidate!(["ki"], true, None)
+                vec![gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),],
+                gen_candidate!(gen_candidate_key_stroke!("ki"), true, None)
             ),]
             .into(),
             inflight_chunk: Some(
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, Some(0), ['k']),
-                        gen_candidate!(["nn"], true, Some(0)),
-                        gen_candidate!(["xn"], true, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, Some(0), ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, Some(0))
                     ],
                     ChunkState::Inflight,
-                    gen_candidate!(["n"], true, None, ['k']),
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
                     []
                 )
                 .into()
@@ -725,11 +725,11 @@ fn stroke_key_2() {
             confirmed_chunks: vec![gen_chunk!(
                 "か",
                 vec![
-                    gen_candidate!(["ka"], true, Some(2)),
-                    gen_candidate!(["ca"], false, Some(0)),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(2)),
+                    gen_candidate!(gen_candidate_key_stroke!("ca"), false, Some(0)),
                 ],
                 ChunkState::Confirmed,
-                gen_candidate!(["ka"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                 [
                     ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                     ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
@@ -749,20 +749,20 @@ fn stroke_key_2() {
         ProcessedChunkInfo {
             unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "き",
-                vec![gen_candidate!(["ki"], true, None),],
-                gen_candidate!(["ki"], true, None)
+                vec![gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),],
+                gen_candidate!(gen_candidate_key_stroke!("ki"), true, None)
             ),]
             .into(),
             inflight_chunk: Some(
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, Some(1), ['k']),
-                        gen_candidate!(["nn"], true, Some(1)),
-                        gen_candidate!(["xn"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, Some(1), ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                     ],
                     ChunkState::Inflight,
-                    gen_candidate!(["n"], true, None, ['k']),
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
                     [ActualKeyStroke::new(
                         Duration::new(3, 0),
                         'n'.try_into().unwrap(),
@@ -774,11 +774,11 @@ fn stroke_key_2() {
             confirmed_chunks: vec![gen_chunk!(
                 "か",
                 vec![
-                    gen_candidate!(["ka"], true, Some(2)),
-                    gen_candidate!(["ca"], false, Some(0)),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(2)),
+                    gen_candidate!(gen_candidate_key_stroke!("ca"), false, Some(0)),
                 ],
                 ChunkState::Confirmed,
-                gen_candidate!(["ka"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                 [
                     ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                     ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
@@ -799,20 +799,20 @@ fn stroke_key_2() {
         ProcessedChunkInfo {
             unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "き",
-                vec![gen_candidate!(["ki"], true, None),],
-                gen_candidate!(["ki"], true, None)
+                vec![gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),],
+                gen_candidate!(gen_candidate_key_stroke!("ki"), true, None)
             ),]
             .into(),
             inflight_chunk: Some(
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, Some(1), ['k']),
-                        gen_candidate!(["nn"], true, Some(1)),
-                        gen_candidate!(["xn"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, Some(1), ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                     ],
                     ChunkState::Inflight,
-                    gen_candidate!(["n"], true, None, ['k']),
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
                     [ActualKeyStroke::new(
                         Duration::new(3, 0),
                         'n'.try_into().unwrap(),
@@ -824,11 +824,11 @@ fn stroke_key_2() {
             confirmed_chunks: vec![gen_chunk!(
                 "か",
                 vec![
-                    gen_candidate!(["ka"], true, Some(2)),
-                    gen_candidate!(["ca"], false, Some(0)),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(2)),
+                    gen_candidate!(gen_candidate_key_stroke!("ca"), false, Some(0)),
                 ],
                 ChunkState::Confirmed,
-                gen_candidate!(["ka"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                 [
                     ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                     ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
@@ -867,9 +867,13 @@ fn stroke_key_2() {
             unprocessed_chunks: vec![].into(),
             inflight_chunk: Some(gen_chunk!(
                 "き",
-                vec![gen_candidate!(["ki"], true, Some(1)),],
+                vec![gen_candidate!(
+                    gen_candidate_key_stroke!("ki"),
+                    true,
+                    Some(1)
+                ),],
                 ChunkState::Inflight,
-                gen_candidate!(["ki"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),
                 [
                     ActualKeyStroke::new(Duration::new(4, 0), 'j'.try_into().unwrap(), false),
                     ActualKeyStroke::new(Duration::new(5, 0), 'k'.try_into().unwrap(), true)
@@ -879,11 +883,11 @@ fn stroke_key_2() {
                 gen_chunk!(
                     "か",
                     vec![
-                        gen_candidate!(["ka"], true, Some(2)),
-                        gen_candidate!(["ca"], false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(2)),
+                        gen_candidate!(gen_candidate_key_stroke!("ca"), false, Some(0)),
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["ka"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                     [
                         ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                         ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
@@ -892,12 +896,12 @@ fn stroke_key_2() {
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, Some(1), ['k']),
-                        gen_candidate!(["nn"], false, Some(1)),
-                        gen_candidate!(["xn"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, Some(1), ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), false, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["n"], true, None, ['k']),
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
                     [ActualKeyStroke::new(
                         Duration::new(3, 0),
                         'n'.try_into().unwrap(),
@@ -936,11 +940,11 @@ fn stroke_key_2() {
                 gen_chunk!(
                     "か",
                     vec![
-                        gen_candidate!(["ka"], true, Some(2)),
-                        gen_candidate!(["ca"], false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(2)),
+                        gen_candidate!(gen_candidate_key_stroke!("ca"), false, Some(0)),
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["ka"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                     [
                         ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                         ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
@@ -949,12 +953,12 @@ fn stroke_key_2() {
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, Some(1), ['k']),
-                        gen_candidate!(["nn"], false, Some(1)),
-                        gen_candidate!(["xn"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, Some(1), ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), false, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["n"], true, None, ['k']),
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
                     [ActualKeyStroke::new(
                         Duration::new(3, 0),
                         'n'.try_into().unwrap(),
@@ -963,9 +967,13 @@ fn stroke_key_2() {
                 ),
                 gen_chunk!(
                     "き",
-                    vec![gen_candidate!(["ki"], true, Some(2)),],
+                    vec![gen_candidate!(
+                        gen_candidate_key_stroke!("ki"),
+                        true,
+                        Some(2)
+                    ),],
                     ChunkState::Confirmed,
-                    gen_candidate!(["ki"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),
                     [
                         ActualKeyStroke::new(Duration::new(4, 0), 'j'.try_into().unwrap(), false),
                         ActualKeyStroke::new(Duration::new(5, 0), 'k'.try_into().unwrap(), true),
@@ -987,24 +995,24 @@ fn stroke_key_3() {
         gen_chunk_unprocessed!(
             "か",
             vec![
-                gen_candidate!(["ka"], true, None),
-                gen_candidate!(["ca"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ca"), true, None),
             ],
-            gen_candidate!(["ka"], true, None)
+            gen_candidate!(gen_candidate_key_stroke!("ka"), true, None)
         ),
         gen_chunk_unprocessed!(
             "ん",
             vec![
-                gen_candidate!(["n"], true, None, ['k']),
-                gen_candidate!(["nn"], true, None),
-                gen_candidate!(["xn"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
+                gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
             ],
-            gen_candidate!(["n"], true, None, ['k'])
+            gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k'])
         ),
         gen_chunk_unprocessed!(
             "き",
-            vec![gen_candidate!(["ki"], true, None),],
-            gen_candidate!(["ki"], true, None)
+            vec![gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),],
+            gen_candidate!(gen_candidate_key_stroke!("ki"), true, None)
         ),
     ]);
 
@@ -1015,24 +1023,24 @@ fn stroke_key_3() {
                 gen_chunk_unprocessed!(
                     "か",
                     vec![
-                        gen_candidate!(["ka"], true, None),
-                        gen_candidate!(["ca"], true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ca"), true, None),
                     ],
-                    gen_candidate!(["ka"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, None)
                 ),
                 gen_chunk_unprocessed!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, None, ['k']),
-                        gen_candidate!(["nn"], true, None),
-                        gen_candidate!(["xn"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
                     ],
-                    gen_candidate!(["n"], true, None, ['k'])
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k'])
                 ),
                 gen_chunk_unprocessed!(
                     "き",
-                    vec![gen_candidate!(["ki"], true, None),],
-                    gen_candidate!(["ki"], true, None)
+                    vec![gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),],
+                    gen_candidate!(gen_candidate_key_stroke!("ki"), true, None)
                 ),
             ]
             .into(),
@@ -1069,16 +1077,16 @@ fn stroke_key_3() {
                 gen_chunk_unprocessed!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, None, ['k']),
-                        gen_candidate!(["nn"], true, None),
-                        gen_candidate!(["xn"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
                     ],
-                    gen_candidate!(["n"], true, None, ['k'])
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k'])
                 ),
                 gen_chunk_unprocessed!(
                     "き",
-                    vec![gen_candidate!(["ki"], true, None),],
-                    gen_candidate!(["ki"], true, None)
+                    vec![gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),],
+                    gen_candidate!(gen_candidate_key_stroke!("ki"), true, None)
                 ),
             ]
             .into(),
@@ -1086,11 +1094,11 @@ fn stroke_key_3() {
                 gen_chunk!(
                     "か",
                     vec![
-                        gen_candidate!(["ka"], true, Some(0)),
-                        gen_candidate!(["ca"], true, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("ca"), true, Some(0)),
                     ],
                     ChunkState::Inflight,
-                    gen_candidate!(["ka"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                     []
                 )
                 .into()
@@ -1112,27 +1120,27 @@ fn stroke_key_3() {
                 gen_chunk_unprocessed!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, None, ['k']),
-                        gen_candidate!(["nn"], true, None),
-                        gen_candidate!(["xn"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
                     ],
-                    gen_candidate!(["n"], true, None, ['k'])
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k'])
                 ),
                 gen_chunk_unprocessed!(
                     "き",
-                    vec![gen_candidate!(["ki"], true, None),],
-                    gen_candidate!(["ki"], true, None)
+                    vec![gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),],
+                    gen_candidate!(gen_candidate_key_stroke!("ki"), true, None)
                 ),
             ]
             .into(),
             inflight_chunk: Some(gen_chunk!(
                 "か",
                 vec![
-                    gen_candidate!(["ka"], true, Some(1)),
-                    gen_candidate!(["ca"], false, Some(0)),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(1)),
+                    gen_candidate!(gen_candidate_key_stroke!("ca"), false, Some(0)),
                 ],
                 ChunkState::Inflight,
-                gen_candidate!(["ka"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                 [ActualKeyStroke::new(
                     Duration::new(1, 0),
                     'k'.try_into().unwrap(),
@@ -1167,20 +1175,20 @@ fn stroke_key_3() {
         ProcessedChunkInfo {
             unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "き",
-                vec![gen_candidate!(["ki"], true, None),],
-                gen_candidate!(["ki"], true, None)
+                vec![gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),],
+                gen_candidate!(gen_candidate_key_stroke!("ki"), true, None)
             ),]
             .into(),
             inflight_chunk: Some(
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, Some(0), ['k']),
-                        gen_candidate!(["nn"], true, Some(0)),
-                        gen_candidate!(["xn"], true, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, Some(0), ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, Some(0))
                     ],
                     ChunkState::Inflight,
-                    gen_candidate!(["n"], true, None, ['k']),
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
                     []
                 )
                 .into()
@@ -1188,11 +1196,11 @@ fn stroke_key_3() {
             confirmed_chunks: vec![gen_chunk!(
                 "か",
                 vec![
-                    gen_candidate!(["ka"], true, Some(2)),
-                    gen_candidate!(["ca"], false, Some(0)),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(2)),
+                    gen_candidate!(gen_candidate_key_stroke!("ca"), false, Some(0)),
                 ],
                 ChunkState::Confirmed,
-                gen_candidate!(["ka"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                 [
                     ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                     ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
@@ -1212,20 +1220,20 @@ fn stroke_key_3() {
         ProcessedChunkInfo {
             unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "き",
-                vec![gen_candidate!(["ki"], true, None),],
-                gen_candidate!(["ki"], true, None)
+                vec![gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),],
+                gen_candidate!(gen_candidate_key_stroke!("ki"), true, None)
             ),]
             .into(),
             inflight_chunk: Some(
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, Some(1), ['k']),
-                        gen_candidate!(["nn"], true, Some(1)),
-                        gen_candidate!(["xn"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, Some(1), ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                     ],
                     ChunkState::Inflight,
-                    gen_candidate!(["n"], true, None, ['k']),
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
                     [ActualKeyStroke::new(
                         Duration::new(3, 0),
                         'n'.try_into().unwrap(),
@@ -1237,11 +1245,11 @@ fn stroke_key_3() {
             confirmed_chunks: vec![gen_chunk!(
                 "か",
                 vec![
-                    gen_candidate!(["ka"], true, Some(2)),
-                    gen_candidate!(["ca"], false, Some(0)),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(2)),
+                    gen_candidate!(gen_candidate_key_stroke!("ca"), false, Some(0)),
                 ],
                 ChunkState::Confirmed,
-                gen_candidate!(["ka"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                 [
                     ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                     ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
@@ -1262,20 +1270,20 @@ fn stroke_key_3() {
         ProcessedChunkInfo {
             unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "き",
-                vec![gen_candidate!(["ki"], true, None),],
-                gen_candidate!(["ki"], true, None)
+                vec![gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),],
+                gen_candidate!(gen_candidate_key_stroke!("ki"), true, None)
             ),]
             .into(),
             inflight_chunk: Some(
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, Some(1), ['k']),
-                        gen_candidate!(["nn"], true, Some(1)),
-                        gen_candidate!(["xn"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, Some(1), ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                     ],
                     ChunkState::Inflight,
-                    gen_candidate!(["n"], true, None, ['k']),
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
                     [ActualKeyStroke::new(
                         Duration::new(3, 0),
                         'n'.try_into().unwrap(),
@@ -1287,11 +1295,11 @@ fn stroke_key_3() {
             confirmed_chunks: vec![gen_chunk!(
                 "か",
                 vec![
-                    gen_candidate!(["ka"], true, Some(2)),
-                    gen_candidate!(["ca"], false, Some(0)),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(2)),
+                    gen_candidate!(gen_candidate_key_stroke!("ca"), false, Some(0)),
                 ],
                 ChunkState::Confirmed,
-                gen_candidate!(["ka"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                 [
                     ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                     ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
@@ -1331,9 +1339,13 @@ fn stroke_key_3() {
             inflight_chunk: Some(
                 gen_chunk!(
                     "き",
-                    vec![gen_candidate!(["ki"], true, Some(0)),],
+                    vec![gen_candidate!(
+                        gen_candidate_key_stroke!("ki"),
+                        true,
+                        Some(0)
+                    ),],
                     ChunkState::Inflight,
-                    gen_candidate!(["ki"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),
                     []
                 )
                 .into()
@@ -1342,11 +1354,11 @@ fn stroke_key_3() {
                 gen_chunk!(
                     "か",
                     vec![
-                        gen_candidate!(["ka"], true, Some(2)),
-                        gen_candidate!(["ca"], false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(2)),
+                        gen_candidate!(gen_candidate_key_stroke!("ca"), false, Some(0)),
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["ka"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                     [
                         ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                         ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
@@ -1355,12 +1367,12 @@ fn stroke_key_3() {
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], false, Some(1), ['k']),
-                        gen_candidate!(["nn"], true, Some(2)),
-                        gen_candidate!(["xn"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("n"), false, Some(1), ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, Some(2)),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["n"], true, None, ['k']),
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
                     [
                         ActualKeyStroke::new(Duration::new(3, 0), 'n'.try_into().unwrap(), true),
                         ActualKeyStroke::new(Duration::new(4, 0), 'j'.try_into().unwrap(), false),
@@ -1383,9 +1395,13 @@ fn stroke_key_3() {
             unprocessed_chunks: vec![].into(),
             inflight_chunk: Some(gen_chunk!(
                 "き",
-                vec![gen_candidate!(["ki"], true, Some(1)),],
+                vec![gen_candidate!(
+                    gen_candidate_key_stroke!("ki"),
+                    true,
+                    Some(1)
+                ),],
                 ChunkState::Inflight,
-                gen_candidate!(["ki"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),
                 [ActualKeyStroke::new(
                     Duration::new(6, 0),
                     'k'.try_into().unwrap(),
@@ -1396,11 +1412,11 @@ fn stroke_key_3() {
                 gen_chunk!(
                     "か",
                     vec![
-                        gen_candidate!(["ka"], true, Some(2)),
-                        gen_candidate!(["ca"], false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(2)),
+                        gen_candidate!(gen_candidate_key_stroke!("ca"), false, Some(0)),
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["ka"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                     [
                         ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                         ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
@@ -1409,12 +1425,12 @@ fn stroke_key_3() {
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], false, Some(1), ['k']),
-                        gen_candidate!(["nn"], true, Some(2)),
-                        gen_candidate!(["xn"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("n"), false, Some(1), ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, Some(2)),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["n"], true, None, ['k']),
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
                     [
                         ActualKeyStroke::new(Duration::new(3, 0), 'n'.try_into().unwrap(), true),
                         ActualKeyStroke::new(Duration::new(4, 0), 'j'.try_into().unwrap(), false),
@@ -1453,11 +1469,11 @@ fn stroke_key_3() {
                 gen_chunk!(
                     "か",
                     vec![
-                        gen_candidate!(["ka"], true, Some(2)),
-                        gen_candidate!(["ca"], false, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("ka"), true, Some(2)),
+                        gen_candidate!(gen_candidate_key_stroke!("ca"), false, Some(0)),
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["ka"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
                     [
                         ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                         ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
@@ -1466,12 +1482,12 @@ fn stroke_key_3() {
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], false, Some(1), ['k']),
-                        gen_candidate!(["nn"], true, Some(2)),
-                        gen_candidate!(["xn"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("n"), false, Some(1), ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, Some(2)),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["n"], true, None, ['k']),
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['k']),
                     [
                         ActualKeyStroke::new(Duration::new(3, 0), 'n'.try_into().unwrap(), true),
                         ActualKeyStroke::new(Duration::new(4, 0), 'j'.try_into().unwrap(), false),
@@ -1480,9 +1496,13 @@ fn stroke_key_3() {
                 ),
                 gen_chunk!(
                     "き",
-                    vec![gen_candidate!(["ki"], true, Some(2)),],
+                    vec![gen_candidate!(
+                        gen_candidate_key_stroke!("ki"),
+                        true,
+                        Some(2)
+                    ),],
                     ChunkState::Confirmed,
-                    gen_candidate!(["ki"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("ki"), true, None),
                     [
                         ActualKeyStroke::new(Duration::new(6, 0), 'k'.try_into().unwrap(), true),
                         ActualKeyStroke::new(Duration::new(7, 0), 'i'.try_into().unwrap(), true)
@@ -1503,16 +1523,16 @@ fn stroke_key_4() {
         gen_chunk_unprocessed!(
             "ん",
             vec![
-                gen_candidate!(["n"], true, None, ['p']),
-                gen_candidate!(["nn"], true, None),
-                gen_candidate!(["xn"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['p']),
+                gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
             ],
-            gen_candidate!(["n"], true, None, ['p'])
+            gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['p'])
         ),
         gen_chunk_unprocessed!(
             "ぴ",
-            vec![gen_candidate!(["p"], true, None),],
-            gen_candidate!(["p"], true, None)
+            vec![gen_candidate!(gen_candidate_key_stroke!("p"), true, None),],
+            gen_candidate!(gen_candidate_key_stroke!("p"), true, None)
         ),
     ]);
 
@@ -1523,16 +1543,16 @@ fn stroke_key_4() {
                 gen_chunk_unprocessed!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, None, ['p']),
-                        gen_candidate!(["nn"], true, None),
-                        gen_candidate!(["xn"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['p']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
                     ],
-                    gen_candidate!(["n"], true, None, ['p'])
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['p'])
                 ),
                 gen_chunk_unprocessed!(
                     "ぴ",
-                    vec![gen_candidate!(["p"], true, None),],
-                    gen_candidate!(["p"], true, None)
+                    vec![gen_candidate!(gen_candidate_key_stroke!("p"), true, None),],
+                    gen_candidate!(gen_candidate_key_stroke!("p"), true, None)
                 ),
             ]
             .into(),
@@ -1563,20 +1583,20 @@ fn stroke_key_4() {
         ProcessedChunkInfo {
             unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "ぴ",
-                vec![gen_candidate!(["p"], true, None),],
-                gen_candidate!(["p"], true, None)
+                vec![gen_candidate!(gen_candidate_key_stroke!("p"), true, None),],
+                gen_candidate!(gen_candidate_key_stroke!("p"), true, None)
             ),]
             .into(),
             inflight_chunk: Some(
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, Some(0), ['p']),
-                        gen_candidate!(["nn"], true, Some(0)),
-                        gen_candidate!(["xn"], true, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, Some(0), ['p']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, Some(0)),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, Some(0))
                     ],
                     ChunkState::Inflight,
-                    gen_candidate!(["n"], true, None, ['p']),
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['p']),
                     []
                 )
                 .into()
@@ -1596,19 +1616,19 @@ fn stroke_key_4() {
         ProcessedChunkInfo {
             unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "ぴ",
-                vec![gen_candidate!(["p"], true, None),],
-                gen_candidate!(["p"], true, None)
+                vec![gen_candidate!(gen_candidate_key_stroke!("p"), true, None),],
+                gen_candidate!(gen_candidate_key_stroke!("p"), true, None)
             ),]
             .into(),
             inflight_chunk: Some(gen_chunk!(
                 "ん",
                 vec![
-                    gen_candidate!(["n"], true, Some(1), ['p']),
-                    gen_candidate!(["nn"], true, Some(1)),
-                    gen_candidate!(["xn"], false, Some(0))
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, Some(1), ['p']),
+                    gen_candidate!(gen_candidate_key_stroke!("nn"), true, Some(1)),
+                    gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                 ],
                 ChunkState::Inflight,
-                gen_candidate!(["n"], true, None, ['p']),
+                gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['p']),
                 [ActualKeyStroke::new(
                     Duration::new(1, 0),
                     'n'.try_into().unwrap(),
@@ -1656,12 +1676,12 @@ fn stroke_key_4() {
                 gen_chunk!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, Some(1), ['p']),
-                        gen_candidate!(["nn"], false, Some(1)),
-                        gen_candidate!(["xn"], false, Some(0))
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, Some(1), ['p']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), false, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["n"], true, None, ['p']),
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['p']),
                     [ActualKeyStroke::new(
                         Duration::new(1, 0),
                         'n'.try_into().unwrap(),
@@ -1670,9 +1690,13 @@ fn stroke_key_4() {
                 ),
                 gen_chunk!(
                     "ぴ",
-                    vec![gen_candidate!(["p"], true, Some(1)),],
+                    vec![gen_candidate!(
+                        gen_candidate_key_stroke!("p"),
+                        true,
+                        Some(1)
+                    ),],
                     ChunkState::Confirmed,
-                    gen_candidate!(["p"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("p"), true, None),
                     [ActualKeyStroke::new(
                         Duration::new(2, 0),
                         'p'.try_into().unwrap(),
@@ -1694,37 +1718,37 @@ fn construct_display_info_1() {
         gen_chunk_unprocessed!(
             "きょ",
             vec![
-                gen_candidate!(["kyo"], true, None),
-                gen_candidate!(["ki", "lyo"], true, None),
-                gen_candidate!(["ki", "xyo"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"]), true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]), true, None)
             ],
-            gen_candidate!(["kyo"], true, None)
+            gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, None)
         ),
         gen_chunk_unprocessed!(
             "きょ",
             vec![
-                gen_candidate!(["kyo"], true, None),
-                gen_candidate!(["ki", "lyo"], true, None),
-                gen_candidate!(["ki", "xyo"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"]), true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]), true, None)
             ],
-            gen_candidate!(["kyo"], true, None)
+            gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, None)
         ),
         gen_chunk_unprocessed!(
             "きょ",
             vec![
-                gen_candidate!(["kyo"], true, None),
-                gen_candidate!(["ki", "lyo"], true, None),
-                gen_candidate!(["ki", "xyo"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"]), true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]), true, None)
             ],
-            gen_candidate!(["kyo"], true, None)
+            gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, None)
         ),
         gen_chunk_unprocessed!(
             "きょ",
             vec![
-                gen_candidate!(["ky"], true, None),
-                gen_candidate!(["ki"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["ky"]), true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["ki"]), true, None),
             ],
-            gen_candidate!(["ky"], true, None)
+            gen_candidate!(gen_candidate_key_stroke!(["ky"]), true, None)
         ),
     ]);
 
@@ -1825,21 +1849,21 @@ fn construct_display_info_1() {
             unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "きょ",
                 vec![
-                    gen_candidate!(["ky"], true, None),
-                    gen_candidate!(["ki"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!(["ky"]), true, None),
+                    gen_candidate!(gen_candidate_key_stroke!(["ki"]), true, None),
                 ],
-                gen_candidate!(["ky"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!(["ky"]), true, None)
             ),]
             .into(),
             inflight_chunk: Some(gen_chunk!(
                 "きょ",
                 vec![
-                    gen_candidate!(["kyo"], true, Some(1)),
-                    gen_candidate!(["ki", "lyo"], true, Some(1)),
-                    gen_candidate!(["ki", "xyo"], true, Some(1)),
+                    gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, Some(1)),
+                    gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"]), true, Some(1)),
+                    gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]), true, Some(1)),
                 ],
                 ChunkState::Inflight,
-                gen_candidate!(["kyo"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, None),
                 [
                     ActualKeyStroke::new(Duration::new(11, 0), 'c'.try_into().unwrap(), false),
                     ActualKeyStroke::new(Duration::new(12, 0), 'k'.try_into().unwrap(), true)
@@ -1849,12 +1873,12 @@ fn construct_display_info_1() {
                 gen_chunk!(
                     "きょ",
                     vec![
-                        gen_candidate!(["kyo"], true, Some(3)),
-                        gen_candidate!(["ki", "lyo"], false, Some(1)),
-                        gen_candidate!(["ki", "xyo"], false, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, Some(3)),
+                        gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"]), false, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]), false, Some(1)),
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["kyo"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, None),
                     [
                         ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                         ActualKeyStroke::new(Duration::new(2, 0), 'u'.try_into().unwrap(), false),
@@ -1865,12 +1889,12 @@ fn construct_display_info_1() {
                 gen_chunk!(
                     "きょ",
                     vec![
-                        gen_candidate!(["kyo"], false, Some(1)),
-                        gen_candidate!(["ki", "lyo"], false, Some(2)),
-                        gen_candidate!(["ki", "xyo"], true, Some(5)),
+                        gen_candidate!(gen_candidate_key_stroke!(["kyo"]), false, Some(1)),
+                        gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"]), false, Some(2)),
+                        gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]), true, Some(5)),
                     ],
                     ChunkState::Confirmed,
-                    gen_candidate!(["kyo"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, None),
                     [
                         ActualKeyStroke::new(Duration::new(5, 0), 'k'.try_into().unwrap(), true),
                         ActualKeyStroke::new(Duration::new(6, 0), 'i'.try_into().unwrap(), true),
@@ -2015,19 +2039,19 @@ fn construct_display_info_2() {
         gen_chunk_unprocessed!(
             "ん",
             vec![
-                gen_candidate!(["n"], true, None, ['z', 'j']),
-                gen_candidate!(["nn"], true, None),
-                gen_candidate!(["xn"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['z', 'j']),
+                gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
             ],
-            gen_candidate!(["n"], true, None, ['z', 'j'])
+            gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['z', 'j'])
         ),
         gen_chunk_unprocessed!(
             "じ",
             vec![
-                gen_candidate!(["zi"], true, None),
-                gen_candidate!(["ji"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("zi"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ji"), true, None),
             ],
-            gen_candidate!(["zi"], true, None)
+            gen_candidate!(gen_candidate_key_stroke!("zi"), true, None)
         ),
     ]);
 
@@ -2068,21 +2092,21 @@ fn construct_display_info_2() {
             unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "じ",
                 vec![
-                    gen_candidate!(["zi"], true, None),
-                    gen_candidate!(["ji"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("zi"), true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("ji"), true, None),
                 ],
-                gen_candidate!(["zi"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("zi"), true, None)
             ),]
             .into(),
             inflight_chunk: Some(gen_chunk!(
                 "ん",
                 vec![
-                    gen_candidate!(["n"], true, Some(1), ['z', 'j']),
-                    gen_candidate!(["nn"], true, Some(1)),
-                    gen_candidate!(["xn"], false, Some(0))
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, Some(1), ['z', 'j']),
+                    gen_candidate!(gen_candidate_key_stroke!("nn"), true, Some(1)),
+                    gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                 ],
                 ChunkState::Inflight,
-                gen_candidate!(["n"], true, None, ['z', 'j']),
+                gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['z', 'j']),
                 [ActualKeyStroke::new(
                     Duration::new(1, 0),
                     'n'.try_into().unwrap(),
@@ -2206,11 +2230,11 @@ fn construct_display_info_2() {
             inflight_chunk: Some(gen_chunk!(
                 "じ",
                 vec![
-                    gen_candidate!(["zi"], false, Some(0)),
-                    gen_candidate!(["ji"], true, Some(1)),
+                    gen_candidate!(gen_candidate_key_stroke!("zi"), false, Some(0)),
+                    gen_candidate!(gen_candidate_key_stroke!("ji"), true, Some(1)),
                 ],
                 ChunkState::Inflight,
-                gen_candidate!(["zi"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("zi"), true, None),
                 [
                     ActualKeyStroke::new(Duration::new(2, 0), 'm'.try_into().unwrap(), false),
                     ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), true)
@@ -2219,12 +2243,12 @@ fn construct_display_info_2() {
             confirmed_chunks: vec![gen_chunk!(
                 "ん",
                 vec![
-                    gen_candidate!(["n"], true, Some(1), ['z', 'j']),
-                    gen_candidate!(["nn"], false, Some(1)),
-                    gen_candidate!(["xn"], false, Some(0))
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, Some(1), ['z', 'j']),
+                    gen_candidate!(gen_candidate_key_stroke!("nn"), false, Some(1)),
+                    gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                 ],
                 ChunkState::Confirmed,
-                gen_candidate!(["n"], true, None, ['z', 'j']),
+                gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['z', 'j']),
                 [ActualKeyStroke::new(
                     Duration::new(1, 0),
                     'n'.try_into().unwrap(),
@@ -2352,19 +2376,19 @@ fn construct_display_info_3() {
         gen_chunk_unprocessed!(
             "ん",
             vec![
-                gen_candidate!(["n"], true, None, ['z', 'j']),
-                gen_candidate!(["nn"], true, None),
-                gen_candidate!(["xn"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['z', 'j']),
+                gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
             ],
-            gen_candidate!(["n"], true, None, ['z', 'j'])
+            gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['z', 'j'])
         ),
         gen_chunk_unprocessed!(
             "じ",
             vec![
-                gen_candidate!(["zi"], true, None),
-                gen_candidate!(["ji"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("zi"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ji"), true, None),
             ],
-            gen_candidate!(["zi"], true, None)
+            gen_candidate!(gen_candidate_key_stroke!("zi"), true, None)
         ),
     ]);
 
@@ -2405,21 +2429,21 @@ fn construct_display_info_3() {
             unprocessed_chunks: vec![gen_chunk_unprocessed!(
                 "じ",
                 vec![
-                    gen_candidate!(["zi"], true, None),
-                    gen_candidate!(["ji"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("zi"), true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("ji"), true, None),
                 ],
-                gen_candidate!(["zi"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("zi"), true, None)
             ),]
             .into(),
             inflight_chunk: Some(gen_chunk!(
                 "ん",
                 vec![
-                    gen_candidate!(["n"], true, Some(1), ['z', 'j']),
-                    gen_candidate!(["nn"], true, Some(1)),
-                    gen_candidate!(["xn"], false, Some(0))
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, Some(1), ['z', 'j']),
+                    gen_candidate!(gen_candidate_key_stroke!("nn"), true, Some(1)),
+                    gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                 ],
                 ChunkState::Inflight,
-                gen_candidate!(["n"], true, None, ['z', 'j']),
+                gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['z', 'j']),
                 [ActualKeyStroke::new(
                     Duration::new(1, 0),
                     'n'.try_into().unwrap(),
@@ -2535,22 +2559,22 @@ fn construct_display_info_3() {
             inflight_chunk: Some(gen_chunk!(
                 "じ",
                 vec![
-                    gen_candidate!(["zi"], true, Some(0)),
-                    gen_candidate!(["ji"], true, Some(0)),
+                    gen_candidate!(gen_candidate_key_stroke!("zi"), true, Some(0)),
+                    gen_candidate!(gen_candidate_key_stroke!("ji"), true, Some(0)),
                 ],
                 ChunkState::Inflight,
-                gen_candidate!(["zi"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("zi"), true, None),
                 []
             ),),
             confirmed_chunks: vec![gen_chunk!(
                 "ん",
                 vec![
-                    gen_candidate!(["n"], false, Some(1), ['z', 'j']),
-                    gen_candidate!(["nn"], true, Some(2)),
-                    gen_candidate!(["xn"], false, Some(0))
+                    gen_candidate!(gen_candidate_key_stroke!("n"), false, Some(1), ['z', 'j']),
+                    gen_candidate!(gen_candidate_key_stroke!("nn"), true, Some(2)),
+                    gen_candidate!(gen_candidate_key_stroke!("xn"), false, Some(0))
                 ],
                 ChunkState::Confirmed,
-                gen_candidate!(["n"], true, None, ['z', 'j']),
+                gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['z', 'j']),
                 [
                     ActualKeyStroke::new(Duration::new(1, 0), 'n'.try_into().unwrap(), true),
                     ActualKeyStroke::new(Duration::new(2, 0), 'm'.try_into().unwrap(), false),
@@ -2678,35 +2702,35 @@ fn construct_display_info_4() {
     let (mut pci, statistical_events) = ProcessedChunkInfo::new(vec![
         gen_chunk_unprocessed!(
             "あ",
-            vec![gen_candidate!(["a"], true, None)],
-            gen_candidate!(["a"], true, None)
+            vec![gen_candidate!(gen_candidate_key_stroke!("a"), true, None)],
+            gen_candidate!(gen_candidate_key_stroke!("a"), true, None)
         ),
         gen_chunk_unprocessed!(
             "っ",
             vec![
-                gen_candidate!(["k"], true, None, 'k', ['k']),
-                gen_candidate!(["c"], true, None, 'c', ['c']),
-                gen_candidate!(["ltu"], true, None),
-                gen_candidate!(["xtu"], true, None),
-                gen_candidate!(["ltsu"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("k"), true, None, 'k', ['k']),
+                gen_candidate!(gen_candidate_key_stroke!("c"), true, None, 'c', ['c']),
+                gen_candidate!(gen_candidate_key_stroke!("ltu"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("xtu"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ltsu"), true, None)
             ],
-            gen_candidate!(["k"], true, None, 'k', ['k'])
+            gen_candidate!(gen_candidate_key_stroke!("k"), true, None, 'k', ['k'])
         ),
         gen_chunk_unprocessed!(
             "か",
             vec![
-                gen_candidate!(["ka"], true, None),
-                gen_candidate!(["ca"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("ca"), true, None)
             ],
-            gen_candidate!(["ka"], true, None)
+            gen_candidate!(gen_candidate_key_stroke!("ka"), true, None)
         ),
         gen_chunk_unprocessed!(
             "ん",
             vec![
-                gen_candidate!(["nn"], true, None),
-                gen_candidate!(["xn"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
             ],
-            gen_candidate!(["nn"], true, None)
+            gen_candidate!(gen_candidate_key_stroke!("nn"), true, None)
         ),
     ]);
 
@@ -2716,35 +2740,35 @@ fn construct_display_info_4() {
             unprocessed_chunks: vec![
                 gen_chunk_unprocessed!(
                     "あ",
-                    vec![gen_candidate!(["a"], true, None)],
-                    gen_candidate!(["a"], true, None)
+                    vec![gen_candidate!(gen_candidate_key_stroke!("a"), true, None)],
+                    gen_candidate!(gen_candidate_key_stroke!("a"), true, None)
                 ),
                 gen_chunk_unprocessed!(
                     "っ",
                     vec![
-                        gen_candidate!(["k"], true, None, 'k', ['k']),
-                        gen_candidate!(["c"], true, None, 'c', ['c']),
-                        gen_candidate!(["ltu"], true, None),
-                        gen_candidate!(["xtu"], true, None),
-                        gen_candidate!(["ltsu"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("k"), true, None, 'k', ['k']),
+                        gen_candidate!(gen_candidate_key_stroke!("c"), true, None, 'c', ['c']),
+                        gen_candidate!(gen_candidate_key_stroke!("ltu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xtu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ltsu"), true, None)
                     ],
-                    gen_candidate!(["k"], true, None, 'k', ['k'])
+                    gen_candidate!(gen_candidate_key_stroke!("k"), true, None, 'k', ['k'])
                 ),
                 gen_chunk_unprocessed!(
                     "か",
                     vec![
-                        gen_candidate!(["ka"], true, None),
-                        gen_candidate!(["ca"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ca"), true, None)
                     ],
-                    gen_candidate!(["ka"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, None)
                 ),
                 gen_chunk_unprocessed!(
                     "ん",
                     vec![
-                        gen_candidate!(["nn"], true, None),
-                        gen_candidate!(["xn"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
                     ],
-                    gen_candidate!(["nn"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("nn"), true, None)
                 ),
             ]
             .into(),
@@ -2805,39 +2829,43 @@ fn construct_display_info_4() {
                 gen_chunk_unprocessed!(
                     "か",
                     vec![
-                        gen_candidate!(["ka"], true, None),
-                        gen_candidate!(["ca"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ca"), true, None)
                     ],
-                    gen_candidate!(["ka"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, None)
                 ),
                 gen_chunk_unprocessed!(
                     "ん",
                     vec![
-                        gen_candidate!(["nn"], true, None),
-                        gen_candidate!(["xn"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
                     ],
-                    gen_candidate!(["nn"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("nn"), true, None)
                 ),
             ]
             .into(),
             inflight_chunk: Some(gen_chunk!(
                 "っ",
                 vec![
-                    gen_candidate!(["k"], true, Some(0), 'k', ['k']),
-                    gen_candidate!(["c"], true, Some(0), 'c', ['c']),
-                    gen_candidate!(["ltu"], true, Some(0)),
-                    gen_candidate!(["xtu"], true, Some(0)),
-                    gen_candidate!(["ltsu"], true, Some(0))
+                    gen_candidate!(gen_candidate_key_stroke!("k"), true, Some(0), 'k', ['k']),
+                    gen_candidate!(gen_candidate_key_stroke!("c"), true, Some(0), 'c', ['c']),
+                    gen_candidate!(gen_candidate_key_stroke!("ltu"), true, Some(0)),
+                    gen_candidate!(gen_candidate_key_stroke!("xtu"), true, Some(0)),
+                    gen_candidate!(gen_candidate_key_stroke!("ltsu"), true, Some(0))
                 ],
                 ChunkState::Inflight,
-                gen_candidate!(["k"], true, None, 'k', ['k']),
+                gen_candidate!(gen_candidate_key_stroke!("k"), true, None, 'k', ['k']),
                 []
             ),),
             confirmed_chunks: vec![gen_chunk!(
                 "あ",
-                vec![gen_candidate!(["a"], true, Some(1))],
+                vec![gen_candidate!(
+                    gen_candidate_key_stroke!("a"),
+                    true,
+                    Some(1)
+                )],
                 ChunkState::Confirmed,
-                gen_candidate!(["a"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("a"), true, None),
                 [ActualKeyStroke::new(
                     Duration::new(1, 0),
                     'a'.try_into().unwrap(),

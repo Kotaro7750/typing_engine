@@ -174,22 +174,22 @@ impl ChunkUnprocessed {
 mod test {
     use std::num::NonZeroUsize;
 
-    use crate::{gen_candidate, gen_chunk_unprocessed};
+    use crate::{gen_candidate, gen_candidate_key_stroke, gen_chunk_unprocessed};
 
     #[test]
     fn strict_key_stroke_count_1() {
         let mut chunk = gen_chunk_unprocessed!(
             "じょ",
             vec![
-                gen_candidate!(["jo"], true, None),
-                gen_candidate!(["zyo"], true, None),
-                gen_candidate!(["jyo"], true, None),
-                gen_candidate!(["zi", "lyo"], true, None),
-                gen_candidate!(["zi", "xyo"], true, None),
-                gen_candidate!(["ji", "lyo"], true, None),
-                gen_candidate!(["ji", "xyo"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["jo"]), true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["zyo"]), true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["jyo"]), true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "lyo"]), true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "xyo"]), true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "lyo"]), true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "xyo"]), true, None),
             ],
-            gen_candidate!(["jo"], true, None)
+            gen_candidate!(gen_candidate_key_stroke!(["jo"]), true, None)
         );
 
         chunk.strict_key_stroke_count(NonZeroUsize::new(1).unwrap());
@@ -199,10 +199,10 @@ mod test {
             gen_chunk_unprocessed!(
                 "じょ",
                 vec![
-                    gen_candidate!(["j"], true, None),
-                    gen_candidate!(["z"], true, None),
+                    gen_candidate!(gen_candidate_key_stroke!(["j"]), true, None),
+                    gen_candidate!(gen_candidate_key_stroke!(["z"]), true, None),
                 ],
-                gen_candidate!(["j"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!(["j"]), true, None)
             )
         )
     }
@@ -212,11 +212,11 @@ mod test {
         let mut chunk = gen_chunk_unprocessed!(
             "ん",
             vec![
-                gen_candidate!(["n"], true, None, ['j', 'z']),
-                gen_candidate!(["nn"], true, None),
-                gen_candidate!(["xn"], true, None),
+                gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['j', 'z']),
+                gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("xn"), true, None),
             ],
-            gen_candidate!(["n"], true, None, ['j', 'z'])
+            gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['j', 'z'])
         );
 
         chunk.strict_key_stroke_count(NonZeroUsize::new(1).unwrap());
@@ -226,10 +226,10 @@ mod test {
             gen_chunk_unprocessed!(
                 "ん",
                 vec![
-                    gen_candidate!(["n"], true, None),
-                    gen_candidate!(["x"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None),
+                    gen_candidate!(gen_candidate_key_stroke!("x"), true, None)
                 ],
-                gen_candidate!(["n"], true, None)
+                gen_candidate!(gen_candidate_key_stroke!("n"), true, None)
             )
         )
     }

@@ -1,5 +1,6 @@
 use std::collections::{HashSet, VecDeque};
 
+use super::key_stroke_candidate::CandidateKeyStroke;
 use super::unprocessed::ChunkUnprocessed;
 use crate::typing_primitive_types::chunk::key_stroke_candidate::{
     ChunkKeyStrokeCandidate, DelayedConfirmedCandidateInfo,
@@ -140,7 +141,9 @@ pub(crate) fn append_key_stroke_to_chunks(
             // 表示可能なASCIIで構成されるチャンクならそのままキーストロークにする
             ChunkSpell::DisplayableAscii(spell_string) => {
                 key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
-                    vec![String::from(spell_string.clone()).try_into().unwrap()],
+                    CandidateKeyStroke::Normal(
+                        String::from(spell_string.clone()).try_into().unwrap(),
+                    ),
                     None,
                     None,
                     true,
@@ -185,7 +188,9 @@ pub(crate) fn append_key_stroke_to_chunks(
                                 avail_as_next_key_strokes,
                             )| {
                                 key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
-                                    vec![key_stroke.to_string().try_into().unwrap()],
+                                    CandidateKeyStroke::Normal(
+                                        key_stroke.to_string().try_into().unwrap(),
+                                    ),
                                     next_chunk_head_constraint,
                                     avail_as_next_key_strokes
                                         .map(DelayedConfirmedCandidateInfo::new),
@@ -204,7 +209,9 @@ pub(crate) fn append_key_stroke_to_chunks(
                         .iter()
                         .for_each(|key_stroke| {
                             key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
-                                vec![key_stroke.to_string().try_into().unwrap()],
+                                CandidateKeyStroke::Normal(
+                                    key_stroke.to_string().try_into().unwrap(),
+                                ),
                                 None,
                                 None,
                                 true,
@@ -221,10 +228,12 @@ pub(crate) fn append_key_stroke_to_chunks(
                             .for_each(|key_stroke| match char::from(key_stroke.clone()) {
                                 'l' | 'x' => {
                                     key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
-                                        vec![char::from(key_stroke.clone())
-                                            .to_string()
-                                            .try_into()
-                                            .unwrap()],
+                                        CandidateKeyStroke::Normal(
+                                            char::from(key_stroke.clone())
+                                                .to_string()
+                                                .try_into()
+                                                .unwrap(),
+                                        ),
                                         Some(key_stroke.clone()),
                                         // 次のチャンクへの制限があるときには遅延確定候補を確定できるのはその制限だけである
                                         Some(DelayedConfirmedCandidateInfo::new(
@@ -241,10 +250,12 @@ pub(crate) fn append_key_stroke_to_chunks(
                                     ))
                                 }
                                 _ => key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
-                                    vec![char::from(key_stroke.clone())
-                                        .to_string()
-                                        .try_into()
-                                        .unwrap()],
+                                    CandidateKeyStroke::Normal(
+                                        char::from(key_stroke.clone())
+                                            .to_string()
+                                            .try_into()
+                                            .unwrap(),
+                                    ),
                                     Some(key_stroke.clone()),
                                     None,
                                     true,
@@ -260,7 +271,9 @@ pub(crate) fn append_key_stroke_to_chunks(
                         .iter()
                         .for_each(|key_stroke| {
                             key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
-                                vec![key_stroke.to_string().try_into().unwrap()],
+                                CandidateKeyStroke::Normal(
+                                    key_stroke.to_string().try_into().unwrap(),
+                                ),
                                 None,
                                 None,
                                 true,
@@ -278,7 +291,7 @@ pub(crate) fn append_key_stroke_to_chunks(
                     .iter()
                     .for_each(|key_stroke| {
                         key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
-                            vec![key_stroke.to_string().try_into().unwrap()],
+                            CandidateKeyStroke::Double(key_stroke.to_string().try_into().unwrap()),
                             None,
                             None,
                             true,
@@ -301,10 +314,10 @@ pub(crate) fn append_key_stroke_to_chunks(
                             .iter()
                             .for_each(|second_key_stroke| {
                                 key_stroke_candidates.push(ChunkKeyStrokeCandidate::new(
-                                    vec![
+                                    CandidateKeyStroke::DoubleSplitted(
                                         first_key_stroke.to_string().try_into().unwrap(),
                                         second_key_stroke.to_string().try_into().unwrap(),
-                                    ],
+                                    ),
                                     None,
                                     None,
                                     true,
@@ -415,7 +428,10 @@ fn append_ideal_candidates_to_chunks(
 mod test {
     use super::*;
 
-    use crate::{gen_candidate, gen_chunk_candidate_unappended, gen_chunk_unprocessed};
+    use crate::{
+        gen_candidate, gen_candidate_key_stroke, gen_chunk_candidate_unappended,
+        gen_chunk_unprocessed,
+    };
 
     #[test]
     fn append_key_stroke_to_chunks_1() {
@@ -432,23 +448,23 @@ mod test {
                 gen_chunk_unprocessed!(
                     "じょ",
                     vec![
-                        gen_candidate!(["jo"], true, None),
-                        gen_candidate!(["zyo"], true, None),
-                        gen_candidate!(["jyo"], true, None),
-                        gen_candidate!(["zi", "lyo"], true, None),
-                        gen_candidate!(["zi", "xyo"], true, None),
-                        gen_candidate!(["ji", "lyo"], true, None),
-                        gen_candidate!(["ji", "xyo"], true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["jo"]), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["zyo"]), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["jyo"]), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["zi", "lyo"]), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["zi", "xyo"]), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["ji", "lyo"]), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["ji", "xyo"]), true, None),
                     ],
-                    gen_candidate!(["jo"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!(["jo"]), true, None)
                 ),
                 gen_chunk_unprocessed!(
                     "ん",
                     vec![
-                        gen_candidate!(["nn"], true, None),
-                        gen_candidate!(["xn"], true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, None),
                     ],
-                    gen_candidate!(["nn"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("nn"), true, None)
                 )
             ]
         );
@@ -470,30 +486,30 @@ mod test {
                 gen_chunk_unprocessed!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], true, None),
-                        gen_candidate!(["wu"], true, None),
-                        gen_candidate!(["whu"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), true, None)
                     ],
-                    gen_candidate!(["u"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("u"), true, None)
                 ),
                 gen_chunk_unprocessed!(
                     "っ",
                     vec![
-                        gen_candidate!(["w"], true, None, 'w'),
-                        gen_candidate!(["ltu"], true, None),
-                        gen_candidate!(["xtu"], true, None),
-                        gen_candidate!(["ltsu"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("w"), true, None, 'w'),
+                        gen_candidate!(gen_candidate_key_stroke!("ltu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xtu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ltsu"), true, None)
                     ],
-                    gen_candidate!(["w"], true, None, 'w')
+                    gen_candidate!(gen_candidate_key_stroke!("w"), true, None, 'w')
                 ),
                 gen_chunk_unprocessed!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], true, None),
-                        gen_candidate!(["wu"], true, None),
-                        gen_candidate!(["whu"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), true, None)
                     ],
-                    gen_candidate!(["wu"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("wu"), true, None)
                 ),
             ]
         );
@@ -515,27 +531,27 @@ mod test {
                 gen_chunk_unprocessed!(
                     "か",
                     vec![
-                        gen_candidate!(["ka"], true, None),
-                        gen_candidate!(["ca"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ca"), true, None)
                     ],
-                    gen_candidate!(["ka"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, None)
                 ),
                 gen_chunk_unprocessed!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, None, ['z', 'j']),
-                        gen_candidate!(["nn"], true, None),
-                        gen_candidate!(["xn"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['z', 'j']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
                     ],
-                    gen_candidate!(["n"], true, None, ['z', 'j'])
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['z', 'j'])
                 ),
                 gen_chunk_unprocessed!(
                     "じ",
                     vec![
-                        gen_candidate!(["zi"], true, None),
-                        gen_candidate!(["ji"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("zi"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ji"), true, None)
                     ],
-                    gen_candidate!(["zi"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("zi"), true, None)
                 ),
             ]
         );
@@ -556,18 +572,18 @@ mod test {
             vec![
                 gen_chunk_unprocessed!(
                     "B",
-                    vec![gen_candidate!(["B"], true, None)],
-                    gen_candidate!(["B"], true, None)
+                    vec![gen_candidate!(gen_candidate_key_stroke!("B"), true, None)],
+                    gen_candidate!(gen_candidate_key_stroke!("B"), true, None)
                 ),
                 gen_chunk_unprocessed!(
                     "i",
-                    vec![gen_candidate!(["i"], true, None)],
-                    gen_candidate!(["i"], true, None)
+                    vec![gen_candidate!(gen_candidate_key_stroke!("i"), true, None)],
+                    gen_candidate!(gen_candidate_key_stroke!("i"), true, None)
                 ),
                 gen_chunk_unprocessed!(
                     "g",
-                    vec![gen_candidate!(["g"], true, None)],
-                    gen_candidate!(["g"], true, None)
+                    vec![gen_candidate!(gen_candidate_key_stroke!("g"), true, None)],
+                    gen_candidate!(gen_candidate_key_stroke!("g"), true, None)
                 ),
             ]
         );
@@ -588,22 +604,22 @@ mod test {
                 gen_chunk_unprocessed!(
                     "っ",
                     vec![
-                        gen_candidate!(["l"], true, None, 'l', ['l']),
-                        gen_candidate!(["x"], true, None, 'x', ['x']),
-                        gen_candidate!(["ltu"], true, None),
-                        gen_candidate!(["xtu"], true, None),
-                        gen_candidate!(["ltsu"], true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("l"), true, None, 'l', ['l']),
+                        gen_candidate!(gen_candidate_key_stroke!("x"), true, None, 'x', ['x']),
+                        gen_candidate!(gen_candidate_key_stroke!("ltu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xtu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ltsu"), true, None),
                     ],
-                    gen_candidate!(["l"], true, None, 'l', ['l'])
+                    gen_candidate!(gen_candidate_key_stroke!("l"), true, None, 'l', ['l'])
                 ),
                 gen_chunk_unprocessed!(
                     "っ",
                     vec![
-                        gen_candidate!(["ltu"], true, None),
-                        gen_candidate!(["xtu"], true, None),
-                        gen_candidate!(["ltsu"], true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ltu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xtu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ltsu"), true, None),
                     ],
-                    gen_candidate!(["ltu"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("ltu"), true, None)
                 ),
             ]
         );
@@ -624,21 +640,21 @@ mod test {
                 gen_chunk_unprocessed!(
                     "っ",
                     vec![
-                        gen_candidate!(["k"], true, None, 'k'),
-                        gen_candidate!(["c"], true, None, 'c'),
-                        gen_candidate!(["ltu"], true, None),
-                        gen_candidate!(["xtu"], true, None),
-                        gen_candidate!(["ltsu"], true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("k"), true, None, 'k'),
+                        gen_candidate!(gen_candidate_key_stroke!("c"), true, None, 'c'),
+                        gen_candidate!(gen_candidate_key_stroke!("ltu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xtu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ltsu"), true, None),
                     ],
-                    gen_candidate!(["k"], true, None, 'k')
+                    gen_candidate!(gen_candidate_key_stroke!("k"), true, None, 'k')
                 ),
                 gen_chunk_unprocessed!(
                     "か",
                     vec![
-                        gen_candidate!(["ka"], true, None),
-                        gen_candidate!(["ca"], true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ka"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("ca"), true, None),
                     ],
-                    gen_candidate!(["ka"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("ka"), true, None)
                 ),
             ]
         );
@@ -661,42 +677,42 @@ mod test {
                 gen_chunk_unprocessed!(
                     "い",
                     vec![
-                        gen_candidate!(["i"], true, None),
-                        gen_candidate!(["yi"], true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("i"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("yi"), true, None),
                     ],
-                    gen_candidate!(["i"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("i"), true, None)
                 ),
                 gen_chunk_unprocessed!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, None, ['s', 'c']),
-                        gen_candidate!(["nn"], true, None),
-                        gen_candidate!(["xn"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['s', 'c']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, None)
                     ],
-                    gen_candidate!(["n"], true, None, ['s', 'c'])
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['s', 'c'])
                 ),
                 gen_chunk_unprocessed!(
                     "しょ",
                     vec![
-                        gen_candidate!(["syo"], true, None),
-                        gen_candidate!(["sho"], true, None),
-                        gen_candidate!(["si", "lyo"], true, None),
-                        gen_candidate!(["si", "xyo"], true, None),
-                        gen_candidate!(["ci", "lyo"], true, None),
-                        gen_candidate!(["ci", "xyo"], true, None),
-                        gen_candidate!(["shi", "lyo"], true, None),
-                        gen_candidate!(["shi", "xyo"], true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["syo"]), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["sho"]), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["si", "lyo"]), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["si", "xyo"]), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["ci", "lyo"]), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["ci", "xyo"]), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["shi", "lyo"]), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!(["shi", "xyo"]), true, None),
                     ],
-                    gen_candidate!(["syo"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!(["syo"]), true, None)
                 ),
                 gen_chunk_unprocessed!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], true, None),
-                        gen_candidate!(["wu"], true, None),
-                        gen_candidate!(["whu"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), true, None)
                     ],
-                    gen_candidate!(["u"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("u"), true, None)
                 ),
             ]
         );
@@ -717,20 +733,20 @@ mod test {
                 gen_chunk_unprocessed!(
                     "ん",
                     vec![
-                        gen_candidate!(["n"], true, None, 'w', ['w']),
-                        gen_candidate!(["nn"], true, None),
-                        gen_candidate!(["xn"], true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("n"), true, None, 'w', ['w']),
+                        gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("xn"), true, None),
                     ],
-                    gen_candidate!(["n"], true, None, 'w', ['w'])
+                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None, 'w', ['w'])
                 ),
                 gen_chunk_unprocessed!(
                     "う",
                     vec![
-                        gen_candidate!(["u"], true, None),
-                        gen_candidate!(["wu"], true, None),
-                        gen_candidate!(["whu"], true, None)
+                        gen_candidate!(gen_candidate_key_stroke!("u"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("wu"), true, None),
+                        gen_candidate!(gen_candidate_key_stroke!("whu"), true, None)
                     ],
-                    gen_candidate!(["wu"], true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("wu"), true, None)
                 ),
             ]
         );
