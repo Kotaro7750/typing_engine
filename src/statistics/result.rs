@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use super::statistics_counter::StatisticsCounter;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
+use crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate;
 use crate::typing_primitive_types::chunk::Chunk;
 use crate::LapRequest;
 

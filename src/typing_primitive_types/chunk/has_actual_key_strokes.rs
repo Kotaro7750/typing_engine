@@ -5,7 +5,7 @@ use super::{Chunk, ChunkKeyStrokeCandidate, ChunkSpell};
 pub(crate) trait ChunkHasActualKeyStrokes: AsRef<Chunk> {
     fn actual_key_strokes(&self) -> &[ActualKeyStroke];
     /// 表示などに使う候補
-    fn effective_candidate(&self) -> &ChunkKeyStrokeCandidate;
+    fn effective_candidate(&self) -> &dyn ChunkKeyStrokeCandidate;
 
     /// Returns the position indexes of wrong key strokes of this chunk.
     /// Basically indexes are relative inner the chunk, but offset can be used for adjusting absolute position.

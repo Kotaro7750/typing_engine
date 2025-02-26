@@ -7,6 +7,7 @@ use crate::statistics::statistical_event::StatisticalEvent;
 use crate::statistics::statistics_counter::StatisticsCounter;
 use crate::statistics::{construct_on_typing_statistics_target, LapRequest};
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
+use crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate;
 use crate::typing_primitive_types::chunk::unprocessed::ChunkUnprocessed;
 use crate::typing_primitive_types::chunk::Chunk;
 use crate::typing_primitive_types::chunk::ChunkState;
@@ -61,7 +62,7 @@ impl ProcessedChunkInfo {
         if self.unprocessed_chunks.is_empty() && self.inflight_chunk.is_none() {
             let next_inflight_chunk = chunks.pop_front().unwrap();
             self.inflight_chunk
-                .replace(next_inflight_chunk.into_inflight());
+                .replace(next_inflight_chunk.into_inflight(None));
         }
 
         self.unprocessed_chunks.append(&mut chunks);
@@ -92,13 +93,9 @@ impl ProcessedChunkInfo {
         assert!(self.inflight_chunk.is_none());
 
         // 未処理チャンク列の先頭チャンクを処理中のチャンクにする
-        if let Some(mut next_inflight_chunk) = self.unprocessed_chunks.pop_front() {
-            if let Some(next_chunk_head_constraint) = next_chunk_head_constraint {
-                next_inflight_chunk.strict_chunk_head(next_chunk_head_constraint);
-            }
-
+        if let Some(next_inflight_chunk) = self.unprocessed_chunks.pop_front() {
             self.inflight_chunk
-                .replace(next_inflight_chunk.into_inflight());
+                .replace(next_inflight_chunk.into_inflight(next_chunk_head_constraint));
         }
 
         confirmed_chunk

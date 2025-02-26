@@ -6,6 +6,8 @@ use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
 use crate::typing_primitive_types::spell::SpellString;
 use has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use key_stroke_candidate::ChunkKeyStrokeCandidate;
+use key_stroke_candidate::ChunkKeyStrokeCandidateHasCursor;
+use key_stroke_candidate::ChunkKeyStrokeCandidateWithoutCursor;
 
 pub(crate) mod chunk_candidate_unappended;
 pub(crate) mod has_actual_key_strokes;
@@ -82,7 +84,6 @@ impl AsRef<SpellString> for ChunkSpell {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum ChunkState {
-    Unprocessed,
     Inflight,
     Confirmed,
 }
@@ -97,27 +98,30 @@ pub struct Chunk {
     spell: ChunkSpell,
     /// Candidates of key strokes to type this chunk.
     /// Ex. For a chunk "きょ", there are key strokes like "kyo" and "kilyo".
-    key_stroke_candidates: Vec<ChunkKeyStrokeCandidate>,
+    key_stroke_candidates: Vec<ChunkKeyStrokeCandidateHasCursor>,
+    inactive_key_stroke_candidates: Vec<ChunkKeyStrokeCandidateWithoutCursor>,
     /// A key stroke candidate that is the shortest when typed.
     /// This is determined when key strokes are assigned, so it may not be possible to type this
     /// candidate depending on the actual key stroke sequence.
-    ideal_candidate: ChunkKeyStrokeCandidate,
+    ideal_candidate: ChunkKeyStrokeCandidateWithoutCursor,
     /// Actual key strokes that also includes wrong key strokes.
-    actual_key_strokes: Option<Vec<ActualKeyStroke>>,
+    actual_key_strokes: Vec<ActualKeyStroke>,
 }
 
 impl Chunk {
     pub fn new(
         spell: SpellString,
-        key_stroke_candidates: Vec<ChunkKeyStrokeCandidate>,
-        ideal_candidate: ChunkKeyStrokeCandidate,
+        key_stroke_candidates: Vec<ChunkKeyStrokeCandidateHasCursor>,
+        inactive_key_stroke_candidates: Vec<ChunkKeyStrokeCandidateWithoutCursor>,
+        ideal_candidate: ChunkKeyStrokeCandidateWithoutCursor,
         state: ChunkState,
-        actual_key_strokes: Option<Vec<ActualKeyStroke>>,
+        actual_key_strokes: Vec<ActualKeyStroke>,
     ) -> Self {
         Self {
             state,
             spell: ChunkSpell::new(spell),
             key_stroke_candidates,
+            inactive_key_stroke_candidates,
             ideal_candidate,
             actual_key_strokes,
         }
@@ -128,45 +132,27 @@ impl Chunk {
         &self.spell
     }
 
-    /// Returns key stroke candidates of this chunk.
-    pub(crate) fn all_key_stroke_candidates(&self) -> &[ChunkKeyStrokeCandidate] {
-        &self.key_stroke_candidates
-    }
+    // /// Returns key stroke candidates of this chunk.
+    // pub(crate) fn all_key_stroke_candidates(&self) -> &[ChunkKeyStrokeCandidate] {
+    //     &self.key_stroke_candidates
+    // }
+    //
+    // fn all_key_stroke_candidates_mut(&mut self) -> &mut [ChunkKeyStrokeCandidate] {
+    //     &mut self.key_stroke_candidates
+    // }
 
-    fn all_key_stroke_candidates_mut(&mut self) -> &mut [ChunkKeyStrokeCandidate] {
+    pub(crate) fn key_stroke_candidates_mut(&mut self) -> &mut [ChunkKeyStrokeCandidateHasCursor] {
         &mut self.key_stroke_candidates
     }
 
-    pub(crate) fn key_stroke_candidates_mut(&mut self) -> Vec<&mut ChunkKeyStrokeCandidate> {
-        self.key_stroke_candidates
-            .iter_mut()
-            .filter(|candidate| candidate.is_active())
-            .collect()
-    }
-
-    pub(crate) fn key_stroke_candidates(&self) -> Vec<&ChunkKeyStrokeCandidate> {
-        self.key_stroke_candidates
-            .iter()
-            .filter(|candidate| candidate.is_active())
-            .collect()
+    pub(crate) fn key_stroke_candidates(&self) -> &[ChunkKeyStrokeCandidateHasCursor] {
+        &self.key_stroke_candidates
     }
 
     pub(crate) fn change_state(&mut self, state: ChunkState) {
         match state {
-            ChunkState::Unprocessed => {
-                unreachable!("Chunk cannot transit to Unprocessed state");
-            }
             ChunkState::Inflight => {
-                assert!(self.state == ChunkState::Unprocessed);
-
-                self.state = state;
-                self.actual_key_strokes = Some(vec![]);
-
-                self.all_key_stroke_candidates_mut()
-                    .iter_mut()
-                    .for_each(|candidate| {
-                        candidate.advance_cursor();
-                    });
+                unreachable!("Chunk cannot transit to Unprocessed state");
             }
             ChunkState::Confirmed => {
                 assert!(self.state == ChunkState::Inflight);
@@ -177,7 +163,7 @@ impl Chunk {
     }
 
     /// Returns the ideal key stroke candidate of this chunk.
-    pub(crate) fn ideal_key_stroke_candidate(&self) -> &ChunkKeyStrokeCandidate {
+    pub(crate) fn ideal_key_stroke_candidate(&self) -> &ChunkKeyStrokeCandidateWithoutCursor {
         &self.ideal_candidate
     }
 
@@ -188,10 +174,10 @@ impl Chunk {
     pub(crate) fn min_candidate(
         &self,
         chunk_head_striction: Option<KeyStrokeChar>,
-    ) -> &ChunkKeyStrokeCandidate {
+    ) -> &ChunkKeyStrokeCandidateHasCursor {
         let min_candidate = self
             .key_stroke_candidates()
-            .into_iter()
+            .iter()
             .filter(|candidate| {
                 if let Some(chunk_head_striction) = &chunk_head_striction {
                     &candidate.key_stroke_char_at_position(0) == chunk_head_striction
@@ -214,19 +200,28 @@ impl Chunk {
 
     /// Reduce the candidates of this chunk.
     /// Retain only the candidates whose index is true in the retain_vector.
-    pub(crate) fn reduce_candidate(&mut self, retain_vector: &[bool]) {
-        self.all_key_stroke_candidates_mut()
-            .iter_mut()
-            .enumerate()
-            .filter(|(i, _)| !retain_vector[*i])
-            .for_each(|(_, candidate)| {
-                candidate.inactivate();
-            });
-    }
+    pub(crate) fn reduce_candidate(&mut self, retain_index: &[usize]) {
+        let contain_set = retain_index
+            .iter()
+            .collect::<std::collections::HashSet<_>>();
 
-    fn actual_key_strokes_unwrapped(&mut self) -> &mut Vec<ActualKeyStroke> {
-        assert_ne!(self.state, ChunkState::Unprocessed);
-        self.actual_key_strokes.as_mut().unwrap()
+        // This reversion is required for removing correctly.
+        // If we remove from the first element, the index of the remaining elements will be
+        // changed.
+
+        let removed_candidates_reverse_order = (0..self.key_stroke_candidates.len())
+            .rev()
+            .filter(|i| !contain_set.contains(i))
+            .map(|remove_index| self.key_stroke_candidates.remove(remove_index))
+            .collect::<Vec<ChunkKeyStrokeCandidateHasCursor>>();
+
+        removed_candidates_reverse_order
+            .into_iter()
+            .rev()
+            .for_each(|removed_candidate| {
+                self.inactive_key_stroke_candidates
+                    .push(removed_candidate.into_without_cursor());
+            });
     }
 
     /*
@@ -285,14 +280,13 @@ impl Chunk {
     ) -> KeyStrokeResult {
         assert_eq!(self.state, ChunkState::Inflight);
         assert!(!self.is_confirmed());
-        assert!(self.actual_key_strokes.is_some());
 
         // 前回のキーストロークよりも時間的に後でなくてはならない
-        if let Some(last_key_stroke) = self.actual_key_strokes.as_mut().unwrap().last() {
+        if let Some(last_key_stroke) = self.actual_key_strokes.last() {
             assert!(&elapsed_time >= last_key_stroke.elapsed_time());
         }
 
-        let key_stroke_candidates = self.all_key_stroke_candidates();
+        let key_stroke_candidates = self.key_stroke_candidates();
         // For confirmation check correctness, save current status.
         // This is required when this key stroke will confirm this chunk.
         let is_delayed_confirmable = self.is_delayed_confirmable();
@@ -311,40 +305,37 @@ impl Chunk {
             if key_stroke_candidates
                 .get(delayed_confirmed_candidate_index)
                 .unwrap()
-                .delayed_confirmed_candiate_info()
+                .delayed_confirmed_candidate_info()
                 .as_ref()
                 .unwrap()
                 .can_confirm_with_key_stroke(key_stroke.clone())
             {
-                // 遅延確定候補以外の候補を削除する
-                let mut candidate_reduce_vec = vec![false; key_stroke_candidates.len()];
-                candidate_reduce_vec[delayed_confirmed_candidate_index] = true;
-
-                self.reduce_candidate(&candidate_reduce_vec);
+                self.reduce_candidate(&[delayed_confirmed_candidate_index]);
 
                 return KeyStrokeResult::Correct;
             }
         }
 
         // それぞれの候補においてタイプされたキーストロークが有効かどうか
-        let candidate_hit_miss: Vec<bool> = key_stroke_candidates
+        let hit_candidate_index: Vec<usize> = key_stroke_candidates
             .iter()
-            .map(|candidate| {
+            .enumerate()
+            .filter_map(|(i, candidate)| {
                 // At this time, delayed confirmed candidate is already determined to be wrong.
                 if self.is_delayed_confirmable() && candidate.is_delayed_confirmed_candidate() {
-                    false
+                    None
                 } else {
-                    candidate.is_active() && candidate.is_hit(&key_stroke)
+                    candidate.is_hit(&key_stroke).then_some(i)
                 }
             })
             .collect();
 
-        let is_hit = candidate_hit_miss.contains(&true);
+        let is_hit = !hit_candidate_index.is_empty();
 
         // If any candidate is hit, only those candidates are left and the cursor position is
         // advanced.
         if is_hit {
-            self.reduce_candidate(&candidate_hit_miss);
+            self.reduce_candidate(&hit_candidate_index);
 
             self.key_stroke_candidates_mut()
                 .iter_mut()
@@ -370,19 +361,15 @@ impl Chunk {
     /// This is usefull when drain the key strokes from pending list.
     pub(crate) fn append_actual_key_stroke(&mut self, actual_key_stroke: ActualKeyStroke) {
         assert_eq!(self.state, ChunkState::Inflight);
-        assert!(self.actual_key_strokes.is_some());
 
-        self.actual_key_strokes_unwrapped().push(actual_key_stroke);
+        self.actual_key_strokes.push(actual_key_stroke);
     }
 
     // チャンクのキーストロークのどこにカーソルを当てるべきか
     pub(crate) fn current_key_stroke_cursor_position(&self) -> usize {
         self.key_stroke_candidates()
             .iter()
-            .map(|candidate| {
-                assert!(candidate.cursor_position().is_some());
-                candidate.cursor_position().unwrap().clone()
-            })
+            .map(|candidate| candidate.cursor_position())
             .reduce(|cursor_position, cursor_position_of_candidate| {
                 // XXX 適切に候補を削減していれば全ての候補でカーソル位置は同じなはず
                 assert!(cursor_position == cursor_position_of_candidate);
@@ -419,7 +406,7 @@ impl Chunk {
     }
 
     /// Returns a candidate that confirm this chunk.
-    pub(crate) fn confirmed_candidate(&self) -> &ChunkKeyStrokeCandidate {
+    pub(crate) fn confirmed_candidate(&self) -> &ChunkKeyStrokeCandidateHasCursor {
         assert_eq!(self.state, ChunkState::Confirmed);
         assert!(self.key_stroke_candidates().len() == 1);
 
@@ -441,14 +428,13 @@ impl AsRef<Chunk> for Chunk {
 }
 
 impl ChunkHasActualKeyStrokes for Chunk {
-    fn effective_candidate(&self) -> &ChunkKeyStrokeCandidate {
+    fn effective_candidate(&self) -> &dyn ChunkKeyStrokeCandidate {
         self.key_stroke_candidates()
             .first()
             .expect("key stroke candidates must not be empty")
     }
 
     fn actual_key_strokes(&self) -> &[ActualKeyStroke] {
-        assert!(self.actual_key_strokes.is_some());
-        self.actual_key_strokes.as_ref().unwrap().as_slice()
+        &self.actual_key_strokes
     }
 }

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::num::NonZeroUsize;
 
-use super::key_stroke_candidate::ChunkKeyStrokeCandidate;
+use super::key_stroke_candidate::{ChunkKeyStrokeCandidate, ChunkKeyStrokeCandidateWithoutCursor};
 use super::Chunk;
 use super::ChunkState;
 use crate::typing_primitive_types::chunk::ChunkSpell;
@@ -16,18 +16,18 @@ pub(crate) struct ChunkUnprocessed {
     spell: ChunkSpell,
     /// Candidates of key strokes to type this chunk.
     /// Ex. For a chunk "きょ", there are key strokes like "kyo" and "kilyo".
-    key_stroke_candidates: Vec<ChunkKeyStrokeCandidate>,
+    key_stroke_candidates: Vec<ChunkKeyStrokeCandidateWithoutCursor>,
     /// A key stroke candidate that is the shortest when typed.
     /// This is determined when key strokes are assigned, so it may not be possible to type this
     /// candidate depending on the actual key stroke sequence.
-    ideal_candidate: ChunkKeyStrokeCandidate,
+    ideal_candidate: ChunkKeyStrokeCandidateWithoutCursor,
 }
 
 impl ChunkUnprocessed {
     pub fn new(
         spell: SpellString,
-        key_stroke_candidates: Vec<ChunkKeyStrokeCandidate>,
-        ideal_candidate: ChunkKeyStrokeCandidate,
+        key_stroke_candidates: Vec<ChunkKeyStrokeCandidateWithoutCursor>,
+        ideal_candidate: ChunkKeyStrokeCandidateWithoutCursor,
     ) -> Self {
         Self {
             spell: ChunkSpell::new(spell),
@@ -36,19 +36,38 @@ impl ChunkUnprocessed {
         }
     }
 
-    pub(crate) fn into_inflight(mut self) -> Chunk {
-        self.all_key_stroke_candidates_mut()
-            .iter_mut()
-            .for_each(|candidate| {
-                candidate.advance_cursor();
+    /// Convert this chunk into inflight chunk.
+    /// If the head_striction_from_previous is Some, the candidates that do not start with the
+    /// key stroke char are inactive by default.
+    /// Ex. If the chunk_head_striction is Some("s"), candidates that do not start with "s" are inactive.
+    pub(crate) fn into_inflight(
+        self,
+        head_striction_from_previous: Option<KeyStrokeChar>,
+    ) -> Chunk {
+        let (active_candidate, inactive_candidate): (
+            Vec<ChunkKeyStrokeCandidateWithoutCursor>,
+            Vec<ChunkKeyStrokeCandidateWithoutCursor>,
+        ) = self
+            .key_stroke_candidates
+            .into_iter()
+            .partition(|candidate| {
+                if let Some(head_striction_from_previous) = &head_striction_from_previous {
+                    candidate.key_stroke_char_at_position(0) == *head_striction_from_previous
+                } else {
+                    true
+                }
             });
 
         Chunk::new(
             self.spell.into(),
-            self.key_stroke_candidates,
+            active_candidate
+                .into_iter()
+                .map(|candidate| candidate.into_with_cursor(0))
+                .collect(),
+            inactive_candidate,
             self.ideal_candidate,
             ChunkState::Inflight,
-            Some(vec![]),
+            vec![],
         )
     }
 
@@ -57,26 +76,12 @@ impl ChunkUnprocessed {
         &self.spell
     }
 
-    fn all_key_stroke_candidates_mut(&mut self) -> &mut [ChunkKeyStrokeCandidate] {
-        &mut self.key_stroke_candidates
-    }
-
-    pub(crate) fn key_stroke_candidates_mut(&mut self) -> Vec<&mut ChunkKeyStrokeCandidate> {
-        self.key_stroke_candidates
-            .iter_mut()
-            .filter(|candidate| candidate.is_active())
-            .collect()
-    }
-
-    pub(crate) fn key_stroke_candidates(&self) -> Vec<&ChunkKeyStrokeCandidate> {
-        self.key_stroke_candidates
-            .iter()
-            .filter(|candidate| candidate.is_active())
-            .collect()
+    pub(crate) fn key_stroke_candidates(&self) -> &[ChunkKeyStrokeCandidateWithoutCursor] {
+        &self.key_stroke_candidates
     }
 
     /// Returns the ideal key stroke candidate of this chunk.
-    pub(crate) fn ideal_key_stroke_candidate(&self) -> &ChunkKeyStrokeCandidate {
+    pub(crate) fn ideal_key_stroke_candidate(&self) -> &ChunkKeyStrokeCandidateWithoutCursor {
         &self.ideal_candidate
     }
 
@@ -87,10 +92,10 @@ impl ChunkUnprocessed {
     pub(crate) fn min_candidate(
         &self,
         chunk_head_striction: Option<KeyStrokeChar>,
-    ) -> &ChunkKeyStrokeCandidate {
+    ) -> &ChunkKeyStrokeCandidateWithoutCursor {
         let min_candidate = self
             .key_stroke_candidates()
-            .into_iter()
+            .iter()
             .filter(|candidate| {
                 if let Some(chunk_head_striction) = &chunk_head_striction {
                     &candidate.key_stroke_char_at_position(0) == chunk_head_striction
@@ -156,18 +161,6 @@ impl ChunkUnprocessed {
 
         self.key_stroke_candidates = new_key_stroke_candidates;
     }
-
-    /// Restrict the candidates of this chunk by the key stroke of chunk head.
-    /// Ex. If the chunk_head_striction is "s", the candidates that do not start with "s" are removed.
-    pub(crate) fn strict_chunk_head(&mut self, chunk_head_striction: KeyStrokeChar) {
-        self.key_stroke_candidates_mut()
-            .iter_mut()
-            .for_each(|candidate| {
-                if candidate.key_stroke_char_at_position(0) != chunk_head_striction {
-                    candidate.inactivate();
-                }
-            });
-    }
 }
 
 #[cfg(test)]
@@ -181,15 +174,15 @@ mod test {
         let mut chunk = gen_chunk_unprocessed!(
             "じょ",
             vec![
-                gen_candidate!(gen_candidate_key_stroke!(["jo"]), true, None),
-                gen_candidate!(gen_candidate_key_stroke!(["zyo"]), true, None),
-                gen_candidate!(gen_candidate_key_stroke!(["jyo"]), true, None),
-                gen_candidate!(gen_candidate_key_stroke!(["zi", "lyo"]), true, None),
-                gen_candidate!(gen_candidate_key_stroke!(["zi", "xyo"]), true, None),
-                gen_candidate!(gen_candidate_key_stroke!(["ji", "lyo"]), true, None),
-                gen_candidate!(gen_candidate_key_stroke!(["ji", "xyo"]), true, None),
+                gen_candidate!(gen_candidate_key_stroke!(["jo"]), false),
+                gen_candidate!(gen_candidate_key_stroke!(["zyo"]), false),
+                gen_candidate!(gen_candidate_key_stroke!(["jyo"]), false),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "lyo"]), false),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "xyo"]), false),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "lyo"]), false),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "xyo"]), false),
             ],
-            gen_candidate!(gen_candidate_key_stroke!(["jo"]), true, None)
+            gen_candidate!(gen_candidate_key_stroke!(["jo"]), false)
         );
 
         chunk.strict_key_stroke_count(NonZeroUsize::new(1).unwrap());
@@ -199,10 +192,10 @@ mod test {
             gen_chunk_unprocessed!(
                 "じょ",
                 vec![
-                    gen_candidate!(gen_candidate_key_stroke!(["j"]), true, None),
-                    gen_candidate!(gen_candidate_key_stroke!(["z"]), true, None),
+                    gen_candidate!(gen_candidate_key_stroke!(["j"]), false),
+                    gen_candidate!(gen_candidate_key_stroke!(["z"]), false),
                 ],
-                gen_candidate!(gen_candidate_key_stroke!(["j"]), true, None)
+                gen_candidate!(gen_candidate_key_stroke!(["j"]), false)
             )
         )
     }
@@ -212,11 +205,11 @@ mod test {
         let mut chunk = gen_chunk_unprocessed!(
             "ん",
             vec![
-                gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['j', 'z']),
-                gen_candidate!(gen_candidate_key_stroke!("nn"), true, None),
-                gen_candidate!(gen_candidate_key_stroke!("xn"), true, None),
+                gen_candidate!(gen_candidate_key_stroke!("n"), false, ['j', 'z']),
+                gen_candidate!(gen_candidate_key_stroke!("nn"), false),
+                gen_candidate!(gen_candidate_key_stroke!("xn"), false),
             ],
-            gen_candidate!(gen_candidate_key_stroke!("n"), true, None, ['j', 'z'])
+            gen_candidate!(gen_candidate_key_stroke!("n"), false, ['j', 'z'])
         );
 
         chunk.strict_key_stroke_count(NonZeroUsize::new(1).unwrap());
@@ -226,10 +219,10 @@ mod test {
             gen_chunk_unprocessed!(
                 "ん",
                 vec![
-                    gen_candidate!(gen_candidate_key_stroke!("n"), true, None),
-                    gen_candidate!(gen_candidate_key_stroke!("x"), true, None)
+                    gen_candidate!(gen_candidate_key_stroke!("n"), false),
+                    gen_candidate!(gen_candidate_key_stroke!("x"), false)
                 ],
-                gen_candidate!(gen_candidate_key_stroke!("n"), true, None)
+                gen_candidate!(gen_candidate_key_stroke!("n"), false)
             )
         )
     }

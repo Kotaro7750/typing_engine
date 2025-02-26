@@ -15,8 +15,7 @@ macro_rules! gen_chunk_unprocessed {
             $ideal_candidate:expr
         ) => {
         {
-            let _ideal_candidate: Option<crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate> = None;
-            let _ideal_candidate: crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate = $ideal_candidate;
+            let _ideal_candidate: crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidateWithoutCursor = $ideal_candidate;
 
             crate::typing_primitive_types::chunk::unprocessed::ChunkUnprocessed::new(
                 $chunk_spell.to_string().try_into().unwrap(),
@@ -32,20 +31,21 @@ macro_rules! gen_chunk {
     (
             $chunk_spell:literal,
             $key_stroke_candidates:expr,
+            $inactive_key_stroke_candidates:expr,
             $state:expr,
             $ideal_candidate:expr
             $(,[$($actual_key_stroke:expr),*])?
         ) => {
         {
-            let _ideal_candidate: crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate = $ideal_candidate;
 
-            let _actual_key_stroke: Option<Vec<crate::typing_primitive_types::key_stroke::ActualKeyStroke>> = None;
-            $(let _actual_key_stroke = Some(vec![$($actual_key_stroke.try_into().unwrap()),*]);)?
+            let _actual_key_stroke: Vec<crate::typing_primitive_types::key_stroke::ActualKeyStroke> = vec![];
+            $(let _actual_key_stroke = vec![$($actual_key_stroke.try_into().unwrap()),*];)?
 
             crate::typing_primitive_types::chunk::Chunk::new(
                 $chunk_spell.to_string().try_into().unwrap(),
                 $key_stroke_candidates,
-                _ideal_candidate,
+                $inactive_key_stroke_candidates,
+                $ideal_candidate,
                 $state,
                 _actual_key_stroke,
             )
@@ -121,7 +121,7 @@ macro_rules! gen_vocabulary_info {
 
 #[macro_export]
 macro_rules! gen_candidate {
-        ($key_stroke:expr, $is_active:literal, $cursor_position:expr$(, $constraint:literal)?$(, [$($delayed:literal),*])?) => {
+        ($key_stroke:expr, true, $cursor_position:expr$(, $constraint:literal)?$(, [$($delayed:literal),*])?) => {
             {
                 let _constraint: Option<crate::typing_primitive_types::key_stroke::KeyStrokeChar> = None;
                 $(let _constraint = Some($constraint.try_into().unwrap());)?
@@ -129,16 +129,28 @@ macro_rules! gen_candidate {
                 let _delayed: Option<crate::typing_primitive_types::chunk::key_stroke_candidate::DelayedConfirmedCandidateInfo> = None;
                 $(let _delayed = Some(crate::typing_primitive_types::chunk::key_stroke_candidate::DelayedConfirmedCandidateInfo::new(vec![$($delayed.try_into().unwrap()),*]));)?
 
-                let _is_active = $is_active.try_into().unwrap();
-
                 let _cursor_position = $cursor_position.try_into().unwrap();
 
-                crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate::new(
+                crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidateHasCursor::new(
                     $key_stroke,
                     _constraint,
                     _delayed,
-                    _is_active,
                     _cursor_position,
+                )
+            }
+        };
+        ($key_stroke:expr, false$(, $constraint:literal)?$(, [$($delayed:literal),*])?) => {
+            {
+                let _constraint: Option<crate::typing_primitive_types::key_stroke::KeyStrokeChar> = None;
+                $(let _constraint = Some($constraint.try_into().unwrap());)?
+
+                let _delayed: Option<crate::typing_primitive_types::chunk::key_stroke_candidate::DelayedConfirmedCandidateInfo> = None;
+                $(let _delayed = Some(crate::typing_primitive_types::chunk::key_stroke_candidate::DelayedConfirmedCandidateInfo::new(vec![$($delayed.try_into().unwrap()),*]));)?
+
+                crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidateWithoutCursor::new(
+                    $key_stroke,
+                    _constraint,
+                    _delayed,
                 )
             }
         };

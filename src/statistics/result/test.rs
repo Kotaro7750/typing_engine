@@ -13,13 +13,13 @@ fn construct_result_1() {
     let cc = vec![
         gen_chunk!(
             "きょ",
+            vec![gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, 3),],
             vec![
-                gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, Some(3)),
-                gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"]), false, Some(1)),
-                gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]), false, Some(1))
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"]), false),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]), false)
             ],
             ChunkState::Confirmed,
-            gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, None),
+            gen_candidate!(gen_candidate_key_stroke!(["kyo"]), false),
             [
                 ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                 ActualKeyStroke::new(Duration::new(2, 0), 'u'.try_into().unwrap(), false),
@@ -30,13 +30,17 @@ fn construct_result_1() {
         ),
         gen_chunk!(
             "きょ",
+            vec![gen_candidate!(
+                gen_candidate_key_stroke!(["ki", "xyo"]),
+                true,
+                5
+            )],
             vec![
-                gen_candidate!(gen_candidate_key_stroke!(["kyo"]), false, Some(1)),
-                gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"]), false, Some(2)),
-                gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]), true, Some(5))
+                gen_candidate!(gen_candidate_key_stroke!(["kyo"]), false),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"]), false),
             ],
             ChunkState::Confirmed,
-            gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, None),
+            gen_candidate!(gen_candidate_key_stroke!(["kyo"]), false),
             [
                 ActualKeyStroke::new(Duration::new(6, 0), 'k'.try_into().unwrap(), true),
                 ActualKeyStroke::new(Duration::new(7, 0), 'i'.try_into().unwrap(), true),
