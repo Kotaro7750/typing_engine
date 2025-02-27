@@ -3,22 +3,20 @@ use std::time::Duration;
 
 use crate::statistics::result::construct_result;
 use crate::statistics::result::{TypingResultStatistics, TypingResultStatisticsTarget};
-use crate::typing_primitive_types::chunk::ChunkState;
 use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
-use crate::LapRequest;
-use crate::{gen_candidate, gen_candidate_key_stroke, gen_chunk};
+use crate::{gen_candidate, gen_candidate_key_stroke};
+use crate::{gen_chunk_confirmed, LapRequest};
 
 #[test]
 fn construct_result_1() {
     let cc = vec![
-        gen_chunk!(
+        gen_chunk_confirmed!(
             "きょ",
-            vec![gen_candidate!(gen_candidate_key_stroke!(["kyo"]), true, 3),],
+            gen_candidate!(gen_candidate_key_stroke!(["kyo"]), false),
             vec![
                 gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"]), false),
                 gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]), false)
             ],
-            ChunkState::Confirmed,
             gen_candidate!(gen_candidate_key_stroke!(["kyo"]), false),
             [
                 ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
@@ -28,18 +26,13 @@ fn construct_result_1() {
                 ActualKeyStroke::new(Duration::new(5, 0), 'o'.try_into().unwrap(), true)
             ]
         ),
-        gen_chunk!(
+        gen_chunk_confirmed!(
             "きょ",
-            vec![gen_candidate!(
-                gen_candidate_key_stroke!(["ki", "xyo"]),
-                true,
-                5
-            )],
+            gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]), false),
             vec![
                 gen_candidate!(gen_candidate_key_stroke!(["kyo"]), false),
                 gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"]), false),
             ],
-            ChunkState::Confirmed,
             gen_candidate!(gen_candidate_key_stroke!(["kyo"]), false),
             [
                 ActualKeyStroke::new(Duration::new(6, 0), 'k'.try_into().unwrap(), true),

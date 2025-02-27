@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 use std::num::NonZeroUsize;
 
+use super::inflight::ChunkInflight;
 use super::key_stroke_candidate::{ChunkKeyStrokeCandidate, ChunkKeyStrokeCandidateWithoutCursor};
 use super::Chunk;
-use super::ChunkState;
 use crate::typing_primitive_types::chunk::ChunkSpell;
 use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
 use crate::typing_primitive_types::spell::SpellString;
@@ -43,7 +43,7 @@ impl ChunkUnprocessed {
     pub(crate) fn into_inflight(
         self,
         head_striction_from_previous: Option<KeyStrokeChar>,
-    ) -> Chunk {
+    ) -> ChunkInflight {
         let (active_candidate, inactive_candidate): (
             Vec<ChunkKeyStrokeCandidateWithoutCursor>,
             Vec<ChunkKeyStrokeCandidateWithoutCursor>,
@@ -58,7 +58,7 @@ impl ChunkUnprocessed {
                 }
             });
 
-        Chunk::new(
+        ChunkInflight::new(
             self.spell.into(),
             active_candidate
                 .into_iter()
@@ -66,14 +66,8 @@ impl ChunkUnprocessed {
                 .collect(),
             inactive_candidate,
             self.ideal_candidate,
-            ChunkState::Inflight,
             vec![],
         )
-    }
-
-    /// Returns the spell of this chunk.
-    pub(crate) fn spell(&self) -> &ChunkSpell {
-        &self.spell
     }
 
     pub(crate) fn key_stroke_candidates(&self) -> &[ChunkKeyStrokeCandidateWithoutCursor] {
@@ -160,6 +154,12 @@ impl ChunkUnprocessed {
         self.ideal_candidate = new_key_stroke_candidates.first().unwrap().clone();
 
         self.key_stroke_candidates = new_key_stroke_candidates;
+    }
+}
+
+impl Chunk for ChunkUnprocessed {
+    fn spell(&self) -> &ChunkSpell {
+        &self.spell
     }
 }
 

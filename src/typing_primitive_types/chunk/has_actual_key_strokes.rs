@@ -1,8 +1,7 @@
+use super::{Chunk, ChunkKeyStrokeCandidate, ChunkSpell};
 use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
 
-use super::{Chunk, ChunkKeyStrokeCandidate, ChunkSpell};
-
-pub(crate) trait ChunkHasActualKeyStrokes: AsRef<Chunk> {
+pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
     fn actual_key_strokes(&self) -> &[ActualKeyStroke];
     /// 表示などに使う候補
     fn effective_candidate(&self) -> &dyn ChunkKeyStrokeCandidate;
@@ -49,7 +48,7 @@ pub(crate) trait ChunkHasActualKeyStrokes: AsRef<Chunk> {
 
         match wrong_spell_element_positions.len() {
             0 => vec![],
-            1 => match self.as_ref().spell() {
+            1 => match self.spell() {
                 ChunkSpell::DoubleChar(_) => {
                     if self.effective_candidate().is_splitted() {
                         vec![wrong_spell_element_positions.first().unwrap() + offset]
@@ -92,7 +91,7 @@ pub(crate) trait ChunkHasActualKeyStrokes: AsRef<Chunk> {
                         .is_element_end_at_key_stroke_index(correct_key_stroke_index)
                     {
                         if !confirmed_candidate.is_splitted() {
-                            spell_end_vector[i] = Some(self.as_ref().spell().count());
+                            spell_end_vector[i] = Some(self.spell().count());
                         } else {
                             spell_end_vector[i] = Some(1);
                         }
@@ -111,7 +110,7 @@ pub(crate) trait ChunkHasActualKeyStrokes: AsRef<Chunk> {
         if self.effective_candidate().is_splitted() {
             1
         } else {
-            self.as_ref().spell().count()
+            self.spell().count()
         }
     }
 }

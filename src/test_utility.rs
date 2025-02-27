@@ -27,12 +27,11 @@ macro_rules! gen_chunk_unprocessed {
 }
 
 #[macro_export]
-macro_rules! gen_chunk {
+macro_rules! gen_chunk_inflight {
     (
             $chunk_spell:literal,
             $key_stroke_candidates:expr,
             $inactive_key_stroke_candidates:expr,
-            $state:expr,
             $ideal_candidate:expr
             $(,[$($actual_key_stroke:expr),*])?
         ) => {
@@ -41,12 +40,35 @@ macro_rules! gen_chunk {
             let _actual_key_stroke: Vec<crate::typing_primitive_types::key_stroke::ActualKeyStroke> = vec![];
             $(let _actual_key_stroke = vec![$($actual_key_stroke.try_into().unwrap()),*];)?
 
-            crate::typing_primitive_types::chunk::Chunk::new(
+            crate::typing_primitive_types::chunk::inflight::ChunkInflight::new(
                 $chunk_spell.to_string().try_into().unwrap(),
                 $key_stroke_candidates,
                 $inactive_key_stroke_candidates,
                 $ideal_candidate,
-                $state,
+                _actual_key_stroke,
+            )
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! gen_chunk_confirmed {
+    (
+            $chunk_spell:literal,
+            $key_stroke_candidates:expr,
+            $inactive_key_stroke_candidates:expr,
+            $ideal_candidate:expr,
+            [$($actual_key_stroke:expr),*]
+        ) => {
+        {
+
+            let _actual_key_stroke = vec![$($actual_key_stroke.try_into().unwrap()),*];
+
+            crate::typing_primitive_types::chunk::confirmed::ChunkConfirmed::new(
+                $chunk_spell.to_string().try_into().unwrap(),
+                $key_stroke_candidates,
+                $inactive_key_stroke_candidates,
+                $ideal_candidate,
                 _actual_key_stroke,
             )
         }

@@ -3,6 +3,7 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 
 use super::statistics_counter::StatisticsCounter;
+use crate::typing_primitive_types::chunk::confirmed::ChunkConfirmed;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate;
 use crate::typing_primitive_types::chunk::Chunk;
@@ -81,7 +82,7 @@ impl TypingResultStatisticsTarget {
 }
 
 pub(crate) fn construct_result(
-    confirmed_chunks: &[Chunk],
+    confirmed_chunks: &[ChunkConfirmed],
     _lap_request: LapRequest,
 ) -> TypingResultStatistics {
     assert!(!confirmed_chunks.is_empty());
@@ -91,23 +92,20 @@ pub(crate) fn construct_result(
     confirmed_chunks.iter().for_each(|confirmed_chunk| {
         statistics_counter.on_add_chunk(
             confirmed_chunk
-                .as_ref()
-                .min_candidate(None)
+                .effective_candidate()
                 .construct_key_stroke_element_count(),
             confirmed_chunk
-                .as_ref()
                 .ideal_key_stroke_candidate()
                 .construct_key_stroke_element_count(),
-            confirmed_chunk.as_ref().spell().count(),
+            confirmed_chunk.spell().count(),
         );
         statistics_counter.on_start_chunk(
             confirmed_chunk
-                .confirmed_candidate()
+                .confirmed_key_stroke_candidates()
                 .whole_key_stroke()
                 .chars()
                 .count(),
             confirmed_chunk
-                .as_ref()
                 .ideal_key_stroke_candidate()
                 .whole_key_stroke()
                 .chars()

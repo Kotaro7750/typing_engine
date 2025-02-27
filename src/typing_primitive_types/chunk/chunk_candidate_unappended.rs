@@ -2,6 +2,7 @@ use std::collections::{HashSet, VecDeque};
 
 use super::key_stroke_candidate::CandidateKeyStroke;
 use super::unprocessed::ChunkUnprocessed;
+use super::Chunk;
 use crate::typing_primitive_types::chunk::key_stroke_candidate::DelayedConfirmedCandidateInfo;
 use crate::typing_primitive_types::chunk::single_n_availability::SingleNAvailability;
 use crate::typing_primitive_types::chunk::ChunkSpell;
@@ -24,11 +25,6 @@ impl ChunkCandidateUnappended {
         Self {
             spell: ChunkSpell::new(spell),
         }
-    }
-
-    /// Returns the spell of this chunk.
-    fn spell(&self) -> &ChunkSpell {
-        &self.spell
     }
 
     /// Returns the estimated minimum number of key strokes required to type this chunk.
@@ -66,6 +62,12 @@ impl ChunkCandidateUnappended {
             spell: self.spell.clone(),
             key_stroke_candidates,
         }
+    }
+}
+
+impl Chunk for ChunkCandidateUnappended {
+    fn spell(&self) -> &ChunkSpell {
+        &self.spell
     }
 }
 
@@ -112,6 +114,12 @@ impl ChunkIdealCandidateUnappended {
         assert!(min_candidate.is_some());
 
         min_candidate.as_ref().unwrap()
+    }
+}
+
+impl Chunk for ChunkIdealCandidateUnappended {
+    fn spell(&self) -> &ChunkSpell {
+        &self.spell
     }
 }
 

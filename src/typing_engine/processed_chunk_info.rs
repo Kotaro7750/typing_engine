@@ -6,11 +6,12 @@ use crate::statistics::lap_statistics::LapStatiticsBuilder;
 use crate::statistics::statistical_event::StatisticalEvent;
 use crate::statistics::statistics_counter::StatisticsCounter;
 use crate::statistics::{construct_on_typing_statistics_target, LapRequest};
+use crate::typing_primitive_types::chunk::confirmed::ChunkConfirmed;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
+use crate::typing_primitive_types::chunk::inflight::ChunkInflight;
 use crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate;
 use crate::typing_primitive_types::chunk::unprocessed::ChunkUnprocessed;
 use crate::typing_primitive_types::chunk::Chunk;
-use crate::typing_primitive_types::chunk::ChunkState;
 use crate::typing_primitive_types::key_stroke::KeyStrokeResult;
 use crate::typing_primitive_types::key_stroke::{ActualKeyStroke, KeyStrokeChar};
 
@@ -20,8 +21,8 @@ mod test;
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub(crate) struct ProcessedChunkInfo {
     unprocessed_chunks: VecDeque<ChunkUnprocessed>,
-    inflight_chunk: Option<Chunk>,
-    confirmed_chunks: Vec<Chunk>,
+    inflight_chunk: Option<ChunkInflight>,
+    confirmed_chunks: Vec<ChunkConfirmed>,
     pending_key_strokes: Vec<ActualKeyStroke>,
 }
 
@@ -71,17 +72,21 @@ impl ProcessedChunkInfo {
     }
 
     // 現在打っているチャンクを確定させ未処理のチャンク列の先頭のチャンクの処理を開始する
-    pub(crate) fn move_next_chunk(&mut self) -> Option<&Chunk> {
-        let mut confirmed_chunk: Option<&Chunk> = None;
+    pub(crate) fn move_next_chunk(&mut self) -> Option<&ChunkConfirmed> {
+        let mut confirmed_chunk: Option<&ChunkConfirmed> = None;
 
         // まずは現在打っているチャンクを確定済みチャンク列に追加する
         let next_chunk_head_constraint = if self.inflight_chunk.is_some() {
             let mut current_inflight_chunk = self.inflight_chunk.take().unwrap();
             assert!(current_inflight_chunk.is_confirmed());
-            current_inflight_chunk.change_state(ChunkState::Confirmed);
 
-            let next_chunk_head_constraint = current_inflight_chunk.next_chunk_head_constraint();
-            self.confirmed_chunks.push(current_inflight_chunk);
+            let confirming_chunk = current_inflight_chunk.try_into_confirmed().unwrap();
+            let next_chunk_head_constraint = confirming_chunk
+                .confirmed_key_stroke_candidates()
+                .next_chunk_head_constraint()
+                .clone();
+
+            self.confirmed_chunks.push(confirming_chunk);
 
             confirmed_chunk.replace(self.confirmed_chunks.last().unwrap());
 
@@ -185,7 +190,7 @@ impl ProcessedChunkInfo {
         (result, statistical_events)
     }
 
-    pub(crate) fn confirmed_chunks(&self) -> &Vec<Chunk> {
+    pub(crate) fn confirmed_chunks(&self) -> &[ChunkConfirmed] {
         &self.confirmed_chunks
     }
 
@@ -215,23 +220,20 @@ impl ProcessedChunkInfo {
         self.confirmed_chunks.iter().for_each(|confirmed_chunk| {
             lap_statistics_builder.on_add_chunk(
                 confirmed_chunk
-                    .as_ref()
-                    .min_candidate(None)
+                    .effective_candidate()
                     .construct_key_stroke_element_count(),
                 confirmed_chunk
-                    .as_ref()
                     .ideal_key_stroke_candidate()
                     .construct_key_stroke_element_count(),
-                confirmed_chunk.as_ref().spell().count(),
+                confirmed_chunk.spell().count(),
             );
             lap_statistics_builder.on_start_chunk(
                 confirmed_chunk
-                    .confirmed_candidate()
+                    .confirmed_key_stroke_candidates()
                     .whole_key_stroke()
                     .chars()
                     .count(),
                 confirmed_chunk
-                    .as_ref()
                     .ideal_key_stroke_candidate()
                     .whole_key_stroke()
                     .chars()
@@ -260,17 +262,21 @@ impl ProcessedChunkInfo {
             key_stroke_wrong_positions
                 .extend(confirmed_chunk.wrong_key_stroke_positions(key_stroke_cursor_position));
             key_stroke_cursor_position += confirmed_chunk
-                .confirmed_candidate()
+                .confirmed_key_stroke_candidates()
                 .calc_key_stroke_count();
 
             // Update cursor positions and wrong positions for spell
             spell_wrong_positions
                 .extend(confirmed_chunk.wrong_spell_positions(spell_head_position));
-            spell_head_position += confirmed_chunk.as_ref().spell().count();
+            spell_head_position += confirmed_chunk.spell().count();
 
             // 最後にチャンクの統計情報と表示用の文字列を更新する
-            key_stroke.push_str(&confirmed_chunk.confirmed_candidate().whole_key_stroke());
-            spell.push_str(confirmed_chunk.as_ref().spell().as_ref());
+            key_stroke.push_str(
+                &confirmed_chunk
+                    .confirmed_key_stroke_candidates()
+                    .whole_key_stroke(),
+            );
+            spell.push_str(confirmed_chunk.spell().as_ref());
 
             lap_statistics_builder.on_finish_chunk();
         });
@@ -287,36 +293,30 @@ impl ProcessedChunkInfo {
 
             realtime_statistics_counter.on_add_chunk(
                 inflight_chunk
-                    .as_ref()
                     .min_candidate(None)
                     .construct_key_stroke_element_count(),
                 inflight_chunk
-                    .as_ref()
                     .ideal_key_stroke_candidate()
                     .construct_key_stroke_element_count(),
-                inflight_chunk.as_ref().spell().count(),
+                inflight_chunk.spell().count(),
             );
             lap_statistics_builder.on_add_chunk(
                 inflight_chunk
-                    .as_ref()
                     .min_candidate(None)
                     .construct_key_stroke_element_count(),
                 inflight_chunk
-                    .as_ref()
                     .ideal_key_stroke_candidate()
                     .construct_key_stroke_element_count(),
-                inflight_chunk.as_ref().spell().count(),
+                inflight_chunk.spell().count(),
             );
 
             realtime_statistics_counter.on_start_chunk(
                 inflight_chunk
-                    .as_ref()
                     .min_candidate(None)
                     .whole_key_stroke()
                     .chars()
                     .count(),
                 inflight_chunk
-                    .as_ref()
                     .ideal_key_stroke_candidate()
                     .whole_key_stroke()
                     .chars()
@@ -324,13 +324,11 @@ impl ProcessedChunkInfo {
             );
             lap_statistics_builder.on_start_chunk(
                 inflight_chunk
-                    .as_ref()
                     .min_candidate(None)
                     .whole_key_stroke()
                     .chars()
                     .count(),
                 inflight_chunk
-                    .as_ref()
                     .ideal_key_stroke_candidate()
                     .whole_key_stroke()
                     .chars()
@@ -372,17 +370,12 @@ impl ProcessedChunkInfo {
                 })
                 .collect();
             spell_wrong_positions.extend(inflight_chunk.wrong_spell_positions(spell_head_position));
-            spell_head_position += inflight_chunk.as_ref().spell().count();
+            spell_head_position += inflight_chunk.spell().count();
 
             // 最後にチャンクの統計情報と表示用の文字列を更新する
 
-            key_stroke.push_str(
-                &inflight_chunk
-                    .as_ref()
-                    .min_candidate(None)
-                    .whole_key_stroke(),
-            );
-            spell.push_str(inflight_chunk.as_ref().spell().as_ref());
+            key_stroke.push_str(&inflight_chunk.min_candidate(None).whole_key_stroke());
+            spell.push_str(inflight_chunk.spell().as_ref());
         }
 
         // 3. 未処理のチャンク
@@ -391,7 +384,6 @@ impl ProcessedChunkInfo {
             self.inflight_chunk
                 .as_ref()
                 .unwrap()
-                .as_ref()
                 .min_candidate(None)
                 .next_chunk_head_constraint()
                 .clone()

@@ -1,4 +1,5 @@
 use crate::typing_primitive_types::chunk::{
+    confirmed::ChunkConfirmed,
     has_actual_key_strokes::ChunkHasActualKeyStrokes,
     key_stroke_candidate::{ChunkKeyStrokeCandidate, KeyStrokeElementCount},
     unprocessed::ChunkUnprocessed,
@@ -92,19 +93,19 @@ impl StatisticalEvent {
     }
 
     /// Create ChunkConfirmed event from chunk
-    pub(crate) fn new_from_confirmed_chunk(confirmed_chunk: &Chunk) -> StatisticalEvent {
+    pub(crate) fn new_from_confirmed_chunk(confirmed_chunk: &ChunkConfirmed) -> StatisticalEvent {
         let key_stroke_element_count = confirmed_chunk
-            .min_candidate(None)
+            .effective_candidate()
             .construct_key_stroke_element_count();
 
         let ideal_key_stroke_element_count = confirmed_chunk
             .ideal_key_stroke_candidate()
             .construct_key_stroke_element_count();
 
-        let spell_count = confirmed_chunk.as_ref().spell().count();
+        let spell_count = confirmed_chunk.spell().count();
 
         let candidate_key_stroke_count = confirmed_chunk
-            .confirmed_candidate()
+            .confirmed_key_stroke_candidates()
             .whole_key_stroke()
             .chars()
             .count();
