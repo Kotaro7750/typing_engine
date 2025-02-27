@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! gen_chunk_candidate_unappended {
     ($chunk_spell:literal) => {
-        crate::typing_primitive_types::chunk::chunk_candidate_unappended::ChunkCandidateUnappended::new(
+        crate::typing_primitive_types::chunk::candidate_unappended::ChunkCandidateUnappended::new(
             $chunk_spell.to_string().try_into().unwrap()
         )
     };

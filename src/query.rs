@@ -3,7 +3,7 @@ use std::num::NonZeroUsize;
 
 use crate::typing_primitive_types::{
     chunk::{
-        chunk_candidate_unappended::{append_key_stroke_to_chunks, ChunkCandidateUnappended},
+        candidate_unappended::{append_key_stroke_to_chunks, ChunkCandidateUnappended},
         unprocessed::ChunkUnprocessed,
     },
     vocabulary::{VocabularyEntry, VocabularyInfo, VocabularySpellElement},

@@ -3,7 +3,7 @@ use has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use key_stroke_candidate::ChunkKeyStrokeCandidate;
 use key_stroke_candidate::ChunkKeyStrokeCandidateWithoutCursor;
 
-pub(crate) mod chunk_candidate_unappended;
+pub(crate) mod candidate_unappended;
 pub(crate) mod confirmed;
 pub(crate) mod has_actual_key_strokes;
 pub(crate) mod inflight;
