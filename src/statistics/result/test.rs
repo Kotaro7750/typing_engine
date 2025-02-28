@@ -12,12 +12,12 @@ fn construct_result_1() {
     let cc = vec![
         gen_chunk_confirmed!(
             "きょ",
-            gen_candidate!(gen_candidate_key_stroke!(["kyo"]), false),
+            gen_candidate!(gen_candidate_key_stroke!(["kyo"])),
             vec![
-                gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"]), false),
-                gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]), false)
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]))
             ],
-            gen_candidate!(gen_candidate_key_stroke!(["kyo"]), false),
+            gen_candidate!(gen_candidate_key_stroke!(["kyo"])),
             [
                 ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                 ActualKeyStroke::new(Duration::new(2, 0), 'u'.try_into().unwrap(), false),
@@ -28,12 +28,12 @@ fn construct_result_1() {
         ),
         gen_chunk_confirmed!(
             "きょ",
-            gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]), false),
+            gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"])),
             vec![
-                gen_candidate!(gen_candidate_key_stroke!(["kyo"]), false),
-                gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"]), false),
+                gen_candidate!(gen_candidate_key_stroke!(["kyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"])),
             ],
-            gen_candidate!(gen_candidate_key_stroke!(["kyo"]), false),
+            gen_candidate!(gen_candidate_key_stroke!(["kyo"])),
             [
                 ActualKeyStroke::new(Duration::new(6, 0), 'k'.try_into().unwrap(), true),
                 ActualKeyStroke::new(Duration::new(7, 0), 'i'.try_into().unwrap(), true),

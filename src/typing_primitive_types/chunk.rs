@@ -1,7 +1,6 @@
 use crate::typing_primitive_types::spell::SpellString;
 use has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use key_stroke_candidate::ChunkKeyStrokeCandidate;
-use key_stroke_candidate::ChunkKeyStrokeCandidateWithoutCursor;
 
 pub(crate) mod candidate_unappended;
 pub(crate) mod confirmed;

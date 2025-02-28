@@ -2,7 +2,7 @@
 macro_rules! gen_chunk_candidate_unappended {
     ($chunk_spell:literal) => {
         crate::typing_primitive_types::chunk::candidate_unappended::ChunkCandidateUnappended::new(
-            $chunk_spell.to_string().try_into().unwrap()
+            $chunk_spell.to_string().try_into().unwrap(),
         )
     };
 }
@@ -15,7 +15,7 @@ macro_rules! gen_chunk_unprocessed {
             $ideal_candidate:expr
         ) => {
         {
-            let _ideal_candidate: crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidateWithoutCursor = $ideal_candidate;
+            let _ideal_candidate: crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate = $ideal_candidate;
 
             crate::typing_primitive_types::chunk::unprocessed::ChunkUnprocessed::new(
                 $chunk_spell.to_string().try_into().unwrap(),
@@ -32,13 +32,13 @@ macro_rules! gen_chunk_inflight {
             $chunk_spell:literal,
             $key_stroke_candidates:expr,
             $inactive_key_stroke_candidates:expr,
-            $ideal_candidate:expr
-            $(,[$($actual_key_stroke:expr),*])?
+            $ideal_candidate:expr,
+            [$($actual_key_stroke:expr),*],
+            $key_stroke_cursor_position:literal
         ) => {
         {
 
-            let _actual_key_stroke: Vec<crate::typing_primitive_types::key_stroke::ActualKeyStroke> = vec![];
-            $(let _actual_key_stroke = vec![$($actual_key_stroke.try_into().unwrap()),*];)?
+            let _actual_key_stroke = vec![$($actual_key_stroke.try_into().unwrap()),*];
 
             crate::typing_primitive_types::chunk::inflight::ChunkInflight::new(
                 $chunk_spell.to_string().try_into().unwrap(),
@@ -46,6 +46,7 @@ macro_rules! gen_chunk_inflight {
                 $inactive_key_stroke_candidates,
                 $ideal_candidate,
                 _actual_key_stroke,
+                $key_stroke_cursor_position
             )
         }
     };
@@ -143,7 +144,7 @@ macro_rules! gen_vocabulary_info {
 
 #[macro_export]
 macro_rules! gen_candidate {
-        ($key_stroke:expr, true, $cursor_position:expr$(, $constraint:literal)?$(, [$($delayed:literal),*])?) => {
+        ($key_stroke:expr$(, $constraint:literal)?$(, [$($delayed:literal),*])?) => {
             {
                 let _constraint: Option<crate::typing_primitive_types::key_stroke::KeyStrokeChar> = None;
                 $(let _constraint = Some($constraint.try_into().unwrap());)?
@@ -151,25 +152,7 @@ macro_rules! gen_candidate {
                 let _delayed: Option<crate::typing_primitive_types::chunk::key_stroke_candidate::DelayedConfirmedCandidateInfo> = None;
                 $(let _delayed = Some(crate::typing_primitive_types::chunk::key_stroke_candidate::DelayedConfirmedCandidateInfo::new(vec![$($delayed.try_into().unwrap()),*]));)?
 
-                let _cursor_position = $cursor_position.try_into().unwrap();
-
-                crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidateHasCursor::new(
-                    $key_stroke,
-                    _constraint,
-                    _delayed,
-                    _cursor_position,
-                )
-            }
-        };
-        ($key_stroke:expr, false$(, $constraint:literal)?$(, [$($delayed:literal),*])?) => {
-            {
-                let _constraint: Option<crate::typing_primitive_types::key_stroke::KeyStrokeChar> = None;
-                $(let _constraint = Some($constraint.try_into().unwrap());)?
-
-                let _delayed: Option<crate::typing_primitive_types::chunk::key_stroke_candidate::DelayedConfirmedCandidateInfo> = None;
-                $(let _delayed = Some(crate::typing_primitive_types::chunk::key_stroke_candidate::DelayedConfirmedCandidateInfo::new(vec![$($delayed.try_into().unwrap()),*]));)?
-
-                crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidateWithoutCursor::new(
+                crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate::new(
                     $key_stroke,
                     _constraint,
                     _delayed,

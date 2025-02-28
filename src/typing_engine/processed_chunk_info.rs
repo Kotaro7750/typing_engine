@@ -9,7 +9,6 @@ use crate::statistics::{construct_on_typing_statistics_target, LapRequest};
 use crate::typing_primitive_types::chunk::confirmed::ChunkConfirmed;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use crate::typing_primitive_types::chunk::inflight::ChunkInflight;
-use crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate;
 use crate::typing_primitive_types::chunk::unprocessed::ChunkUnprocessed;
 use crate::typing_primitive_types::chunk::Chunk;
 use crate::typing_primitive_types::key_stroke::KeyStrokeResult;
@@ -359,7 +358,7 @@ impl ProcessedChunkInfo {
             // Update cursor positions and wrong positions for key stroke
             key_stroke_wrong_positions
                 .extend(inflight_chunk.wrong_key_stroke_positions(key_stroke_cursor_position));
-            key_stroke_cursor_position += inflight_chunk.current_key_stroke_cursor_position(); // この時点ではカーソル位置はこのチャンクの先頭を指しているので単純に足すだけで良い
+            key_stroke_cursor_position += inflight_chunk.key_stroke_cursor_position(); // この時点ではカーソル位置はこのチャンクの先頭を指しているので単純に足すだけで良い
 
             // Update cursor positions and wrong positions for spell
             spell_cursor_positions = inflight_chunk

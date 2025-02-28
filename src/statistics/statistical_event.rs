@@ -1,9 +1,6 @@
 use crate::typing_primitive_types::chunk::{
-    confirmed::ChunkConfirmed,
-    has_actual_key_strokes::ChunkHasActualKeyStrokes,
-    key_stroke_candidate::{ChunkKeyStrokeCandidate, KeyStrokeElementCount},
-    unprocessed::ChunkUnprocessed,
-    Chunk,
+    confirmed::ChunkConfirmed, has_actual_key_strokes::ChunkHasActualKeyStrokes,
+    key_stroke_candidate::KeyStrokeElementCount, unprocessed::ChunkUnprocessed, Chunk,
 };
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]

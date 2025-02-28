@@ -3,8 +3,6 @@ use std::time::Duration;
 use crate::typing_primitive_types::chunk::confirmed::ChunkConfirmed;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate;
-use crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidateHasCursor;
-use crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidateWithoutCursor;
 use crate::typing_primitive_types::chunk::Chunk;
 use crate::typing_primitive_types::chunk::ChunkSpell;
 use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
@@ -20,23 +18,26 @@ pub struct ChunkInflight {
     spell: ChunkSpell,
     /// Candidates of key strokes to type this chunk.
     /// Ex. For a chunk "きょ", there are key strokes like "kyo" and "kilyo".
-    key_stroke_candidates: Vec<ChunkKeyStrokeCandidateHasCursor>,
-    inactive_key_stroke_candidates: Vec<ChunkKeyStrokeCandidateWithoutCursor>,
+    key_stroke_candidates: Vec<ChunkKeyStrokeCandidate>,
+    inactive_key_stroke_candidates: Vec<ChunkKeyStrokeCandidate>,
     /// A key stroke candidate that is the shortest when typed.
     /// This is determined when key strokes are assigned, so it may not be possible to type this
     /// candidate depending on the actual key stroke sequence.
-    ideal_candidate: ChunkKeyStrokeCandidateWithoutCursor,
+    ideal_candidate: ChunkKeyStrokeCandidate,
     /// Actual key strokes that also includes wrong key strokes.
     actual_key_strokes: Vec<ActualKeyStroke>,
+    /// Cursur position index of the key stroke candidates.
+    key_stroke_cursor_position: usize,
 }
 
 impl ChunkInflight {
     pub fn new(
         spell: SpellString,
-        key_stroke_candidates: Vec<ChunkKeyStrokeCandidateHasCursor>,
-        inactive_key_stroke_candidates: Vec<ChunkKeyStrokeCandidateWithoutCursor>,
-        ideal_candidate: ChunkKeyStrokeCandidateWithoutCursor,
+        key_stroke_candidates: Vec<ChunkKeyStrokeCandidate>,
+        inactive_key_stroke_candidates: Vec<ChunkKeyStrokeCandidate>,
+        ideal_candidate: ChunkKeyStrokeCandidate,
         actual_key_strokes: Vec<ActualKeyStroke>,
+        key_stroke_cursor_position: usize,
     ) -> Self {
         Self {
             spell: ChunkSpell::new(spell),
@@ -44,14 +45,16 @@ impl ChunkInflight {
             inactive_key_stroke_candidates,
             ideal_candidate,
             actual_key_strokes,
+            key_stroke_cursor_position,
         }
     }
 
-    pub(crate) fn key_stroke_candidates_mut(&mut self) -> &mut [ChunkKeyStrokeCandidateHasCursor] {
-        &mut self.key_stroke_candidates
+    /// Returns the key stroke cursor position.
+    pub(crate) fn key_stroke_cursor_position(&self) -> usize {
+        self.key_stroke_cursor_position
     }
 
-    pub(crate) fn key_stroke_candidates(&self) -> &[ChunkKeyStrokeCandidateHasCursor] {
+    pub(crate) fn key_stroke_candidates(&self) -> &[ChunkKeyStrokeCandidate] {
         &self.key_stroke_candidates
     }
 
@@ -61,10 +64,7 @@ impl ChunkInflight {
         if self.is_confirmed() {
             Ok(ChunkConfirmed::new(
                 self.spell.into(),
-                self.key_stroke_candidates
-                    .pop()
-                    .unwrap()
-                    .into_without_cursor(),
+                self.key_stroke_candidates.pop().unwrap(),
                 self.inactive_key_stroke_candidates,
                 self.ideal_candidate,
                 self.actual_key_strokes,
@@ -75,7 +75,7 @@ impl ChunkInflight {
     }
 
     /// Returns the ideal key stroke candidate of this chunk.
-    pub(crate) fn ideal_key_stroke_candidate(&self) -> &ChunkKeyStrokeCandidateWithoutCursor {
+    pub(crate) fn ideal_key_stroke_candidate(&self) -> &ChunkKeyStrokeCandidate {
         &self.ideal_candidate
     }
 
@@ -86,7 +86,7 @@ impl ChunkInflight {
     pub(crate) fn min_candidate(
         &self,
         chunk_head_striction: Option<KeyStrokeChar>,
-    ) -> &dyn ChunkKeyStrokeCandidate {
+    ) -> &ChunkKeyStrokeCandidate {
         let min_candidate = self
             .key_stroke_candidates()
             .iter()
@@ -107,7 +107,7 @@ impl ChunkInflight {
 
         assert!(min_candidate.is_some());
 
-        *min_candidate.as_ref().unwrap()
+        min_candidate.as_ref().unwrap()
     }
 
     /// Reduce the candidates of this chunk.
@@ -125,15 +125,19 @@ impl ChunkInflight {
             .rev()
             .filter(|i| !contain_set.contains(i))
             .map(|remove_index| self.key_stroke_candidates.remove(remove_index))
-            .collect::<Vec<ChunkKeyStrokeCandidateHasCursor>>();
+            .collect::<Vec<ChunkKeyStrokeCandidate>>();
 
         removed_candidates_reverse_order
             .into_iter()
             .rev()
             .for_each(|removed_candidate| {
-                self.inactive_key_stroke_candidates
-                    .push(removed_candidate.into_without_cursor());
+                self.inactive_key_stroke_candidates.push(removed_candidate);
             });
+    }
+
+    /// Return if the passed candidate is confirmed.
+    pub(crate) fn is_candidate_confirmed(&self, candidate: &ChunkKeyStrokeCandidate) -> bool {
+        self.key_stroke_cursor_position() == candidate.calc_key_stroke_count()
     }
 
     /// チャンクが確定したか
@@ -149,16 +153,7 @@ impl ChunkInflight {
             return false;
         }
 
-        let mut is_confirmed = false;
-
-        key_stroke_candidates.iter().for_each(|candidate| {
-            if candidate.is_confirmed() {
-                assert!(!is_confirmed);
-                is_confirmed = true;
-            }
-        });
-
-        is_confirmed
+        self.is_candidate_confirmed(key_stroke_candidates.first().unwrap())
     }
 
     /// 遅延確定候補があるとしたらそれを打ち終えているかどうか
@@ -170,7 +165,7 @@ impl ChunkInflight {
             .iter()
             .filter(|candidate| candidate.is_delayed_confirmed_candidate())
             .for_each(|candidate| {
-                if candidate.is_confirmed() {
+                if self.is_candidate_confirmed(candidate) {
                     // 同時に遅延確定候補が複数あることはない
                     assert!(!is_delayed_confirmable);
                     is_delayed_confirmable = true;
@@ -232,7 +227,9 @@ impl ChunkInflight {
                 if self.is_delayed_confirmable() && candidate.is_delayed_confirmed_candidate() {
                     None
                 } else {
-                    candidate.is_hit(&key_stroke).then_some(i)
+                    candidate
+                        .is_hit(&key_stroke, self.key_stroke_cursor_position())
+                        .then_some(i)
                 }
             })
             .collect();
@@ -243,12 +240,7 @@ impl ChunkInflight {
         // advanced.
         if is_hit {
             self.reduce_candidate(&hit_candidate_index);
-
-            self.key_stroke_candidates_mut()
-                .iter_mut()
-                .for_each(|candidate| {
-                    candidate.advance_cursor();
-                });
+            self.key_stroke_cursor_position += 1;
         }
 
         // If the chunk is delayed confirmable, key strokes are not added at this time.
@@ -270,19 +262,6 @@ impl ChunkInflight {
         self.actual_key_strokes.push(actual_key_stroke);
     }
 
-    // チャンクのキーストロークのどこにカーソルを当てるべきか
-    pub(crate) fn current_key_stroke_cursor_position(&self) -> usize {
-        self.key_stroke_candidates()
-            .iter()
-            .map(|candidate| candidate.cursor_position())
-            .reduce(|cursor_position, cursor_position_of_candidate| {
-                // XXX 適切に候補を削減していれば全ての候補でカーソル位置は同じなはず
-                assert!(cursor_position == cursor_position_of_candidate);
-                cursor_position_of_candidate
-            })
-            .unwrap()
-    }
-
     // チャンクの綴りのどこにカーソルを当てるべきか
     // 基本的にはチャンク全体だが複数文字を個別で入力している場合にはそれぞれの文字になる
     pub(crate) fn current_spell_cursor_positions(&self) -> Vec<usize> {
@@ -292,9 +271,7 @@ impl ChunkInflight {
             // 複数文字チャンクをまとめて入力する場合には現在入力中の綴りのみにカーソルを当てる
             cursor_positions.push(
                 self.min_candidate(None)
-                    .belonging_element_index_of_key_stroke(
-                        self.current_key_stroke_cursor_position(),
-                    ),
+                    .belonging_element_index_of_key_stroke(self.key_stroke_cursor_position()),
             );
         } else {
             // チャンクをまとめて入力している場合にはチャンクの綴り全体にカーソルを当てる
@@ -318,7 +295,7 @@ impl Chunk for ChunkInflight {
 }
 
 impl ChunkHasActualKeyStrokes for ChunkInflight {
-    fn effective_candidate(&self) -> &dyn ChunkKeyStrokeCandidate {
+    fn effective_candidate(&self) -> &ChunkKeyStrokeCandidate {
         self.key_stroke_candidates()
             .first()
             .expect("key stroke candidates must not be empty")

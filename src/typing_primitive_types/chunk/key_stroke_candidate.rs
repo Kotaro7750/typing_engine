@@ -128,75 +128,9 @@ impl CandidateKeyStroke {
     }
 }
 
-/// A trait for common behavior of key stroke candidate.
-pub(crate) trait ChunkKeyStrokeCandidate {
-    /// Returns key stroke of this candidate.
-    fn key_stroke(&self) -> &CandidateKeyStroke;
-    /// Returns constraints for the next chunk head key stroke of this candidate.
-    fn next_chunk_head_constraint(&self) -> &Option<KeyStrokeChar>;
-    /// Returns delay confirmed candidate information of this candidate.
-    fn delayed_confirmed_candidate_info(&self) -> &Option<DelayedConfirmedCandidateInfo>;
-    /// Returns whole key stroke string of this candidate.
-    fn whole_key_stroke(&self) -> KeyStrokeString;
-    /// Returns if this candidate is a delayed confirmed candidate.
-    fn is_delayed_confirmed_candidate(&self) -> bool {
-        self.delayed_confirmed_candidate_info().is_some()
-    }
-
-    /// Returns if chunk of this candidate is double characters and each character is input
-    /// separately like "きょ".
-    fn is_splitted(&self) -> bool {
-        self.key_stroke().is_double_splitted()
-    }
-
-    /// Return how many key strokes are needed to type this candidate.
-    fn calc_key_stroke_count(&self) -> usize {
-        self.whole_key_stroke().chars().count()
-    }
-
-    /// Return key stroke char at the passed position index.
-    fn key_stroke_char_at_position(&self, position: usize) -> KeyStrokeChar {
-        let whole_key_stroke = self.whole_key_stroke();
-
-        assert!(position < whole_key_stroke.chars().count());
-
-        whole_key_stroke
-            .chars()
-            .nth(position)
-            .unwrap()
-            .try_into()
-            .unwrap()
-    }
-
-    /// Returns index of key stroke element which passed key stroke index belongs to.
-    /// Usually, this function returns 0, but it can return 1 when the chunk is double characters
-    /// and each character is input separately.
-    fn belonging_element_index_of_key_stroke(&self, key_stroke_index: usize) -> usize {
-        assert!(key_stroke_index < self.calc_key_stroke_count());
-
-        self.key_stroke()
-            .belonging_element_index_of_key_stroke(key_stroke_index)
-            .unwrap()
-    }
-
-    /// Returns if passed key stroke index is at the end of key stroke element.
-    fn is_element_end_at_key_stroke_index(&self, key_stroke_index: usize) -> bool {
-        assert!(key_stroke_index < self.calc_key_stroke_count());
-
-        self.key_stroke()
-            .is_element_end_at_key_stroke_index(key_stroke_index)
-            .unwrap()
-    }
-
-    /// Returns key stroke element count of this candidate.
-    fn construct_key_stroke_element_count(&self) -> KeyStrokeElementCount {
-        self.key_stroke().construct_key_stroke_element_count()
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-/// A struct representing single candidate of key strokes with cursor position.
-pub(crate) struct ChunkKeyStrokeCandidateHasCursor {
+/// A struct representing single candidate of key strokes
+pub(crate) struct ChunkKeyStrokeCandidate {
     /// Key stroke of this candidate.
     key_stroke: CandidateKeyStroke,
     /// Constraint for the next chunk head key stroke.
@@ -206,113 +140,51 @@ pub(crate) struct ChunkKeyStrokeCandidateHasCursor {
     /// Information of delayed confirmed candidate if this candidate is a delayed confirmed
     /// candidate.
     delayed_confirmed_candidate_info: Option<DelayedConfirmedCandidateInfo>,
-    /// Cursor position of this candidate.
-    cursor_position: usize,
 }
 
-impl ChunkKeyStrokeCandidateHasCursor {
-    #[cfg(test)]
+impl ChunkKeyStrokeCandidate {
     pub(crate) fn new(
         key_stroke: CandidateKeyStroke,
         next_chunk_head_constraint: Option<KeyStrokeChar>,
         delayed_confirmed_candidate_info: Option<DelayedConfirmedCandidateInfo>,
-        cursor_position: usize,
     ) -> Self {
         Self {
             key_stroke,
             next_chunk_head_constraint,
             delayed_confirmed_candidate_info,
-            cursor_position,
         }
     }
 
-    /// Returns if passed key stroke is valid for this candidate current cursor position.
-    pub(super) fn is_hit(&self, key_stroke: &KeyStrokeChar) -> bool {
-        self.key_stroke_char_at_position(self.cursor_position) == *key_stroke
-    }
-
-    /// Returns if this candidate is confirmed.
-    /// This distinction is done by comparing cursor position.
-    pub(crate) fn is_confirmed(&self) -> bool {
-        self.cursor_position >= self.calc_key_stroke_count()
-    }
-
-    /// Returns current cursor position of this candidate.
-    pub(crate) fn cursor_position(&self) -> usize {
-        self.cursor_position
-    }
-
-    /// Advance cursor position of this candidate.
-    /// If cursor position is None, this function reset cursor position to 0.
-    pub(super) fn advance_cursor(&mut self) {
-        self.cursor_position += 1;
-    }
-
-    pub(crate) fn into_without_cursor(self) -> ChunkKeyStrokeCandidateWithoutCursor {
-        ChunkKeyStrokeCandidateWithoutCursor {
-            key_stroke: self.key_stroke,
-            next_chunk_head_constraint: self.next_chunk_head_constraint,
-            delayed_confirmed_candidate_info: self.delayed_confirmed_candidate_info,
-        }
-    }
-}
-
-impl ChunkKeyStrokeCandidate for ChunkKeyStrokeCandidateHasCursor {
+    /// Returns key stroke of this candidate.
     fn key_stroke(&self) -> &CandidateKeyStroke {
         &self.key_stroke
     }
 
-    fn next_chunk_head_constraint(&self) -> &Option<KeyStrokeChar> {
+    /// Returns constraints for the next chunk head key stroke of this candidate.
+    pub(crate) fn next_chunk_head_constraint(&self) -> &Option<KeyStrokeChar> {
         &self.next_chunk_head_constraint
     }
 
-    fn delayed_confirmed_candidate_info(&self) -> &Option<DelayedConfirmedCandidateInfo> {
+    /// Returns delay confirmed candidate information of this candidate.
+    pub(super) fn delayed_confirmed_candidate_info(
+        &self,
+    ) -> &Option<DelayedConfirmedCandidateInfo> {
         &self.delayed_confirmed_candidate_info
     }
 
-    fn whole_key_stroke(&self) -> KeyStrokeString {
+    /// Returns whole key stroke string of this candidate.
+    pub(crate) fn whole_key_stroke(&self) -> KeyStrokeString {
         self.key_stroke.whole_key_stroke()
     }
-}
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-/// A struct representing single candidate of key strokes with cursor position.
-pub(crate) struct ChunkKeyStrokeCandidateWithoutCursor {
-    /// Key stroke of this candidate.
-    key_stroke: CandidateKeyStroke,
-    /// Constraint for the next chunk head key stroke.
-    /// This constraint is used when the next chunk head key stroke is restricted by this
-    /// candidate.
-    next_chunk_head_constraint: Option<KeyStrokeChar>,
-    /// Information of delayed confirmed candidate if this candidate is a delayed confirmed
-    /// candidate.
-    delayed_confirmed_candidate_info: Option<DelayedConfirmedCandidateInfo>,
-}
-
-impl ChunkKeyStrokeCandidateWithoutCursor {
-    pub(crate) fn new(
-        key_stroke: CandidateKeyStroke,
-        next_chunk_head_constraint: Option<KeyStrokeChar>,
-        delayed_confirmed_candidate_info: Option<DelayedConfirmedCandidateInfo>,
-    ) -> Self {
-        Self {
-            key_stroke,
-            next_chunk_head_constraint,
-            delayed_confirmed_candidate_info,
-        }
+    /// Returns if this candidate is a delayed confirmed candidate.
+    pub(super) fn is_delayed_confirmed_candidate(&self) -> bool {
+        self.delayed_confirmed_candidate_info().is_some()
     }
 
-    /// Consume this candidate and generate ChunkKeyStrokeCandidateHasCursor.
-    pub(crate) fn into_with_cursor(
-        self,
-        cursor_position: usize,
-    ) -> ChunkKeyStrokeCandidateHasCursor {
-        ChunkKeyStrokeCandidateHasCursor {
-            key_stroke: self.key_stroke,
-            next_chunk_head_constraint: self.next_chunk_head_constraint,
-            delayed_confirmed_candidate_info: self.delayed_confirmed_candidate_info,
-            cursor_position,
-        }
+    /// Returns if passed key stroke is valid for this candidate current cursor position.
+    pub(super) fn is_hit(&self, key_stroke: &KeyStrokeChar, cursor_position: usize) -> bool {
+        self.key_stroke_char_at_position(cursor_position) == *key_stroke
     }
 
     /// Restrics the key stroke count of this candidate to key_stroke_count_striction.
@@ -332,23 +204,55 @@ impl ChunkKeyStrokeCandidateWithoutCursor {
         // 遅延確定候補は普通の候補にする必要がある
         self.delayed_confirmed_candidate_info.take();
     }
-}
 
-impl ChunkKeyStrokeCandidate for ChunkKeyStrokeCandidateWithoutCursor {
-    fn key_stroke(&self) -> &CandidateKeyStroke {
-        &self.key_stroke
+    /// Returns if chunk of this candidate is double characters and each character is input
+    /// separately like "きょ".
+    pub(crate) fn is_splitted(&self) -> bool {
+        self.key_stroke().is_double_splitted()
     }
 
-    fn next_chunk_head_constraint(&self) -> &Option<KeyStrokeChar> {
-        &self.next_chunk_head_constraint
+    /// Return how many key strokes are needed to type this candidate.
+    pub(crate) fn calc_key_stroke_count(&self) -> usize {
+        self.whole_key_stroke().chars().count()
     }
 
-    fn delayed_confirmed_candidate_info(&self) -> &Option<DelayedConfirmedCandidateInfo> {
-        &self.delayed_confirmed_candidate_info
+    /// Return key stroke char at the passed position index.
+    pub(super) fn key_stroke_char_at_position(&self, position: usize) -> KeyStrokeChar {
+        let whole_key_stroke = self.whole_key_stroke();
+
+        assert!(position < whole_key_stroke.chars().count());
+
+        whole_key_stroke
+            .chars()
+            .nth(position)
+            .unwrap()
+            .try_into()
+            .unwrap()
     }
 
-    fn whole_key_stroke(&self) -> KeyStrokeString {
-        self.key_stroke.whole_key_stroke()
+    /// Returns index of key stroke element which passed key stroke index belongs to.
+    /// Usually, this function returns 0, but it can return 1 when the chunk is double characters
+    /// and each character is input separately.
+    pub(super) fn belonging_element_index_of_key_stroke(&self, key_stroke_index: usize) -> usize {
+        assert!(key_stroke_index < self.calc_key_stroke_count());
+
+        self.key_stroke()
+            .belonging_element_index_of_key_stroke(key_stroke_index)
+            .unwrap()
+    }
+
+    /// Returns if passed key stroke index is at the end of key stroke element.
+    pub(super) fn is_element_end_at_key_stroke_index(&self, key_stroke_index: usize) -> bool {
+        assert!(key_stroke_index < self.calc_key_stroke_count());
+
+        self.key_stroke()
+            .is_element_end_at_key_stroke_index(key_stroke_index)
+            .unwrap()
+    }
+
+    /// Returns key stroke element count of this candidate.
+    pub(crate) fn construct_key_stroke_element_count(&self) -> KeyStrokeElementCount {
+        self.key_stroke().construct_key_stroke_element_count()
     }
 }
 
