@@ -33,11 +33,11 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
     fn wrong_spell_element_positions(&self, offset: usize) -> Vec<usize> {
         self.wrong_key_stroke_positions(0)
             .iter()
-            .map(|key_stroke_index| {
+            .filter_map(|key_stroke_index| {
                 self.effective_candidate()
                     .belonging_element_index_of_key_stroke(*key_stroke_index)
-                    + offset
             })
+            .map(|element_index| element_index.into_absolute_index(offset))
             .collect()
     }
 
@@ -50,7 +50,7 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
             0 => vec![],
             1 => match self.spell() {
                 ChunkSpell::DoubleChar(_) => {
-                    if self.effective_candidate().is_splitted() {
+                    if self.effective_candidate().key_stroke().is_double_splitted() {
                         vec![wrong_spell_element_positions.first().unwrap() + offset]
                     } else {
                         assert_eq!(wrong_spell_element_positions, vec![0]);
@@ -64,7 +64,7 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
             },
             2 => {
                 assert_eq!(wrong_spell_element_positions, vec![0, 1]);
-                assert!(self.effective_candidate().is_splitted());
+                assert!(self.effective_candidate().key_stroke().is_double_splitted());
 
                 vec![offset, offset + 1]
             }
@@ -89,8 +89,9 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
                 if key_stroke.is_correct() {
                     if confirmed_candidate
                         .is_element_end_at_key_stroke_index(correct_key_stroke_index)
+                        .is_some_and(|is_end| is_end)
                     {
-                        if !confirmed_candidate.is_splitted() {
+                        if !confirmed_candidate.key_stroke().is_double_splitted() {
                             spell_end_vector[i] = Some(self.spell().count());
                         } else {
                             spell_end_vector[i] = Some(1);
@@ -107,7 +108,7 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
     /// 基本的には1だが複数文字の綴りをまとめて打つ場合には2となる
     fn effective_spell_count(&self) -> usize {
         // 複数文字の綴りをまとめて打つ場合には綴りの統計は2文字分カウントする必要がある
-        if self.effective_candidate().is_splitted() {
+        if self.effective_candidate().key_stroke().is_double_splitted() {
             1
         } else {
             self.spell().count()

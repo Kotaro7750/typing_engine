@@ -4,6 +4,7 @@ use crate::typing_primitive_types::chunk::confirmed::ChunkConfirmed;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate;
 use crate::typing_primitive_types::chunk::Chunk;
+use crate::typing_primitive_types::chunk::ChunkElementIndex;
 use crate::typing_primitive_types::chunk::ChunkSpell;
 use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
 use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
@@ -108,6 +109,11 @@ impl ChunkInflight {
         assert!(min_candidate.is_some());
 
         min_candidate.as_ref().unwrap()
+    }
+
+    /// Advance cursor position.
+    fn advance_cursor(&mut self) {
+        self.key_stroke_cursor_position += 1;
     }
 
     /// Reduce the candidates of this chunk.
@@ -240,7 +246,7 @@ impl ChunkInflight {
         // advanced.
         if is_hit {
             self.reduce_candidate(&hit_candidate_index);
-            self.key_stroke_cursor_position += 1;
+            self.advance_cursor();
         }
 
         // If the chunk is delayed confirmable, key strokes are not added at this time.
@@ -262,29 +268,31 @@ impl ChunkInflight {
         self.actual_key_strokes.push(actual_key_stroke);
     }
 
-    // チャンクの綴りのどこにカーソルを当てるべきか
-    // 基本的にはチャンク全体だが複数文字を個別で入力している場合にはそれぞれの文字になる
-    pub(crate) fn current_spell_cursor_positions(&self) -> Vec<usize> {
-        let mut cursor_positions: Vec<usize> = vec![];
-
-        if self.min_candidate(None).is_splitted() {
-            // 複数文字チャンクをまとめて入力する場合には現在入力中の綴りのみにカーソルを当てる
-            cursor_positions.push(
-                self.min_candidate(None)
-                    .belonging_element_index_of_key_stroke(self.key_stroke_cursor_position()),
-            );
+    /// Returns the cursor position of the spell for this chunk.
+    pub(crate) fn spell_cursor_position(&self) -> ChunkSpellCursorPosition {
+        if let Some(element_index) = self
+            .effective_candidate()
+            .belonging_element_index_of_key_stroke(self.key_stroke_cursor_position())
+        {
+            match element_index {
+                ChunkElementIndex::OnlyFirst => match self.spell() {
+                    ChunkSpell::DoubleChar(_) => ChunkSpellCursorPosition::DoubleCombined,
+                    _ => ChunkSpellCursorPosition::Single,
+                },
+                ChunkElementIndex::DoubleFirst => ChunkSpellCursorPosition::DoubleFirst,
+                ChunkElementIndex::DoubleSecond => ChunkSpellCursorPosition::DoubleSecond,
+            }
         } else {
-            // チャンクをまとめて入力している場合にはチャンクの綴り全体にカーソルを当てる
-            self.spell()
-                .as_ref()
-                .chars()
-                .enumerate()
-                .for_each(|(i, _)| {
-                    cursor_positions.push(i);
-                });
+            // If cursor position is out of range, it is considered to be at the end of the spell.
+            // This heppens when the chunk is delayed confirmable.
+            if self.effective_candidate().key_stroke().is_double_splitted() {
+                ChunkSpellCursorPosition::DoubleSecond
+            } else if self.effective_candidate().key_stroke().is_double() {
+                ChunkSpellCursorPosition::DoubleCombined
+            } else {
+                ChunkSpellCursorPosition::Single
+            }
         }
-
-        cursor_positions
     }
 }
 
@@ -296,12 +304,33 @@ impl Chunk for ChunkInflight {
 
 impl ChunkHasActualKeyStrokes for ChunkInflight {
     fn effective_candidate(&self) -> &ChunkKeyStrokeCandidate {
-        self.key_stroke_candidates()
-            .first()
-            .expect("key stroke candidates must not be empty")
+        self.min_candidate(None)
     }
 
     fn actual_key_strokes(&self) -> &[ActualKeyStroke] {
         &self.actual_key_strokes
+    }
+}
+
+/// An enum representing the cursor position of spell for chunk.
+pub(crate) enum ChunkSpellCursorPosition {
+    /// A cursor is on the first and only character of the spell.
+    Single,
+    /// A cursor is on the first character of the spell.
+    DoubleFirst,
+    /// A cursor is on the second character of the spell.
+    DoubleSecond,
+    /// A cursor is on the first and second characters of the spell.
+    DoubleCombined,
+}
+
+impl ChunkSpellCursorPosition {
+    /// Returns the absolute cursor position of the spell for this chunk with passed offset added.
+    pub(crate) fn into_absolute_cursor_position(self, offset: usize) -> Vec<usize> {
+        match self {
+            Self::Single | Self::DoubleFirst => vec![offset],
+            Self::DoubleSecond => vec![offset + 1],
+            Self::DoubleCombined => vec![offset, offset + 1],
+        }
     }
 }

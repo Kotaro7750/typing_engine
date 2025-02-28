@@ -3,6 +3,8 @@ use crate::typing_primitive_types::{key_stroke::KeyStrokeChar, key_stroke::KeySt
 use crate::utility::convert_by_weighted_count;
 use std::num::NonZeroUsize;
 
+use super::ChunkElementIndex;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// An enum representing the key stroke of a candidate.
 pub(crate) enum CandidateKeyStroke {
@@ -19,8 +21,13 @@ pub(crate) enum CandidateKeyStroke {
 }
 
 impl CandidateKeyStroke {
+    /// Returns if key stroke is double characters.
+    pub(crate) fn is_double(&self) -> bool {
+        matches!(self, Self::Double(_) | Self::DoubleSplitted(_, _))
+    }
+
     /// Returns if key stroke is double characters and input separately.
-    fn is_double_splitted(&self) -> bool {
+    pub(crate) fn is_double_splitted(&self) -> bool {
         matches!(self, Self::DoubleSplitted(_, _))
     }
 
@@ -48,19 +55,22 @@ impl CandidateKeyStroke {
     }
 
     /// Returns index of key stroke element which passed key stroke index belongs to.
-    fn belonging_element_index_of_key_stroke(&self, key_stroke_index: usize) -> Result<usize, ()> {
+    fn belonging_element_index_of_key_stroke(
+        &self,
+        key_stroke_index: usize,
+    ) -> Result<ChunkElementIndex, ()> {
         if self.whole_key_stroke().chars().count() <= key_stroke_index {
             return Err(());
         }
 
         match self {
-            Self::Normal(_) | Self::Double(_) => Ok(0),
+            Self::Normal(_) | Self::Double(_) => Ok(ChunkElementIndex::OnlyFirst),
             Self::DoubleSplitted(s1, _) => {
                 let s1_len = s1.chars().count();
                 if key_stroke_index < s1_len {
-                    Ok(0)
+                    Ok(ChunkElementIndex::DoubleFirst)
                 } else {
-                    Ok(1)
+                    Ok(ChunkElementIndex::DoubleSecond)
                 }
             }
         }
@@ -156,7 +166,7 @@ impl ChunkKeyStrokeCandidate {
     }
 
     /// Returns key stroke of this candidate.
-    fn key_stroke(&self) -> &CandidateKeyStroke {
+    pub(crate) fn key_stroke(&self) -> &CandidateKeyStroke {
         &self.key_stroke
     }
 
@@ -205,12 +215,6 @@ impl ChunkKeyStrokeCandidate {
         self.delayed_confirmed_candidate_info.take();
     }
 
-    /// Returns if chunk of this candidate is double characters and each character is input
-    /// separately like "きょ".
-    pub(crate) fn is_splitted(&self) -> bool {
-        self.key_stroke().is_double_splitted()
-    }
-
     /// Return how many key strokes are needed to type this candidate.
     pub(crate) fn calc_key_stroke_count(&self) -> usize {
         self.whole_key_stroke().chars().count()
@@ -231,23 +235,23 @@ impl ChunkKeyStrokeCandidate {
     }
 
     /// Returns index of key stroke element which passed key stroke index belongs to.
-    /// Usually, this function returns 0, but it can return 1 when the chunk is double characters
-    /// and each character is input separately.
-    pub(super) fn belonging_element_index_of_key_stroke(&self, key_stroke_index: usize) -> usize {
-        assert!(key_stroke_index < self.calc_key_stroke_count());
-
+    pub(super) fn belonging_element_index_of_key_stroke(
+        &self,
+        key_stroke_index: usize,
+    ) -> Option<ChunkElementIndex> {
         self.key_stroke()
             .belonging_element_index_of_key_stroke(key_stroke_index)
-            .unwrap()
+            .ok()
     }
 
     /// Returns if passed key stroke index is at the end of key stroke element.
-    pub(super) fn is_element_end_at_key_stroke_index(&self, key_stroke_index: usize) -> bool {
-        assert!(key_stroke_index < self.calc_key_stroke_count());
-
+    pub(super) fn is_element_end_at_key_stroke_index(
+        &self,
+        key_stroke_index: usize,
+    ) -> Option<bool> {
         self.key_stroke()
             .is_element_end_at_key_stroke_index(key_stroke_index)
-            .unwrap()
+            .ok()
     }
 
     /// Returns key stroke element count of this candidate.

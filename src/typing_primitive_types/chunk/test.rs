@@ -9,11 +9,12 @@ use crate::{gen_candidate, gen_candidate_key_stroke, gen_chunk_inflight};
 fn is_element_end_at_key_stroke_index_1() {
     let c = gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"]));
 
-    assert!(!c.is_element_end_at_key_stroke_index(0));
-    assert!(c.is_element_end_at_key_stroke_index(1));
-    assert!(!c.is_element_end_at_key_stroke_index(2));
-    assert!(!c.is_element_end_at_key_stroke_index(3));
-    assert!(c.is_element_end_at_key_stroke_index(4));
+    assert_eq!(c.is_element_end_at_key_stroke_index(0), Some(false));
+    assert_eq!(c.is_element_end_at_key_stroke_index(1), Some(true));
+    assert_eq!(c.is_element_end_at_key_stroke_index(2), Some(false));
+    assert_eq!(c.is_element_end_at_key_stroke_index(3), Some(false));
+    assert_eq!(c.is_element_end_at_key_stroke_index(4), Some(true));
+    assert_eq!(c.is_element_end_at_key_stroke_index(5), None);
 }
 
 #[test]

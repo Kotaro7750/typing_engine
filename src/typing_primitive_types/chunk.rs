@@ -13,6 +13,27 @@ pub(crate) mod unprocessed;
 #[cfg(test)]
 mod test;
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// An enum representing the index of a spell or key stroke element in a chunk.
+pub(crate) enum ChunkElementIndex {
+    /// Index for the only and first element.
+    OnlyFirst,
+    /// Index for the first element of a double element.
+    DoubleFirst,
+    /// Index for the second element of a double element.
+    DoubleSecond,
+}
+
+impl ChunkElementIndex {
+    /// Returns the absolute index of this element for this chunk with passwd offset added.
+    pub(crate) fn into_absolute_index(self, offset: usize) -> usize {
+        match self {
+            Self::OnlyFirst | Self::DoubleFirst => offset,
+            Self::DoubleSecond => offset + 1,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// An enum representing possible spell of a chunk.
 pub(crate) enum ChunkSpell {

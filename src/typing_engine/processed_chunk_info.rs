@@ -362,12 +362,9 @@ impl ProcessedChunkInfo {
 
             // Update cursor positions and wrong positions for spell
             spell_cursor_positions = inflight_chunk
-                .current_spell_cursor_positions()
-                .iter()
-                .map(|in_chunk_current_spell_cursor_position| {
-                    spell_head_position + in_chunk_current_spell_cursor_position
-                })
-                .collect();
+                .spell_cursor_position()
+                .into_absolute_cursor_position(spell_head_position);
+
             spell_wrong_positions.extend(inflight_chunk.wrong_spell_positions(spell_head_position));
             spell_head_position += inflight_chunk.spell().count();
 
@@ -397,7 +394,7 @@ impl ProcessedChunkInfo {
                 // 未処理のチャンクの内最初のチャンクのみタイピング中のチャンクの遅延確定候補の補正をする
 
                 let candidate = unprocessed_chunk.min_candidate(next_chunk_head_constraint.clone());
-                let spell_count = if candidate.is_splitted() {
+                let spell_count = if candidate.key_stroke().is_double_splitted() {
                     2
                 } else {
                     unprocessed_chunk.spell().count()
