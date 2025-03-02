@@ -452,6 +452,10 @@ impl KeyStrokeCorrectContext {
         }
     }
 
+    pub(crate) fn spell_finished_context(&self) -> &Option<SpellFinishedContext> {
+        &self.spell_finished_context
+    }
+
     pub(crate) fn chunk_confirmation(&self) -> &Option<Vec<ActualKeyStroke>> {
         &self.chunk_confirmation
     }

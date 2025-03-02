@@ -43,7 +43,7 @@ pub(crate) enum ChunkSpell {
 }
 
 impl ChunkSpell {
-    fn new(ss: SpellString) -> Self {
+    pub(crate) fn new(ss: SpellString) -> Self {
         if ss.contains_displayable_ascii() {
             assert!(ss.chars().count() == 1);
             Self::DisplayableAscii(ss)

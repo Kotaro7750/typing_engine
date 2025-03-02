@@ -125,45 +125,58 @@ impl ProcessedChunkInfo {
 
         let mut statistical_events = vec![];
 
-        let inflight_chunk = self.inflight_chunk.as_mut().unwrap();
-        let result = inflight_chunk.stroke_key(key_stroke.clone(), elapsed_time);
+        let mut original_result: Option<KeyStrokeResult> = None;
+        let mut key_strokes = vec![(key_stroke, elapsed_time)];
 
-        // このキーストロークでチャンクが確定したら次のチャンクの処理に移る
-        // Key strokes in pending list should be added to chunk.
-        // What chunk to be added is determined whether it is delayed confirmable or not.
-        if let KeyStrokeResult::Correct(correct_context) = &result {
-            if let Some(pending_key_strokes) = correct_context.chunk_confirmation() {
-                let confirmed_chunk = self.move_next_chunk().unwrap();
-                statistical_events
-                    .push(StatisticalEvent::new_from_confirmed_chunk(confirmed_chunk));
+        while !key_strokes.is_empty() {
+            let mut next_key_strokes = vec![];
 
-                if !pending_key_strokes.is_empty() {
+            key_strokes
+                .iter()
+                .for_each(|(key_stroke_char, elapsed_time)| {
                     let inflight_chunk = self.inflight_chunk.as_mut().unwrap();
 
-                    // 遅延確定候補で確定した場合にはpendingしていたキーストロークを次のチャンクに入力する必要がある
-                    pending_key_strokes.iter().for_each(|actual_key_stroke| {
-                        inflight_chunk.stroke_key(
-                            actual_key_stroke.key_stroke().clone(),
-                            *actual_key_stroke.elapsed_time(),
-                        );
-                    });
+                    let result =
+                        inflight_chunk.stroke_key(key_stroke_char.clone(), elapsed_time.clone());
 
-                    // pendingしていたキーストロークの入力によって次のチャンクが終了する場合に対処する
-                    if inflight_chunk.is_confirmed() {
-                        // pendingしていたキーストローク中には正しいキーストロークは一つしか無いはずなので遅延確定候補が終了することはない
-                        assert!(inflight_chunk
-                            .delayed_confirmable_candidate_index()
-                            .is_none());
-
-                        let confirmed_chunk = self.move_next_chunk().unwrap();
-                        statistical_events
-                            .push(StatisticalEvent::new_from_confirmed_chunk(confirmed_chunk));
+                    // この関数の引数に与えられたキーストロークの結果を返す必要がある
+                    if original_result.is_none() {
+                        original_result.replace(result.clone());
                     }
-                }
-            }
+
+                    if let KeyStrokeResult::Correct(correct_context) = &result {
+                        if let Some(spell_finished_context) =
+                            correct_context.spell_finished_context()
+                        {
+                            statistical_events.push(StatisticalEvent::new_from_spell_finished(
+                                spell_finished_context.clone(),
+                            ))
+                        }
+
+                        if let Some(pending_key_strokes) = correct_context.chunk_confirmation() {
+                            let confirmed_chunk = self.move_next_chunk().unwrap();
+                            statistical_events
+                                .push(StatisticalEvent::new_from_confirmed_chunk(confirmed_chunk));
+
+                            if !pending_key_strokes.is_empty() {
+                                // 遅延確定候補で確定した場合にはpendingしていたキーストロークを次のチャンクに入力する必要がある
+                                pending_key_strokes.iter().for_each(|actual_key_stroke| {
+                                    next_key_strokes.push((
+                                        actual_key_stroke.key_stroke().clone(),
+                                        *actual_key_stroke.elapsed_time(),
+                                    ));
+                                });
+                            }
+                        }
+                    }
+                });
+
+            // pending listには2つ以上の正しいキーストロークが入ることはないので愚直に追加してよい
+            key_strokes.clear();
+            key_strokes = next_key_strokes.into_iter().collect();
         }
 
-        (result.into(), statistical_events)
+        (original_result.unwrap().into(), statistical_events)
     }
 
     pub(crate) fn confirmed_chunks(&self) -> &[ChunkConfirmed] {
