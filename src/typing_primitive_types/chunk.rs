@@ -86,6 +86,27 @@ impl ChunkSpell {
             _ => 1,
         }
     }
+
+    /// Returns the spell at the specified index.
+    pub(crate) fn spell_at_index(&self, index: ChunkElementIndex) -> ChunkSpell {
+        Self::new(match self {
+            Self::DisplayableAscii(ss) | ChunkSpell::SingleChar(ss) => match index {
+                ChunkElementIndex::OnlyFirst => ss.clone(),
+                _ => unreachable!("ChunkSpell::DisplayableAscii or ChunkSpell::SingleChar must not have Double index"),
+            },
+            Self::DoubleChar(ss) => match index {
+                ChunkElementIndex::OnlyFirst => ss.clone(),
+                ChunkElementIndex::DoubleFirst => {
+                    let (first, _) = self.split_double_char();
+                    first
+                }
+                ChunkElementIndex::DoubleSecond => {
+                    let (_, second) = self.split_double_char();
+                    second
+                }
+            },
+        })
+    }
 }
 
 impl AsRef<SpellString> for ChunkSpell {

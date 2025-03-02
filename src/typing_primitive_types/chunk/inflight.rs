@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use crate::statistics::statistical_event::SpellFinishedContext;
 use crate::typing_primitive_types::chunk::confirmed::ChunkConfirmed;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use crate::typing_primitive_types::chunk::key_stroke_candidate::ChunkKeyStrokeCandidate;
@@ -120,9 +121,41 @@ impl ChunkInflight {
         min_candidate.as_ref().unwrap()
     }
 
+    /// Returns element index of finishable spell when passed key stroke cursor position is
+    /// correct.
+    fn finishable_spell_index(
+        &self,
+        key_stroke_cursor_position: usize,
+    ) -> Option<ChunkElementIndex> {
+        self.effective_candidate()
+            .is_element_end_at_key_stroke_index(key_stroke_cursor_position)
+            .and_then(|is_end| {
+                if is_end {
+                    self.effective_candidate()
+                        .belonging_element_index_of_key_stroke(key_stroke_cursor_position)
+                } else {
+                    None
+                }
+            })
+    }
+
+    /// Returns SpellFinishedContext of passed finished spell index.
+    /// This method assumes that all key strokes in pending list are drained.
+    fn spell_finished_context(
+        &self,
+        finished_spell_index: ChunkElementIndex,
+    ) -> SpellFinishedContext {
+        SpellFinishedContext::new(
+            self.spell().spell_at_index(finished_spell_index),
+            self.wrong_key_stroke_count_of_element_index(finished_spell_index),
+        )
+    }
+
     /// Advance cursor position.
-    fn advance_cursor(&mut self) {
+    /// Returns element index of finished spell if exist.
+    fn advance_cursor(&mut self) -> Option<ChunkElementIndex> {
         self.key_stroke_cursor_position += 1;
+        self.finishable_spell_index(self.key_stroke_cursor_position() - 1)
     }
 
     /// Reduce the candidates of this chunk.
@@ -227,9 +260,12 @@ impl ChunkInflight {
                     .push(ActualKeyStroke::new(elapsed_time, key_stroke, true));
                 self.reduce_candidate(&[delayed_confirmable_candidate_index]);
 
-                return KeyStrokeResult::Correct(KeyStrokeCorrectContext::new(Some(
-                    self.pending_key_strokes.drain(..).collect(),
-                )));
+                return KeyStrokeResult::Correct(KeyStrokeCorrectContext::new(
+                    // At this point, key_stroke_cursor_position is already advanced.
+                    self.finishable_spell_index(self.key_stroke_cursor_position() - 1)
+                        .and_then(|index| Some(self.spell_finished_context(index))),
+                    Some(self.pending_key_strokes.drain(..).collect()),
+                ));
             }
         }
 
@@ -254,13 +290,6 @@ impl ChunkInflight {
 
         let is_hit = !hit_candidate_index.is_empty();
 
-        // If any candidate is hit, only those candidates are left and the cursor position is
-        // advanced.
-        if is_hit {
-            self.reduce_candidate(&hit_candidate_index);
-            self.advance_cursor();
-        }
-
         // If the chunk is delayed confirmable, key strokes are not added at this time.
         // This is because such key strokes can belong to the next chunk.
         if delayed_confirmable_index.is_some() {
@@ -271,6 +300,11 @@ impl ChunkInflight {
         }
 
         if is_hit {
+            // If any candidate is hit, only those candidates are left and the cursor position is
+            // advanced.
+            self.reduce_candidate(&hit_candidate_index);
+            let finished_spell_index = self.advance_cursor();
+
             let key_stroke_correct_ctx = if self.is_confirmed() {
                 let pending_key_strokes: Vec<ActualKeyStroke> =
                     self.pending_key_strokes.drain(..).collect();
@@ -279,9 +313,21 @@ impl ChunkInflight {
                     self.append_actual_key_stroke(key_stroke);
                 });
 
-                KeyStrokeCorrectContext::new(Some(self.pending_key_strokes.clone()))
+                KeyStrokeCorrectContext::new(
+                    finished_spell_index.and_then(|index| Some(self.spell_finished_context(index))),
+                    Some(self.pending_key_strokes.clone()),
+                )
             } else {
-                KeyStrokeCorrectContext::new(None)
+                // If chunk become delayed confirmable after this key stroke, spell must not
+                // finidhed at this time.
+                let spell_finished_context = if self.delayed_confirmable_candidate_index().is_none()
+                {
+                    finished_spell_index.and_then(|index| Some(self.spell_finished_context(index)))
+                } else {
+                    None
+                };
+
+                KeyStrokeCorrectContext::new(spell_finished_context, None)
             };
 
             KeyStrokeResult::Correct(key_stroke_correct_ctx)
@@ -388,14 +434,22 @@ impl KeyStrokeResult {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct KeyStrokeCorrectContext {
+    /// If Some, this key stroke finishes spell.
+    spell_finished_context: Option<SpellFinishedContext>,
     /// If Some, this key stroke confirm the chunk.
     /// The vector is pending key strokes for the next chunk.
     chunk_confirmation: Option<Vec<ActualKeyStroke>>,
 }
 
 impl KeyStrokeCorrectContext {
-    pub(crate) fn new(chunk_confirmation: Option<Vec<ActualKeyStroke>>) -> Self {
-        Self { chunk_confirmation }
+    pub(crate) fn new(
+        spell_finished_context: Option<SpellFinishedContext>,
+        chunk_confirmation: Option<Vec<ActualKeyStroke>>,
+    ) -> Self {
+        Self {
+            spell_finished_context,
+            chunk_confirmation,
+        }
     }
 
     pub(crate) fn chunk_confirmation(&self) -> &Option<Vec<ActualKeyStroke>> {

@@ -1,4 +1,4 @@
-use super::{Chunk, ChunkKeyStrokeCandidate, ChunkSpell};
+use super::{Chunk, ChunkElementIndex, ChunkKeyStrokeCandidate, ChunkSpell};
 use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
 
 pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
@@ -6,26 +6,56 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
     /// 表示などに使う候補
     fn effective_candidate(&self) -> &ChunkKeyStrokeCandidate;
 
-    /// Returns the position indexes of wrong key strokes of this chunk.
-    /// Basically indexes are relative inner the chunk, but offset can be used for adjusting absolute position.
-    fn wrong_key_stroke_positions(&self, offset: usize) -> Vec<usize> {
-        let mut wrong_positions: Vec<usize> = vec![];
+    /// Returns the count of wrong key strokes of each key stroke index.
+    fn wrong_key_stroke_count_of_key_stroke_index(&self) -> Vec<usize> {
+        let mut wrong_key_stroke_count = vec![];
+        let mut wrong_count = 0;
         let mut i = 0;
-        let mut is_prev_wrong = false;
 
         self.actual_key_strokes().iter().for_each(|key_stroke| {
             if key_stroke.is_correct() {
+                wrong_key_stroke_count.push(wrong_count);
+                wrong_count = 0;
                 i += 1;
-                is_prev_wrong = false;
             } else {
-                if !is_prev_wrong {
-                    wrong_positions.push(i + offset);
-                }
-                is_prev_wrong = true;
+                wrong_count += 1;
             }
         });
 
-        wrong_positions
+        wrong_key_stroke_count
+    }
+
+    /// Returns the position indexes of wrong key strokes of this chunk.
+    /// Basically indexes are relative inner the chunk, but offset can be used for adjusting absolute position.
+    fn wrong_key_stroke_positions(&self, offset: usize) -> Vec<usize> {
+        self.wrong_key_stroke_count_of_key_stroke_index()
+            .iter()
+            .enumerate()
+            .filter_map(
+                |(i, count)| {
+                    if *count > 0 {
+                        Some(i + offset)
+                    } else {
+                        None
+                    }
+                },
+            )
+            .collect()
+    }
+
+    /// Returns the count of wrong key strokes of the element index.
+    fn wrong_key_stroke_count_of_element_index(&self, element_index: ChunkElementIndex) -> usize {
+        self.wrong_key_stroke_count_of_key_stroke_index()
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| {
+                self.effective_candidate()
+                    .belonging_element_index_of_key_stroke(*i)
+                    .map_or(false, |index| index == element_index)
+            })
+            .map(|(_, count)| *count)
+            .reduce(|sum, count| sum + count)
+            .map_or(0, |count| count)
     }
 
     /// Returns the position indexes of wrong spell elements of this chunk.

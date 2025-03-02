@@ -1,7 +1,10 @@
 use inflight::KeyStrokeCorrectContext;
 
 use super::*;
-use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
+use crate::{
+    statistics::statistical_event::SpellFinishedContext,
+    typing_primitive_types::key_stroke::ActualKeyStroke,
+};
 use std::time::Duration;
 
 use crate::{gen_candidate, gen_candidate_key_stroke, gen_chunk_inflight};
@@ -42,7 +45,7 @@ fn stroke_key_1() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(None)
+        KeyStrokeCorrectContext::new(None, None)
     );
 
     assert_eq!(
@@ -103,7 +106,13 @@ fn stroke_key_1() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(Some(vec![]))
+        KeyStrokeCorrectContext::new(
+            Some(SpellFinishedContext::new(
+                ChunkSpell::new("じょ".to_string().try_into().unwrap()),
+                1
+            )),
+            Some(vec![])
+        )
     );
 
     assert_eq!(
@@ -151,7 +160,7 @@ fn stroke_key_2() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(None)
+        KeyStrokeCorrectContext::new(None, None)
     );
 
     assert_eq!(
@@ -208,7 +217,13 @@ fn stroke_key_2() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(Some(vec![]))
+        KeyStrokeCorrectContext::new(
+            Some(SpellFinishedContext::new(
+                ChunkSpell::new("ん".to_string().try_into().unwrap()),
+                1
+            )),
+            Some(vec![])
+        )
     );
 
     assert_eq!(
@@ -254,7 +269,7 @@ fn stroke_key_3() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(None)
+        KeyStrokeCorrectContext::new(None, None)
     );
 
     assert_eq!(
@@ -311,10 +326,16 @@ fn stroke_key_3() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(Some(vec![
-            ActualKeyStroke::new(Duration::new(2, 0), 'm'.try_into().unwrap(), false),
-            ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), true)
-        ]))
+        KeyStrokeCorrectContext::new(
+            Some(SpellFinishedContext::new(
+                ChunkSpell::new("ん".to_string().try_into().unwrap()),
+                0
+            )),
+            Some(vec![
+                ActualKeyStroke::new(Duration::new(2, 0), 'm'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), true)
+            ])
+        )
     );
 
     assert_eq!(
@@ -338,6 +359,232 @@ fn stroke_key_3() {
     );
 
     assert!(typed_chunk.is_confirmed());
+}
+
+#[test]
+fn stroke_key_4() {
+    let mut typed_chunk = gen_chunk_inflight!(
+        "じょ",
+        vec![
+            gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+            gen_candidate!(gen_candidate_key_stroke!(["zyo"])),
+            gen_candidate!(gen_candidate_key_stroke!(["jyo"])),
+            gen_candidate!(gen_candidate_key_stroke!(["zi", "lyo"])),
+            gen_candidate!(gen_candidate_key_stroke!(["zi", "xyo"])),
+            gen_candidate!(gen_candidate_key_stroke!(["ji", "lyo"])),
+            gen_candidate!(gen_candidate_key_stroke!(["ji", "xyo"])),
+        ],
+        vec![],
+        gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+        [],
+        0,
+        []
+    );
+
+    let stroke_result = typed_chunk.stroke_key('j'.try_into().unwrap(), Duration::new(1, 0));
+    assert!(stroke_result.is_correct());
+    assert_eq!(
+        stroke_result.correct_context().unwrap().clone(),
+        KeyStrokeCorrectContext::new(None, None)
+    );
+
+    assert_eq!(
+        typed_chunk,
+        gen_chunk_inflight!(
+            "じょ",
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["jyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "xyo"])),
+            ],
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!(["zyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "xyo"])),
+            ],
+            gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+            [ActualKeyStroke::new(
+                Duration::new(1, 0),
+                'j'.try_into().unwrap(),
+                true
+            )],
+            1,
+            []
+        )
+    );
+
+    let stroke_result = typed_chunk.stroke_key('j'.try_into().unwrap(), Duration::new(2, 0));
+    assert!(!stroke_result.is_correct());
+
+    assert_eq!(
+        typed_chunk,
+        gen_chunk_inflight!(
+            "じょ",
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["jyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "xyo"])),
+            ],
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!(["zyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "xyo"])),
+            ],
+            gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+            [
+                ActualKeyStroke::new(Duration::new(1, 0), 'j'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), false)
+            ],
+            1,
+            []
+        )
+    );
+
+    let stroke_result = typed_chunk.stroke_key('i'.try_into().unwrap(), Duration::new(3, 0));
+    assert!(stroke_result.is_correct());
+    assert_eq!(
+        stroke_result.correct_context().unwrap().clone(),
+        KeyStrokeCorrectContext::new(
+            Some(SpellFinishedContext::new(
+                ChunkSpell::new("じ".to_string().try_into().unwrap()),
+                1
+            )),
+            None
+        )
+    );
+
+    assert_eq!(
+        typed_chunk,
+        gen_chunk_inflight!(
+            "じょ",
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "xyo"])),
+            ],
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!(["zyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "xyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["jyo"])),
+            ],
+            gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+            [
+                ActualKeyStroke::new(Duration::new(1, 0), 'j'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(3, 0), 'i'.try_into().unwrap(), true)
+            ],
+            2,
+            []
+        )
+    );
+
+    let stroke_result = typed_chunk.stroke_key('x'.try_into().unwrap(), Duration::new(4, 0));
+    assert!(stroke_result.is_correct());
+    assert_eq!(
+        stroke_result.correct_context().unwrap().clone(),
+        KeyStrokeCorrectContext::new(None, None)
+    );
+
+    assert_eq!(
+        typed_chunk,
+        gen_chunk_inflight!(
+            "じょ",
+            vec![gen_candidate!(gen_candidate_key_stroke!(["ji", "xyo"])),],
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!(["zyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "xyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["jyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "lyo"])),
+            ],
+            gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+            [
+                ActualKeyStroke::new(Duration::new(1, 0), 'j'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(3, 0), 'i'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(4, 0), 'x'.try_into().unwrap(), true)
+            ],
+            3,
+            []
+        )
+    );
+
+    let stroke_result = typed_chunk.stroke_key('y'.try_into().unwrap(), Duration::new(5, 0));
+    assert!(stroke_result.is_correct());
+    assert_eq!(
+        stroke_result.correct_context().unwrap().clone(),
+        KeyStrokeCorrectContext::new(None, None)
+    );
+
+    assert_eq!(
+        typed_chunk,
+        gen_chunk_inflight!(
+            "じょ",
+            vec![gen_candidate!(gen_candidate_key_stroke!(["ji", "xyo"])),],
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!(["zyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "xyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["jyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "lyo"])),
+            ],
+            gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+            [
+                ActualKeyStroke::new(Duration::new(1, 0), 'j'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(3, 0), 'i'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(4, 0), 'x'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(5, 0), 'y'.try_into().unwrap(), true)
+            ],
+            4,
+            []
+        )
+    );
+
+    let stroke_result = typed_chunk.stroke_key('o'.try_into().unwrap(), Duration::new(6, 0));
+    assert!(stroke_result.is_correct());
+    assert_eq!(
+        stroke_result.correct_context().unwrap().clone(),
+        KeyStrokeCorrectContext::new(
+            Some(SpellFinishedContext::new(
+                ChunkSpell::new("ょ".to_string().try_into().unwrap()),
+                0
+            )),
+            Some(vec![])
+        )
+    );
+
+    assert_eq!(
+        typed_chunk,
+        gen_chunk_inflight!(
+            "じょ",
+            vec![gen_candidate!(gen_candidate_key_stroke!(["ji", "xyo"])),],
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!(["zyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "xyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["jyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "lyo"])),
+            ],
+            gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+            [
+                ActualKeyStroke::new(Duration::new(1, 0), 'j'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(3, 0), 'i'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(4, 0), 'x'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(5, 0), 'y'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(6, 0), 'o'.try_into().unwrap(), true)
+            ],
+            5,
+            []
+        )
+    );
 }
 
 #[test]

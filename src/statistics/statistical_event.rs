@@ -1,6 +1,6 @@
 use crate::typing_primitive_types::chunk::{
     confirmed::ChunkConfirmed, has_actual_key_strokes::ChunkHasActualKeyStrokes,
-    key_stroke_candidate::KeyStrokeElementCount, unprocessed::ChunkUnprocessed, Chunk,
+    key_stroke_candidate::KeyStrokeElementCount, unprocessed::ChunkUnprocessed, Chunk, ChunkSpell,
 };
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -67,8 +67,39 @@ impl ChunkAddedContext {
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
+/// A struct representing the context for updating statistics when spell is finished
+pub(crate) struct SpellFinishedContext {
+    /// Finished spell.
+    /// Finish detection is done with the unit of chunk.
+    spell: ChunkSpell,
+    /// Wrong key stroke count for typing spell.
+    wrong_key_stroke_count: usize,
+}
+
+impl SpellFinishedContext {
+    pub(crate) fn new(spell: ChunkSpell, wrong_key_stroke_count: usize) -> Self {
+        Self {
+            spell,
+            wrong_key_stroke_count,
+        }
+    }
+
+    /// Returns finished spell.
+    pub(crate) fn spell(&self) -> &ChunkSpell {
+        &self.spell
+    }
+
+    /// Returns wrong key stroke count for typing spell.
+    pub(crate) fn wrong_key_stroke_count(&self) -> usize {
+        self.wrong_key_stroke_count
+    }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// Representing events generated when statistically meaningfull things happened
 pub(crate) enum StatisticalEvent {
+    /// Event generated when spell is finished
+    SpellFinished(SpellFinishedContext),
     /// Event generated when chunk is added
     ChunkAdded(ChunkAddedContext),
     /// Event generated when chunk is confirmed
@@ -76,6 +107,11 @@ pub(crate) enum StatisticalEvent {
 }
 
 impl StatisticalEvent {
+    /// Create SpellFinished event from SpellFinishedContext
+    pub(crate) fn new_from_spell_finished(spell_finished_context: SpellFinishedContext) -> Self {
+        StatisticalEvent::SpellFinished(spell_finished_context)
+    }
+
     /// Create ChunkAdded event from chunk
     pub(crate) fn new_from_added_chunk(added_chunk: &ChunkUnprocessed) -> StatisticalEvent {
         let spell_count = added_chunk.spell().count();

@@ -160,6 +160,7 @@ impl StatisticsManager {
     /// Consume event and update statistics.
     pub(crate) fn consume_event(&mut self, event: statistical_event::StatisticalEvent) {
         match event {
+            StatisticalEvent::SpellFinished(_) => todo!(),
             StatisticalEvent::ChunkConfirmed(chunk_confirmation_info) => {
                 // TODO completely correct must be treated correctly.
                 self.chunk.on_finished(1, false);
