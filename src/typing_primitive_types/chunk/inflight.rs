@@ -263,7 +263,7 @@ impl ChunkInflight {
                 return KeyStrokeResult::Correct(KeyStrokeCorrectContext::new(
                     // At this point, key_stroke_cursor_position is already advanced.
                     self.finishable_spell_index(self.key_stroke_cursor_position() - 1)
-                        .and_then(|index| Some(self.spell_finished_context(index))),
+                        .map(|index| self.spell_finished_context(index)),
                     Some(self.pending_key_strokes.drain(..).collect()),
                 ));
             }
@@ -314,7 +314,7 @@ impl ChunkInflight {
                 });
 
                 KeyStrokeCorrectContext::new(
-                    finished_spell_index.and_then(|index| Some(self.spell_finished_context(index))),
+                    finished_spell_index.map(|index| self.spell_finished_context(index)),
                     Some(self.pending_key_strokes.clone()),
                 )
             } else {
@@ -322,7 +322,7 @@ impl ChunkInflight {
                 // finidhed at this time.
                 let spell_finished_context = if self.delayed_confirmable_candidate_index().is_none()
                 {
-                    finished_spell_index.and_then(|index| Some(self.spell_finished_context(index)))
+                    finished_spell_index.map(|index| self.spell_finished_context(index))
                 } else {
                     None
                 };

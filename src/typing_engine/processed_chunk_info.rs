@@ -136,8 +136,7 @@ impl ProcessedChunkInfo {
                 .for_each(|(key_stroke_char, elapsed_time)| {
                     let inflight_chunk = self.inflight_chunk.as_mut().unwrap();
 
-                    let result =
-                        inflight_chunk.stroke_key(key_stroke_char.clone(), elapsed_time.clone());
+                    let result = inflight_chunk.stroke_key(key_stroke_char.clone(), *elapsed_time);
 
                     // この関数の引数に与えられたキーストロークの結果を返す必要がある
                     if original_result.is_none() {
