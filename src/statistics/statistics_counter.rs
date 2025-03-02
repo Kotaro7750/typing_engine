@@ -72,7 +72,7 @@ impl PrimitiveStatisticsCounter {
     }
 
     /// Update statistics when entities are wrong typed.
-    fn on_wrong(&mut self, delta: usize) {
+    pub(crate) fn on_wrong(&mut self, delta: usize) {
         self.wrong_count += delta;
     }
 }
