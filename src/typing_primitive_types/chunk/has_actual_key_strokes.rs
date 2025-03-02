@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use super::{Chunk, ChunkElementIndex, ChunkKeyStrokeCandidate, ChunkSpell};
 use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
 
@@ -59,14 +61,20 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
     /// Returns the position indexes of wrong spell elements of this chunk.
     /// Basically indexes are relative inner the chunk, but offset can be used for adjusting absolute position.
     fn wrong_spell_element_positions(&self, offset: usize) -> Vec<usize> {
-        self.wrong_key_stroke_positions(0)
+        let mut positions_set = self
+            .wrong_key_stroke_positions(0)
             .iter()
             .filter_map(|key_stroke_index| {
                 self.effective_candidate()
                     .belonging_element_index_of_key_stroke(*key_stroke_index)
             })
             .map(|element_index| element_index.into_absolute_index(offset))
-            .collect()
+            .collect::<HashSet<usize>>()
+            .into_iter()
+            .collect::<Vec<usize>>();
+
+        positions_set.sort();
+        positions_set
     }
 
     /// Returns the position indexes of wrong spell of this chunk.
