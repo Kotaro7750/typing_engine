@@ -10,13 +10,11 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
     fn wrong_key_stroke_count_of_key_stroke_index(&self) -> Vec<usize> {
         let mut wrong_key_stroke_count = vec![];
         let mut wrong_count = 0;
-        let mut i = 0;
 
         self.actual_key_strokes().iter().for_each(|key_stroke| {
             if key_stroke.is_correct() {
                 wrong_key_stroke_count.push(wrong_count);
                 wrong_count = 0;
-                i += 1;
             } else {
                 wrong_count += 1;
             }
