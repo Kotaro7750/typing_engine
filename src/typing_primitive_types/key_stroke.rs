@@ -5,6 +5,8 @@ use std::time::Duration;
 
 use crate::utility::is_displayable_ascii;
 
+use super::chunk::inflight::KeyStrokeResult;
+
 /// A type representing a character can be used as a key stroke.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct KeyStrokeChar(char);
@@ -127,9 +129,18 @@ impl ActualKeyStroke {
 
 /// An enum representing the result of a key stroke.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum KeyStrokeResult {
+pub(crate) enum KeyStrokeHitMiss {
     // キーストロークが正しかったケース
     Correct,
     // キーストロークが間違っていたケース
     Wrong,
+}
+
+impl From<KeyStrokeResult> for KeyStrokeHitMiss {
+    fn from(result: KeyStrokeResult) -> Self {
+        match result {
+            KeyStrokeResult::Correct(_) => Self::Correct,
+            KeyStrokeResult::Wrong => Self::Wrong,
+        }
+    }
 }

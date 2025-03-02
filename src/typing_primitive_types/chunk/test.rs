@@ -1,6 +1,7 @@
+use inflight::KeyStrokeCorrectContext;
+
 use super::*;
 use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
-use crate::typing_primitive_types::key_stroke::KeyStrokeResult;
 use std::time::Duration;
 
 use crate::{gen_candidate, gen_candidate_key_stroke, gen_chunk_inflight};
@@ -33,11 +34,16 @@ fn stroke_key_1() {
         vec![],
         gen_candidate!(gen_candidate_key_stroke!(["jo"])),
         [],
-        0
+        0,
+        []
     );
 
     let stroke_result = typed_chunk.stroke_key('j'.try_into().unwrap(), Duration::new(1, 0));
-    assert_eq!(stroke_result, KeyStrokeResult::Correct);
+    assert!(stroke_result.is_correct());
+    assert_eq!(
+        stroke_result.correct_context().unwrap().clone(),
+        KeyStrokeCorrectContext::new(None)
+    );
 
     assert_eq!(
         typed_chunk,
@@ -60,12 +66,13 @@ fn stroke_key_1() {
                 'j'.try_into().unwrap(),
                 true
             )],
-            1
+            1,
+            []
         )
     );
 
     let stroke_result = typed_chunk.stroke_key('j'.try_into().unwrap(), Duration::new(2, 0));
-    assert_eq!(stroke_result, KeyStrokeResult::Wrong);
+    assert!(!stroke_result.is_correct());
 
     assert_eq!(
         typed_chunk,
@@ -87,12 +94,17 @@ fn stroke_key_1() {
                 ActualKeyStroke::new(Duration::new(1, 0), 'j'.try_into().unwrap(), true),
                 ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), false)
             ],
-            1
+            1,
+            []
         )
     );
 
     let stroke_result = typed_chunk.stroke_key('o'.try_into().unwrap(), Duration::new(3, 0));
-    assert_eq!(stroke_result, KeyStrokeResult::Correct);
+    assert!(stroke_result.is_correct());
+    assert_eq!(
+        stroke_result.correct_context().unwrap().clone(),
+        KeyStrokeCorrectContext::new(Some(vec![]))
+    );
 
     assert_eq!(
         typed_chunk,
@@ -113,7 +125,8 @@ fn stroke_key_1() {
                 ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), false),
                 ActualKeyStroke::new(Duration::new(3, 0), 'o'.try_into().unwrap(), true)
             ],
-            2
+            2,
+            []
         )
     );
 }
@@ -130,11 +143,16 @@ fn stroke_key_2() {
         vec![],
         gen_candidate!(gen_candidate_key_stroke!("n"), ['j']),
         [],
-        0
+        0,
+        []
     );
 
     let stroke_result = typed_chunk.stroke_key('n'.try_into().unwrap(), Duration::new(1, 0));
-    assert_eq!(stroke_result, KeyStrokeResult::Correct);
+    assert!(stroke_result.is_correct());
+    assert_eq!(
+        stroke_result.correct_context().unwrap().clone(),
+        KeyStrokeCorrectContext::new(None)
+    );
 
     assert_eq!(
         typed_chunk,
@@ -151,15 +169,16 @@ fn stroke_key_2() {
                 'n'.try_into().unwrap(),
                 true
             )],
-            1
+            1,
+            []
         ),
     );
 
     assert!(!typed_chunk.is_confirmed());
-    assert!(typed_chunk.is_delayed_confirmable());
+    assert!(typed_chunk.delayed_confirmable_candidate_index().is_some());
 
     let stroke_result = typed_chunk.stroke_key('m'.try_into().unwrap(), Duration::new(2, 0));
-    assert_eq!(stroke_result, KeyStrokeResult::Wrong);
+    assert!(!stroke_result.is_correct());
 
     assert_eq!(
         typed_chunk,
@@ -176,12 +195,21 @@ fn stroke_key_2() {
                 'n'.try_into().unwrap(),
                 true
             )],
-            1
+            1,
+            [ActualKeyStroke::new(
+                Duration::new(2, 0),
+                'm'.try_into().unwrap(),
+                false
+            )]
         )
     );
 
     let stroke_result = typed_chunk.stroke_key('n'.try_into().unwrap(), Duration::new(3, 0));
-    assert_eq!(stroke_result, KeyStrokeResult::Correct);
+    assert!(stroke_result.is_correct());
+    assert_eq!(
+        stroke_result.correct_context().unwrap().clone(),
+        KeyStrokeCorrectContext::new(Some(vec![]))
+    );
 
     assert_eq!(
         typed_chunk,
@@ -193,12 +221,13 @@ fn stroke_key_2() {
                 gen_candidate!(gen_candidate_key_stroke!("n"), ['j']),
             ],
             gen_candidate!(gen_candidate_key_stroke!("n"), ['j']),
-            [ActualKeyStroke::new(
-                Duration::new(1, 0),
-                'n'.try_into().unwrap(),
-                true
-            )],
-            2
+            [
+                ActualKeyStroke::new(Duration::new(1, 0), 'n'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(2, 0), 'm'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(3, 0), 'n'.try_into().unwrap(), true)
+            ],
+            2,
+            []
         )
     );
 
@@ -217,11 +246,16 @@ fn stroke_key_3() {
         vec![],
         gen_candidate!(gen_candidate_key_stroke!("n"), ['j']),
         [],
-        0
+        0,
+        []
     );
 
     let stroke_result = typed_chunk.stroke_key('n'.try_into().unwrap(), Duration::new(1, 0));
-    assert_eq!(stroke_result, KeyStrokeResult::Correct);
+    assert!(stroke_result.is_correct());
+    assert_eq!(
+        stroke_result.correct_context().unwrap().clone(),
+        KeyStrokeCorrectContext::new(None)
+    );
 
     assert_eq!(
         typed_chunk,
@@ -238,15 +272,16 @@ fn stroke_key_3() {
                 'n'.try_into().unwrap(),
                 true
             )],
-            1
+            1,
+            []
         )
     );
 
     assert!(!typed_chunk.is_confirmed());
-    assert!(typed_chunk.is_delayed_confirmable());
+    assert!(typed_chunk.delayed_confirmable_candidate_index().is_some());
 
     let stroke_result = typed_chunk.stroke_key('m'.try_into().unwrap(), Duration::new(2, 0));
-    assert_eq!(stroke_result, KeyStrokeResult::Wrong);
+    assert!(!stroke_result.is_correct());
 
     assert_eq!(
         typed_chunk,
@@ -263,12 +298,24 @@ fn stroke_key_3() {
                 'n'.try_into().unwrap(),
                 true
             )],
-            1
+            1,
+            [ActualKeyStroke::new(
+                Duration::new(2, 0),
+                'm'.try_into().unwrap(),
+                false
+            )]
         )
     );
 
     let stroke_result = typed_chunk.stroke_key('j'.try_into().unwrap(), Duration::new(3, 0));
-    assert_eq!(stroke_result, KeyStrokeResult::Correct);
+    assert!(stroke_result.is_correct());
+    assert_eq!(
+        stroke_result.correct_context().unwrap().clone(),
+        KeyStrokeCorrectContext::new(Some(vec![
+            ActualKeyStroke::new(Duration::new(2, 0), 'm'.try_into().unwrap(), false),
+            ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), true)
+        ]))
+    );
 
     assert_eq!(
         typed_chunk,
@@ -285,7 +332,8 @@ fn stroke_key_3() {
                 'n'.try_into().unwrap(),
                 true
             )],
-            1
+            1,
+            []
         )
     );
 
@@ -310,7 +358,8 @@ fn construct_spell_end_vector_1() {
             ActualKeyStroke::new(Duration::new(5, 0), 'y'.try_into().unwrap(), true),
             ActualKeyStroke::new(Duration::new(6, 0), 'o'.try_into().unwrap(), true)
         ],
-        5
+        5,
+        []
     );
 
     let spell_end_vector = cc.construct_spell_end_vector();
@@ -337,7 +386,8 @@ fn construct_spell_end_vector_2() {
             ActualKeyStroke::new(Duration::new(3, 0), 'y'.try_into().unwrap(), true),
             ActualKeyStroke::new(Duration::new(4, 0), 'o'.try_into().unwrap(), true)
         ],
-        3
+        3,
+        []
     );
 
     let spell_end_vector = cc.construct_spell_end_vector();

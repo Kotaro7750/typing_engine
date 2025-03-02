@@ -34,11 +34,13 @@ macro_rules! gen_chunk_inflight {
             $inactive_key_stroke_candidates:expr,
             $ideal_candidate:expr,
             [$($actual_key_stroke:expr),*],
-            $key_stroke_cursor_position:literal
+            $key_stroke_cursor_position:literal,
+            [$($pending_key_strokes:expr),*]
         ) => {
         {
 
             let _actual_key_stroke = vec![$($actual_key_stroke.try_into().unwrap()),*];
+            let _pending_key_strokes = vec![$($pending_key_strokes.try_into().unwrap()),*];
 
             crate::typing_primitive_types::chunk::inflight::ChunkInflight::new(
                 $chunk_spell.to_string().try_into().unwrap(),
@@ -46,7 +48,8 @@ macro_rules! gen_chunk_inflight {
                 $inactive_key_stroke_candidates,
                 $ideal_candidate,
                 _actual_key_stroke,
-                $key_stroke_cursor_position
+                $key_stroke_cursor_position,
+                _pending_key_strokes
             )
         }
     };

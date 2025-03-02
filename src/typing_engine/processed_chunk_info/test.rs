@@ -85,7 +85,6 @@ fn stroke_key_1() {
             .into(),
             inflight_chunk: None,
             confirmed_chunks: vec![],
-            pending_key_strokes: vec![],
         }
     );
 
@@ -145,18 +144,18 @@ fn stroke_key_1() {
                     vec![],
                     gen_candidate!(gen_candidate_key_stroke!("u")),
                     [],
-                    0
+                    0,
+                    []
                 )
                 .into()
             ),
             confirmed_chunks: vec![],
-            pending_key_strokes: vec![],
         }
     );
 
     // 3. 「u」と入力
     let (result, events) = pci.stroke_key('u'.try_into().unwrap(), Duration::new(1, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(
         events,
         vec![StatisticalEvent::ChunkConfirmed(
@@ -197,7 +196,8 @@ fn stroke_key_1() {
                     vec![],
                     gen_candidate!(gen_candidate_key_stroke!("w"), 'w'),
                     [],
-                    0
+                    0,
+                    []
                 )
                 .into()
             ),
@@ -215,13 +215,12 @@ fn stroke_key_1() {
                     true
                 )]
             )],
-            pending_key_strokes: vec![],
         }
     );
 
     // 3. 「w」と入力
     let (result, events) = pci.stroke_key('w'.try_into().unwrap(), Duration::new(2, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(
         events,
         vec![StatisticalEvent::ChunkConfirmed(
@@ -251,7 +250,8 @@ fn stroke_key_1() {
                     vec![gen_candidate!(gen_candidate_key_stroke!("u")),],
                     gen_candidate!(gen_candidate_key_stroke!("wu")),
                     [],
-                    0
+                    0,
+                    []
                 )
                 .into()
             ),
@@ -286,13 +286,12 @@ fn stroke_key_1() {
                     )]
                 ),
             ],
-            pending_key_strokes: vec![],
         }
     );
 
     // 4. 「w」と入力
     let (result, events) = pci.stroke_key('w'.try_into().unwrap(), Duration::new(3, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(events, vec![]);
 
     assert_eq!(
@@ -313,7 +312,8 @@ fn stroke_key_1() {
                         'w'.try_into().unwrap(),
                         true
                     )],
-                    1
+                    1,
+                    []
                 )
                 .into(),
             ),
@@ -348,13 +348,12 @@ fn stroke_key_1() {
                     )]
                 ),
             ],
-            pending_key_strokes: vec![],
         }
     );
 
     // 5. 「u」と入力
     let (result, events) = pci.stroke_key('u'.try_into().unwrap(), Duration::new(4, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(
         events,
         vec![StatisticalEvent::ChunkConfirmed(
@@ -419,7 +418,6 @@ fn stroke_key_1() {
                     ]
                 )
             ],
-            pending_key_strokes: vec![],
         }
     );
 
@@ -458,7 +456,8 @@ fn stroke_key_1() {
                     vec![],
                     gen_candidate!(gen_candidate_key_stroke!("u")),
                     [],
-                    0
+                    0,
+                    []
                 )
                 .into()
             ),
@@ -506,7 +505,6 @@ fn stroke_key_1() {
                     ]
                 )
             ],
-            pending_key_strokes: vec![],
         }
     );
 }
@@ -569,7 +567,6 @@ fn stroke_key_2() {
             .into(),
             inflight_chunk: None,
             confirmed_chunks: vec![],
-            pending_key_strokes: vec![],
         }
     );
 
@@ -623,18 +620,18 @@ fn stroke_key_2() {
                     vec![],
                     gen_candidate!(gen_candidate_key_stroke!("ka")),
                     [],
-                    0
+                    0,
+                    []
                 )
                 .into()
             ),
             confirmed_chunks: vec![],
-            pending_key_strokes: vec![],
         }
     );
 
     // 3. 「k」と入力
     let (result, events) = pci.stroke_key('k'.try_into().unwrap(), Duration::new(1, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(events, vec![]);
 
     assert_eq!(
@@ -667,16 +664,16 @@ fn stroke_key_2() {
                     'k'.try_into().unwrap(),
                     true
                 )],
-                1
+                1,
+                []
             )),
             confirmed_chunks: vec![],
-            pending_key_strokes: vec![],
         }
     );
 
     // 3. 「a」と入力
     let (result, events) = pci.stroke_key('a'.try_into().unwrap(), Duration::new(2, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(
         events,
         vec![StatisticalEvent::ChunkConfirmed(
@@ -712,7 +709,8 @@ fn stroke_key_2() {
                     vec![],
                     gen_candidate!(gen_candidate_key_stroke!("n"), ['k']),
                     [],
-                    0
+                    0,
+                    []
                 )
                 .into()
             ),
@@ -726,13 +724,12 @@ fn stroke_key_2() {
                     ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
                 ]
             ),],
-            pending_key_strokes: vec![],
         }
     );
 
     // 4. 「n」と入力
     let (result, events) = pci.stroke_key('n'.try_into().unwrap(), Duration::new(3, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(events, vec![]);
 
     assert_eq!(
@@ -758,7 +755,8 @@ fn stroke_key_2() {
                         'n'.try_into().unwrap(),
                         true
                     )],
-                    1
+                    1,
+                    []
                 )
                 .into()
             ),
@@ -772,14 +770,13 @@ fn stroke_key_2() {
                     ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
                 ]
             )],
-            pending_key_strokes: vec![],
         }
     );
 
     // 5. 「j」と入力（ミスタイプ）
     // 遅延確定候補が確定していないのでミスタイプはどのチャンクにも属さない
     let (result, events) = pci.stroke_key('j'.try_into().unwrap(), Duration::new(4, 0));
-    assert_eq!(result, KeyStrokeResult::Wrong);
+    assert_eq!(result, KeyStrokeHitMiss::Wrong);
     assert_eq!(events, vec![]);
 
     assert_eq!(
@@ -805,7 +802,12 @@ fn stroke_key_2() {
                         'n'.try_into().unwrap(),
                         true
                     )],
-                    1
+                    1,
+                    [ActualKeyStroke::new(
+                        Duration::new(4, 0),
+                        'j'.try_into().unwrap(),
+                        false
+                    )]
                 )
                 .into(),
             ),
@@ -819,18 +821,13 @@ fn stroke_key_2() {
                     ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
                 ]
             )],
-            pending_key_strokes: vec![ActualKeyStroke::new(
-                Duration::new(4, 0),
-                'j'.try_into().unwrap(),
-                false
-            )],
         }
     );
 
     // 6. 「k」と入力
     // 遅延確定候補が確定したのでミスタイプは次のチャンクに属する
     let (result, events) = pci.stroke_key('k'.try_into().unwrap(), Duration::new(5, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(
         events,
         vec![StatisticalEvent::ChunkConfirmed(
@@ -859,7 +856,8 @@ fn stroke_key_2() {
                     ActualKeyStroke::new(Duration::new(4, 0), 'j'.try_into().unwrap(), false),
                     ActualKeyStroke::new(Duration::new(5, 0), 'k'.try_into().unwrap(), true)
                 ],
-                1
+                1,
+                []
             ),),
             confirmed_chunks: vec![
                 gen_chunk_confirmed!(
@@ -887,13 +885,12 @@ fn stroke_key_2() {
                     )]
                 ),
             ],
-            pending_key_strokes: vec![],
         }
     );
 
     // 7. 「i」と入力
     let (result, events) = pci.stroke_key('i'.try_into().unwrap(), Duration::new(6, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(
         events,
         vec![StatisticalEvent::ChunkConfirmed(
@@ -951,7 +948,6 @@ fn stroke_key_2() {
                     ]
                 ),
             ],
-            pending_key_strokes: vec![],
         }
     );
 
@@ -1016,7 +1012,6 @@ fn stroke_key_3() {
             .into(),
             inflight_chunk: None,
             confirmed_chunks: vec![],
-            pending_key_strokes: vec![],
         }
     );
 
@@ -1070,18 +1065,18 @@ fn stroke_key_3() {
                     vec![],
                     gen_candidate!(gen_candidate_key_stroke!("ka")),
                     [],
-                    0
+                    0,
+                    []
                 )
                 .into()
             ),
             confirmed_chunks: vec![],
-            pending_key_strokes: vec![],
         }
     );
 
     // 3. 「k」と入力
     let (result, events) = pci.stroke_key('k'.try_into().unwrap(), Duration::new(1, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(events, vec![]);
 
     assert_eq!(
@@ -1114,16 +1109,16 @@ fn stroke_key_3() {
                     'k'.try_into().unwrap(),
                     true
                 )],
-                1
+                1,
+                []
             )),
             confirmed_chunks: vec![],
-            pending_key_strokes: vec![],
         }
     );
 
     // 3. 「a」と入力
     let (result, events) = pci.stroke_key('a'.try_into().unwrap(), Duration::new(2, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(
         events,
         vec![StatisticalEvent::ChunkConfirmed(
@@ -1159,7 +1154,8 @@ fn stroke_key_3() {
                     vec![],
                     gen_candidate!(gen_candidate_key_stroke!("n"), ['k']),
                     [],
-                    0
+                    0,
+                    []
                 )
                 .into()
             ),
@@ -1173,13 +1169,12 @@ fn stroke_key_3() {
                     ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
                 ]
             ),],
-            pending_key_strokes: vec![],
         }
     );
 
     // 4. 「n」と入力
     let (result, events) = pci.stroke_key('n'.try_into().unwrap(), Duration::new(3, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(events, vec![]);
 
     assert_eq!(
@@ -1205,7 +1200,8 @@ fn stroke_key_3() {
                         'n'.try_into().unwrap(),
                         true
                     )],
-                    1
+                    1,
+                    []
                 )
                 .into(),
             ),
@@ -1219,14 +1215,13 @@ fn stroke_key_3() {
                     ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
                 ]
             )],
-            pending_key_strokes: vec![],
         }
     );
 
     // 5. 「j」と入力（ミスタイプ）
     // 遅延確定候補が確定していないのでミスタイプはどのチャンクにも属さない
     let (result, events) = pci.stroke_key('j'.try_into().unwrap(), Duration::new(4, 0));
-    assert_eq!(result, KeyStrokeResult::Wrong);
+    assert_eq!(result, KeyStrokeHitMiss::Wrong);
     assert_eq!(events, vec![]);
 
     assert_eq!(
@@ -1252,7 +1247,12 @@ fn stroke_key_3() {
                         'n'.try_into().unwrap(),
                         true
                     )],
-                    1
+                    1,
+                    [ActualKeyStroke::new(
+                        Duration::new(4, 0),
+                        'j'.try_into().unwrap(),
+                        false
+                    )]
                 )
                 .into(),
             ),
@@ -1265,11 +1265,6 @@ fn stroke_key_3() {
                     ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
                     ActualKeyStroke::new(Duration::new(2, 0), 'a'.try_into().unwrap(), true)
                 ]
-            )],
-            pending_key_strokes: vec![ActualKeyStroke::new(
-                Duration::new(4, 0),
-                'j'.try_into().unwrap(),
-                false
             )],
         }
     );
@@ -1277,7 +1272,7 @@ fn stroke_key_3() {
     // 6. 「n」と入力
     // 遅延確定候補でない候補で確定したのでミスタイプはそのチャンクに属する
     let (result, events) = pci.stroke_key('n'.try_into().unwrap(), Duration::new(5, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(
         events,
         vec![StatisticalEvent::ChunkConfirmed(
@@ -1304,7 +1299,8 @@ fn stroke_key_3() {
                     vec![],
                     gen_candidate!(gen_candidate_key_stroke!("ki")),
                     [],
-                    0
+                    0,
+                    []
                 )
                 .into()
             ),
@@ -1334,13 +1330,12 @@ fn stroke_key_3() {
                     ]
                 ),
             ],
-            pending_key_strokes: vec![],
         }
     );
 
     // 7. 「k」と入力
     let (result, events) = pci.stroke_key('k'.try_into().unwrap(), Duration::new(6, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(events, vec![]);
 
     assert_eq!(
@@ -1357,7 +1352,8 @@ fn stroke_key_3() {
                     'k'.try_into().unwrap(),
                     true
                 )],
-                1
+                1,
+                []
             ),),
             confirmed_chunks: vec![
                 gen_chunk_confirmed!(
@@ -1385,13 +1381,12 @@ fn stroke_key_3() {
                     ]
                 ),
             ],
-            pending_key_strokes: vec![],
         }
     );
 
     // 8. 「i」と入力
     let (result, events) = pci.stroke_key('i'.try_into().unwrap(), Duration::new(7, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(
         events,
         vec![StatisticalEvent::ChunkConfirmed(
@@ -1448,7 +1443,6 @@ fn stroke_key_3() {
                     ]
                 ),
             ],
-            pending_key_strokes: vec![],
         }
     );
 
@@ -1497,7 +1491,6 @@ fn stroke_key_4() {
             .into(),
             inflight_chunk: None,
             confirmed_chunks: vec![],
-            pending_key_strokes: vec![],
         }
     );
 
@@ -1537,18 +1530,18 @@ fn stroke_key_4() {
                     vec![],
                     gen_candidate!(gen_candidate_key_stroke!("n"), ['p']),
                     [],
-                    0
+                    0,
+                    []
                 )
                 .into()
             ),
             confirmed_chunks: vec![],
-            pending_key_strokes: vec![],
         }
     );
 
     // 3. 「n」と入力
     let (result, events) = pci.stroke_key('n'.try_into().unwrap(), Duration::new(1, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(events, vec![]);
 
     assert_eq!(
@@ -1573,16 +1566,16 @@ fn stroke_key_4() {
                     'n'.try_into().unwrap(),
                     true
                 )],
-                1
+                1,
+                []
             )),
             confirmed_chunks: vec![],
-            pending_key_strokes: vec![],
         }
     );
 
     // 3. 「p」と入力
     let (result, events) = pci.stroke_key('p'.try_into().unwrap(), Duration::new(2, 0));
-    assert_eq!(result, KeyStrokeResult::Correct);
+    assert_eq!(result, KeyStrokeHitMiss::Correct);
     assert_eq!(
         events,
         vec![
@@ -1639,7 +1632,6 @@ fn stroke_key_4() {
                     )]
                 ),
             ],
-            pending_key_strokes: vec![],
         }
     );
 
@@ -1730,11 +1722,11 @@ fn construct_display_info_1() {
     assert_eq!(
         results,
         vec![
-            (KeyStrokeResult::Correct, vec![]),
-            (KeyStrokeResult::Wrong, vec![]),
-            (KeyStrokeResult::Correct, vec![]),
+            (KeyStrokeHitMiss::Correct, vec![]),
+            (KeyStrokeHitMiss::Wrong, vec![]),
+            (KeyStrokeHitMiss::Correct, vec![]),
             (
-                KeyStrokeResult::Correct,
+                KeyStrokeHitMiss::Correct,
                 vec![StatisticalEvent::ChunkConfirmed(
                     ChunkConfirmationInfo::new(
                         KeyStrokeElementCount::Sigle(3),
@@ -1747,13 +1739,13 @@ fn construct_display_info_1() {
                     )
                 )]
             ),
-            (KeyStrokeResult::Correct, vec![]),
-            (KeyStrokeResult::Correct, vec![]),
-            (KeyStrokeResult::Wrong, vec![]),
-            (KeyStrokeResult::Correct, vec![]),
-            (KeyStrokeResult::Correct, vec![]),
+            (KeyStrokeHitMiss::Correct, vec![]),
+            (KeyStrokeHitMiss::Correct, vec![]),
+            (KeyStrokeHitMiss::Wrong, vec![]),
+            (KeyStrokeHitMiss::Correct, vec![]),
+            (KeyStrokeHitMiss::Correct, vec![]),
             (
-                KeyStrokeResult::Correct,
+                KeyStrokeHitMiss::Correct,
                 vec![StatisticalEvent::ChunkConfirmed(
                     ChunkConfirmationInfo::new(
                         KeyStrokeElementCount::Double((2, 3)),
@@ -1773,8 +1765,8 @@ fn construct_display_info_1() {
                     )
                 )]
             ),
-            (KeyStrokeResult::Wrong, vec![]),
-            (KeyStrokeResult::Correct, vec![]),
+            (KeyStrokeHitMiss::Wrong, vec![]),
+            (KeyStrokeHitMiss::Correct, vec![]),
         ]
     );
 
@@ -1803,7 +1795,8 @@ fn construct_display_info_1() {
                     ActualKeyStroke::new(Duration::new(11, 0), 'c'.try_into().unwrap(), false),
                     ActualKeyStroke::new(Duration::new(12, 0), 'k'.try_into().unwrap(), true)
                 ],
-                1
+                1,
+                []
             ),),
             confirmed_chunks: vec![
                 gen_chunk_confirmed!(
@@ -1839,7 +1832,6 @@ fn construct_display_info_1() {
                     ]
                 ),
             ],
-            pending_key_strokes: vec![],
         }
     );
 
@@ -2015,8 +2007,8 @@ fn construct_display_info_2() {
     assert_eq!(
         results,
         vec![
-            (KeyStrokeResult::Correct, vec![]),
-            (KeyStrokeResult::Wrong, vec![]),
+            (KeyStrokeHitMiss::Correct, vec![]),
+            (KeyStrokeHitMiss::Wrong, vec![]),
         ]
     );
 
@@ -2045,14 +2037,14 @@ fn construct_display_info_2() {
                     'n'.try_into().unwrap(),
                     true
                 )],
-                1
+                1,
+                [ActualKeyStroke::new(
+                    Duration::new(2, 0),
+                    'm'.try_into().unwrap(),
+                    false
+                )]
             )),
             confirmed_chunks: vec![],
-            pending_key_strokes: vec![ActualKeyStroke::new(
-                Duration::new(2, 0),
-                'm'.try_into().unwrap(),
-                false
-            ),],
         }
     );
 
@@ -2170,7 +2162,8 @@ fn construct_display_info_2() {
                     ActualKeyStroke::new(Duration::new(2, 0), 'm'.try_into().unwrap(), false),
                     ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), true)
                 ],
-                1
+                1,
+                []
             )),
             confirmed_chunks: vec![gen_chunk_confirmed!(
                 "ん",
@@ -2186,7 +2179,6 @@ fn construct_display_info_2() {
                     true
                 )]
             ),],
-            pending_key_strokes: vec![],
         }
     );
 
@@ -2349,8 +2341,8 @@ fn construct_display_info_3() {
     assert_eq!(
         results,
         vec![
-            (KeyStrokeResult::Correct, vec![]),
-            (KeyStrokeResult::Wrong, vec![]),
+            (KeyStrokeHitMiss::Correct, vec![]),
+            (KeyStrokeHitMiss::Wrong, vec![]),
         ]
     );
 
@@ -2379,14 +2371,14 @@ fn construct_display_info_3() {
                     'n'.try_into().unwrap(),
                     true
                 )],
-                1
+                1,
+                [ActualKeyStroke::new(
+                    Duration::new(2, 0),
+                    'm'.try_into().unwrap(),
+                    false
+                )]
             )),
             confirmed_chunks: vec![],
-            pending_key_strokes: vec![ActualKeyStroke::new(
-                Duration::new(2, 0),
-                'm'.try_into().unwrap(),
-                false
-            ),],
         }
     );
 
@@ -2468,7 +2460,7 @@ fn construct_display_info_3() {
     assert_eq!(
         pci.stroke_key('n'.try_into().unwrap(), Duration::new(3, 0)),
         (
-            KeyStrokeResult::Correct,
+            KeyStrokeHitMiss::Correct,
             vec![StatisticalEvent::ChunkConfirmed(
                 ChunkConfirmationInfo::new(
                     KeyStrokeElementCount::Sigle(2),
@@ -2496,7 +2488,8 @@ fn construct_display_info_3() {
                 vec![],
                 gen_candidate!(gen_candidate_key_stroke!("zi")),
                 [],
-                0
+                0,
+                []
             ),),
             confirmed_chunks: vec![gen_chunk_confirmed!(
                 "ん",
@@ -2512,7 +2505,6 @@ fn construct_display_info_3() {
                     ActualKeyStroke::new(Duration::new(3, 0), 'n'.try_into().unwrap(), true)
                 ]
             )],
-            pending_key_strokes: vec![],
         }
     );
 
@@ -2705,7 +2697,6 @@ fn construct_display_info_4() {
             .into(),
             inflight_chunk: None,
             confirmed_chunks: vec![],
-            pending_key_strokes: vec![],
         }
     );
 
@@ -2738,7 +2729,7 @@ fn construct_display_info_4() {
     assert_eq!(
         pci.stroke_key('a'.try_into().unwrap(), Duration::new(1, 0)),
         (
-            KeyStrokeResult::Correct,
+            KeyStrokeHitMiss::Correct,
             vec![StatisticalEvent::ChunkConfirmed(
                 ChunkConfirmationInfo::new(
                     KeyStrokeElementCount::Sigle(1),
@@ -2787,7 +2778,8 @@ fn construct_display_info_4() {
                 vec![],
                 gen_candidate!(gen_candidate_key_stroke!("k"), 'k', ['k']),
                 [],
-                0
+                0,
+                []
             ),),
             confirmed_chunks: vec![gen_chunk_confirmed!(
                 "あ",
@@ -2800,7 +2792,6 @@ fn construct_display_info_4() {
                     true
                 )]
             ),],
-            pending_key_strokes: vec![],
         }
     );
 

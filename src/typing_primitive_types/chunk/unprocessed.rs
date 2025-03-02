@@ -65,6 +65,7 @@ impl ChunkUnprocessed {
             self.ideal_candidate,
             vec![],
             0,
+            vec![],
         )
     }
 
