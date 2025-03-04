@@ -1,4 +1,4 @@
-use inflight::KeyStrokeCorrectContext;
+use inflight::KeyStrokeCorrectResult;
 
 use super::*;
 use crate::{
@@ -45,8 +45,9 @@ fn stroke_key_1() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(None, None)
+        KeyStrokeCorrectResult::new(None, None)
     );
+    assert_eq!(stroke_result.wrong_key_strokes(), Some(vec![].as_ref()));
 
     assert_eq!(
         typed_chunk,
@@ -106,12 +107,24 @@ fn stroke_key_1() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(
+        KeyStrokeCorrectResult::new(
             Some(SpellFinishedContext::new(
                 ChunkSpell::new("じょ".to_string().try_into().unwrap()),
                 1
             )),
-            Some(vec![])
+            Some(vec![]),
+        )
+    );
+
+    assert_eq!(
+        stroke_result.wrong_key_strokes(),
+        Some(
+            vec![ActualKeyStroke::new(
+                Duration::new(2, 0),
+                'j'.try_into().unwrap(),
+                false
+            )]
+            .as_ref()
         )
     );
 
@@ -160,8 +173,9 @@ fn stroke_key_2() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(None, None)
+        KeyStrokeCorrectResult::new(None, None)
     );
+    assert_eq!(stroke_result.wrong_key_strokes(), Some(vec![].as_ref()));
 
     assert_eq!(
         typed_chunk,
@@ -217,12 +231,24 @@ fn stroke_key_2() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(
+        KeyStrokeCorrectResult::new(
             Some(SpellFinishedContext::new(
                 ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 1
             )),
-            Some(vec![])
+            Some(vec![]),
+        )
+    );
+
+    assert_eq!(
+        stroke_result.wrong_key_strokes(),
+        Some(
+            vec![ActualKeyStroke::new(
+                Duration::new(2, 0),
+                'm'.try_into().unwrap(),
+                false
+            )]
+            .as_ref()
         )
     );
 
@@ -269,8 +295,9 @@ fn stroke_key_3() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(None, None)
+        KeyStrokeCorrectResult::new(None, None)
     );
+    assert_eq!(stroke_result.wrong_key_strokes(), Some(vec![].as_ref()));
 
     assert_eq!(
         typed_chunk,
@@ -326,7 +353,7 @@ fn stroke_key_3() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(
+        KeyStrokeCorrectResult::new(
             Some(SpellFinishedContext::new(
                 ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 0
@@ -334,9 +361,10 @@ fn stroke_key_3() {
             Some(vec![
                 ActualKeyStroke::new(Duration::new(2, 0), 'm'.try_into().unwrap(), false),
                 ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), true)
-            ])
+            ]),
         )
     );
+    assert_eq!(stroke_result.wrong_key_strokes(), None);
 
     assert_eq!(
         typed_chunk,
@@ -385,8 +413,9 @@ fn stroke_key_4() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(None, None)
+        KeyStrokeCorrectResult::new(None, None)
     );
+    assert_eq!(stroke_result.wrong_key_strokes(), Some(vec![].as_ref()));
 
     assert_eq!(
         typed_chunk,
@@ -446,12 +475,23 @@ fn stroke_key_4() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(
+        KeyStrokeCorrectResult::new(
             Some(SpellFinishedContext::new(
                 ChunkSpell::new("じ".to_string().try_into().unwrap()),
                 1
             )),
-            None
+            None,
+        )
+    );
+    assert_eq!(
+        stroke_result.wrong_key_strokes(),
+        Some(
+            vec![ActualKeyStroke::new(
+                Duration::new(2, 0),
+                'j'.try_into().unwrap(),
+                false
+            )]
+            .as_ref()
         )
     );
 
@@ -485,8 +525,9 @@ fn stroke_key_4() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(None, None)
+        KeyStrokeCorrectResult::new(None, None)
     );
+    assert_eq!(stroke_result.wrong_key_strokes(), Some(vec![].as_ref()));
 
     assert_eq!(
         typed_chunk,
@@ -517,8 +558,9 @@ fn stroke_key_4() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(None, None)
+        KeyStrokeCorrectResult::new(None, None)
     );
+    assert_eq!(stroke_result.wrong_key_strokes(), Some(vec![].as_ref()));
 
     assert_eq!(
         typed_chunk,
@@ -550,14 +592,15 @@ fn stroke_key_4() {
     assert!(stroke_result.is_correct());
     assert_eq!(
         stroke_result.correct_context().unwrap().clone(),
-        KeyStrokeCorrectContext::new(
+        KeyStrokeCorrectResult::new(
             Some(SpellFinishedContext::new(
                 ChunkSpell::new("ょ".to_string().try_into().unwrap()),
                 0
             )),
-            Some(vec![])
+            Some(vec![]),
         )
     );
+    assert_eq!(stroke_result.wrong_key_strokes(), Some(vec![].as_ref()));
 
     assert_eq!(
         typed_chunk,

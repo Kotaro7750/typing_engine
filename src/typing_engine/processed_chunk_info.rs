@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
 use crate::statistics::lap_statistics::LapStatiticsBuilder;
-use crate::statistics::statistical_event::StatisticalEvent;
+use crate::statistics::statistical_event::{KeyStrokeCorrectContext, StatisticalEvent};
 use crate::statistics::statistics_counter::StatisticsCounter;
 use crate::statistics::{construct_on_typing_statistics_target, LapRequest};
 use crate::typing_primitive_types::chunk::confirmed::ChunkConfirmed;
@@ -143,7 +143,21 @@ impl ProcessedChunkInfo {
                         original_result.replace(result.clone());
                     }
 
-                    if let KeyStrokeResult::Correct(correct_context) = &result {
+                    if let KeyStrokeResult::Correct(correct_context, _)
+                    | KeyStrokeResult::ConfirmDelayed(correct_context) = &result
+                    {
+                        if let Some(wrong_key_strokes) = result.wrong_key_strokes() {
+                            statistical_events.push(StatisticalEvent::new_from_key_stroke_correct(
+                                KeyStrokeCorrectContext::new(
+                                    key_stroke_char.clone(),
+                                    wrong_key_strokes
+                                        .iter()
+                                        .map(|key_stroke| key_stroke.key_stroke().clone())
+                                        .collect(),
+                                ),
+                            ));
+                        }
+
                         if let Some(spell_finished_context) =
                             correct_context.spell_finished_context()
                         {

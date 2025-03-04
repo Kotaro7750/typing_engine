@@ -8,6 +8,25 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
     /// 表示などに使う候補
     fn effective_candidate(&self) -> &ChunkKeyStrokeCandidate;
 
+    /// Returns all wrong ActualKeyStroke for typing passed key stroke index
+    fn wrong_key_strokes_for_correct_key_stroke_index(
+        &self,
+        key_stroke_index: usize,
+    ) -> Vec<ActualKeyStroke> {
+        let mut i = 0;
+        let mut wrong_key_strokes = vec![];
+
+        self.actual_key_strokes().iter().for_each(|key_stroke| {
+            if key_stroke.is_correct() {
+                i += 1;
+            } else if i == key_stroke_index {
+                wrong_key_strokes.push(key_stroke.clone());
+            }
+        });
+
+        wrong_key_strokes
+    }
+
     /// Returns the count of wrong key strokes of each key stroke index.
     fn wrong_key_stroke_count_of_key_stroke_index(&self) -> Vec<usize> {
         let mut wrong_key_stroke_count = vec![];

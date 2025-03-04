@@ -160,6 +160,9 @@ impl StatisticsManager {
     /// Consume event and update statistics.
     pub(crate) fn consume_event(&mut self, event: statistical_event::StatisticalEvent) {
         match event {
+            StatisticalEvent::KeyStrokeCorrect(_) => {
+                self.chunk.on_wrong(1);
+            }
             StatisticalEvent::SpellFinished(spell_finished_context) => {
                 let spell_count = spell_finished_context.spell().count();
                 let wrong_key_stroke_count = spell_finished_context.wrong_key_stroke_count();

@@ -1,6 +1,10 @@
-use crate::typing_primitive_types::chunk::{
-    confirmed::ChunkConfirmed, has_actual_key_strokes::ChunkHasActualKeyStrokes,
-    key_stroke_candidate::KeyStrokeElementCount, unprocessed::ChunkUnprocessed, Chunk, ChunkSpell,
+use crate::{
+    typing_primitive_types::chunk::{
+        confirmed::ChunkConfirmed, has_actual_key_strokes::ChunkHasActualKeyStrokes,
+        key_stroke_candidate::KeyStrokeElementCount, unprocessed::ChunkUnprocessed, Chunk,
+        ChunkSpell,
+    },
+    KeyStrokeChar,
 };
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -96,8 +100,27 @@ impl SpellFinishedContext {
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
+/// A struct representing the context for updating statistics when key stroke is correct
+pub(crate) struct KeyStrokeCorrectContext {
+    /// Key stroke that generate event.
+    key_stroke: KeyStrokeChar,
+    /// Wrong key strokes for typing this key stroke.
+    wrong_key_strokes: Vec<KeyStrokeChar>,
+}
+
+impl KeyStrokeCorrectContext {
+    pub(crate) fn new(key_stroke: KeyStrokeChar, wrong_key_strokes: Vec<KeyStrokeChar>) -> Self {
+        Self {
+            key_stroke,
+            wrong_key_strokes,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// Representing events generated when statistically meaningfull things happened
 pub(crate) enum StatisticalEvent {
+    KeyStrokeCorrect(KeyStrokeCorrectContext),
     /// Event generated when spell is finished
     SpellFinished(SpellFinishedContext),
     /// Event generated when chunk is added
@@ -107,6 +130,13 @@ pub(crate) enum StatisticalEvent {
 }
 
 impl StatisticalEvent {
+    /// Create KeyStrokeWrong event from KeyStrokeWrongContext
+    pub(crate) fn new_from_key_stroke_correct(
+        key_stroke_correct_context: KeyStrokeCorrectContext,
+    ) -> Self {
+        StatisticalEvent::KeyStrokeCorrect(key_stroke_correct_context)
+    }
+
     /// Create SpellFinished event from SpellFinishedContext
     pub(crate) fn new_from_spell_finished(spell_finished_context: SpellFinishedContext) -> Self {
         StatisticalEvent::SpellFinished(spell_finished_context)

@@ -162,6 +162,10 @@ fn stroke_key_1() {
     assert_eq!(
         events,
         vec![
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'u'.try_into().unwrap(),
+                vec![]
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("う".to_string().try_into().unwrap()),
                 0
@@ -231,6 +235,10 @@ fn stroke_key_1() {
     assert_eq!(
         events,
         vec![
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'w'.try_into().unwrap(),
+                vec![]
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("っ".to_string().try_into().unwrap()),
                 0
@@ -303,7 +311,12 @@ fn stroke_key_1() {
     // 4. 「w」と入力
     let (result, events) = pci.stroke_key('w'.try_into().unwrap(), Duration::new(3, 0));
     assert_eq!(result, KeyStrokeHitMiss::Correct);
-    assert_eq!(events, vec![]);
+    assert_eq!(
+        events,
+        vec![StatisticalEvent::KeyStrokeCorrect(
+            KeyStrokeCorrectContext::new('w'.try_into().unwrap(), vec![])
+        ),]
+    );
 
     assert_eq!(
         pci,
@@ -368,6 +381,10 @@ fn stroke_key_1() {
     assert_eq!(
         events,
         vec![
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'u'.try_into().unwrap(),
+                vec![]
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("う".to_string().try_into().unwrap()),
                 0
@@ -647,7 +664,12 @@ fn stroke_key_2() {
     // 3. 「k」と入力
     let (result, events) = pci.stroke_key('k'.try_into().unwrap(), Duration::new(1, 0));
     assert_eq!(result, KeyStrokeHitMiss::Correct);
-    assert_eq!(events, vec![]);
+    assert_eq!(
+        events,
+        vec![StatisticalEvent::KeyStrokeCorrect(
+            KeyStrokeCorrectContext::new('k'.try_into().unwrap(), vec![])
+        ),]
+    );
 
     assert_eq!(
         pci,
@@ -692,6 +714,10 @@ fn stroke_key_2() {
     assert_eq!(
         events,
         vec![
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'a'.try_into().unwrap(),
+                vec![]
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("か".to_string().try_into().unwrap()),
                 0
@@ -749,7 +775,12 @@ fn stroke_key_2() {
     // 4. 「n」と入力
     let (result, events) = pci.stroke_key('n'.try_into().unwrap(), Duration::new(3, 0));
     assert_eq!(result, KeyStrokeHitMiss::Correct);
-    assert_eq!(events, vec![]);
+    assert_eq!(
+        events,
+        vec![StatisticalEvent::KeyStrokeCorrect(
+            KeyStrokeCorrectContext::new('n'.try_into().unwrap(), vec![])
+        )]
+    );
 
     assert_eq!(
         pci,
@@ -862,6 +893,10 @@ fn stroke_key_2() {
                 1,
                 1,
                 vec![(true, Some(1))]
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'k'.try_into().unwrap(),
+                vec!['j'.try_into().unwrap()]
             ))
         ]
     );
@@ -917,6 +952,10 @@ fn stroke_key_2() {
     assert_eq!(
         events,
         vec![
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'i'.try_into().unwrap(),
+                vec![]
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("き".to_string().try_into().unwrap()),
                 1
@@ -1104,7 +1143,12 @@ fn stroke_key_3() {
     // 3. 「k」と入力
     let (result, events) = pci.stroke_key('k'.try_into().unwrap(), Duration::new(1, 0));
     assert_eq!(result, KeyStrokeHitMiss::Correct);
-    assert_eq!(events, vec![]);
+    assert_eq!(
+        events,
+        vec![StatisticalEvent::KeyStrokeCorrect(
+            KeyStrokeCorrectContext::new('k'.try_into().unwrap(), vec![])
+        ),]
+    );
 
     assert_eq!(
         pci,
@@ -1149,6 +1193,10 @@ fn stroke_key_3() {
     assert_eq!(
         events,
         vec![
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'a'.try_into().unwrap(),
+                vec![]
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("か".to_string().try_into().unwrap()),
                 0
@@ -1206,7 +1254,12 @@ fn stroke_key_3() {
     // 4. 「n」と入力
     let (result, events) = pci.stroke_key('n'.try_into().unwrap(), Duration::new(3, 0));
     assert_eq!(result, KeyStrokeHitMiss::Correct);
-    assert_eq!(events, vec![]);
+    assert_eq!(
+        events,
+        vec![StatisticalEvent::KeyStrokeCorrect(
+            KeyStrokeCorrectContext::new('n'.try_into().unwrap(), vec![])
+        ),]
+    );
 
     assert_eq!(
         pci,
@@ -1307,6 +1360,10 @@ fn stroke_key_3() {
     assert_eq!(
         events,
         vec![
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'n'.try_into().unwrap(),
+                vec!['j'.try_into().unwrap()]
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 1
@@ -1371,7 +1428,12 @@ fn stroke_key_3() {
     // 7. 「k」と入力
     let (result, events) = pci.stroke_key('k'.try_into().unwrap(), Duration::new(6, 0));
     assert_eq!(result, KeyStrokeHitMiss::Correct);
-    assert_eq!(events, vec![]);
+    assert_eq!(
+        events,
+        vec![StatisticalEvent::KeyStrokeCorrect(
+            KeyStrokeCorrectContext::new('k'.try_into().unwrap(), vec![])
+        ),]
+    );
 
     assert_eq!(
         pci,
@@ -1425,6 +1487,10 @@ fn stroke_key_3() {
     assert_eq!(
         events,
         vec![
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'i'.try_into().unwrap(),
+                vec![]
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("き".to_string().try_into().unwrap()),
                 0
@@ -1581,7 +1647,12 @@ fn stroke_key_4() {
     // 3. 「n」と入力
     let (result, events) = pci.stroke_key('n'.try_into().unwrap(), Duration::new(1, 0));
     assert_eq!(result, KeyStrokeHitMiss::Correct);
-    assert_eq!(events, vec![]);
+    assert_eq!(
+        events,
+        vec![StatisticalEvent::KeyStrokeCorrect(
+            KeyStrokeCorrectContext::new('n'.try_into().unwrap(), vec![])
+        ),]
+    );
 
     assert_eq!(
         pci,
@@ -1630,6 +1701,10 @@ fn stroke_key_4() {
                 1,
                 1,
                 vec![(true, Some(1))]
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'p'.try_into().unwrap(),
+                vec![]
             )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("ぴ".to_string().try_into().unwrap()),
@@ -1769,12 +1844,29 @@ fn construct_display_info_1() {
     assert_eq!(
         results,
         vec![
-            (KeyStrokeHitMiss::Correct, vec![]),
+            (
+                KeyStrokeHitMiss::Correct,
+                vec![StatisticalEvent::KeyStrokeCorrect(
+                    KeyStrokeCorrectContext::new('k'.try_into().unwrap(), vec![])
+                ),]
+            ),
             (KeyStrokeHitMiss::Wrong, vec![]),
-            (KeyStrokeHitMiss::Correct, vec![]),
+            (
+                KeyStrokeHitMiss::Correct,
+                vec![StatisticalEvent::KeyStrokeCorrect(
+                    KeyStrokeCorrectContext::new(
+                        'y'.try_into().unwrap(),
+                        vec!['u'.try_into().unwrap()]
+                    )
+                ),]
+            ),
             (
                 KeyStrokeHitMiss::Correct,
                 vec![
+                    StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                        'o'.try_into().unwrap(),
+                        vec![]
+                    )),
                     StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                         ChunkSpell::new("きょ".to_string().try_into().unwrap()),
                         1
@@ -1790,20 +1882,48 @@ fn construct_display_info_1() {
                     ))
                 ]
             ),
-            (KeyStrokeHitMiss::Correct, vec![]),
             (
                 KeyStrokeHitMiss::Correct,
-                vec![StatisticalEvent::SpellFinished(SpellFinishedContext::new(
-                    ChunkSpell::new("き".to_string().try_into().unwrap()),
-                    0
-                )),]
+                vec![StatisticalEvent::KeyStrokeCorrect(
+                    KeyStrokeCorrectContext::new('k'.try_into().unwrap(), vec![])
+                ),]
             ),
-            (KeyStrokeHitMiss::Wrong, vec![]),
-            (KeyStrokeHitMiss::Correct, vec![]),
-            (KeyStrokeHitMiss::Correct, vec![]),
             (
                 KeyStrokeHitMiss::Correct,
                 vec![
+                    StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                        'i'.try_into().unwrap(),
+                        vec![]
+                    )),
+                    StatisticalEvent::SpellFinished(SpellFinishedContext::new(
+                        ChunkSpell::new("き".to_string().try_into().unwrap()),
+                        0
+                    )),
+                ]
+            ),
+            (KeyStrokeHitMiss::Wrong, vec![]),
+            (
+                KeyStrokeHitMiss::Correct,
+                vec![StatisticalEvent::KeyStrokeCorrect(
+                    KeyStrokeCorrectContext::new(
+                        'x'.try_into().unwrap(),
+                        vec!['j'.try_into().unwrap()]
+                    )
+                ),]
+            ),
+            (
+                KeyStrokeHitMiss::Correct,
+                vec![StatisticalEvent::KeyStrokeCorrect(
+                    KeyStrokeCorrectContext::new('y'.try_into().unwrap(), vec![])
+                ),]
+            ),
+            (
+                KeyStrokeHitMiss::Correct,
+                vec![
+                    StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                        'o'.try_into().unwrap(),
+                        vec![]
+                    )),
                     StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                         ChunkSpell::new("ょ".to_string().try_into().unwrap()),
                         1
@@ -1827,7 +1947,15 @@ fn construct_display_info_1() {
                 ]
             ),
             (KeyStrokeHitMiss::Wrong, vec![]),
-            (KeyStrokeHitMiss::Correct, vec![]),
+            (
+                KeyStrokeHitMiss::Correct,
+                vec![StatisticalEvent::KeyStrokeCorrect(
+                    KeyStrokeCorrectContext::new(
+                        'k'.try_into().unwrap(),
+                        vec!['c'.try_into().unwrap()]
+                    )
+                ),]
+            ),
         ]
     );
 
@@ -2068,7 +2196,12 @@ fn construct_display_info_2() {
     assert_eq!(
         results,
         vec![
-            (KeyStrokeHitMiss::Correct, vec![]),
+            (
+                KeyStrokeHitMiss::Correct,
+                vec![StatisticalEvent::KeyStrokeCorrect(
+                    KeyStrokeCorrectContext::new('n'.try_into().unwrap(), vec![])
+                ),]
+            ),
             (KeyStrokeHitMiss::Wrong, vec![]),
         ]
     );
@@ -2402,7 +2535,12 @@ fn construct_display_info_3() {
     assert_eq!(
         results,
         vec![
-            (KeyStrokeHitMiss::Correct, vec![]),
+            (
+                KeyStrokeHitMiss::Correct,
+                vec![StatisticalEvent::KeyStrokeCorrect(
+                    KeyStrokeCorrectContext::new('n'.try_into().unwrap(), vec![])
+                ),]
+            ),
             (KeyStrokeHitMiss::Wrong, vec![]),
         ]
     );
@@ -2523,6 +2661,10 @@ fn construct_display_info_3() {
         (
             KeyStrokeHitMiss::Correct,
             vec![
+                StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                    'n'.try_into().unwrap(),
+                    vec!['m'.try_into().unwrap()]
+                )),
                 StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                     ChunkSpell::new("ん".to_string().try_into().unwrap()),
                     1
@@ -2796,6 +2938,10 @@ fn construct_display_info_4() {
         (
             KeyStrokeHitMiss::Correct,
             vec![
+                StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                    'a'.try_into().unwrap(),
+                    vec![]
+                )),
                 StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                     ChunkSpell::new("あ".to_string().try_into().unwrap()),
                     0

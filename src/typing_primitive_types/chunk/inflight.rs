@@ -260,7 +260,7 @@ impl ChunkInflight {
                     .push(ActualKeyStroke::new(elapsed_time, key_stroke, true));
                 self.reduce_candidate(&[delayed_confirmable_candidate_index]);
 
-                return KeyStrokeResult::Correct(KeyStrokeCorrectContext::new(
+                return KeyStrokeResult::ConfirmDelayed(KeyStrokeCorrectResult::new(
                     // At this point, key_stroke_cursor_position is already advanced.
                     self.finishable_spell_index(self.key_stroke_cursor_position() - 1)
                         .map(|index| self.spell_finished_context(index)),
@@ -313,7 +313,7 @@ impl ChunkInflight {
                     self.append_actual_key_stroke(key_stroke);
                 });
 
-                KeyStrokeCorrectContext::new(
+                KeyStrokeCorrectResult::new(
                     finished_spell_index.map(|index| self.spell_finished_context(index)),
                     Some(self.pending_key_strokes.clone()),
                 )
@@ -327,10 +327,15 @@ impl ChunkInflight {
                     None
                 };
 
-                KeyStrokeCorrectContext::new(spell_finished_context, None)
+                KeyStrokeCorrectResult::new(spell_finished_context, None)
             };
 
-            KeyStrokeResult::Correct(key_stroke_correct_ctx)
+            KeyStrokeResult::Correct(
+                key_stroke_correct_ctx,
+                self.wrong_key_strokes_for_correct_key_stroke_index(
+                    self.key_stroke_cursor_position() - 1,
+                ),
+            )
         } else {
             KeyStrokeResult::Wrong
         }
@@ -410,8 +415,14 @@ impl ChunkSpellCursorPosition {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// An enum representing the result of a key stroke to ChunkInflight.
 pub(crate) enum KeyStrokeResult {
-    Correct(KeyStrokeCorrectContext),
+    /// A key stroke is correct.
+    /// The second element of tuple is wrong key strokes for this correct key stroke.
+    Correct(KeyStrokeCorrectResult, Vec<ActualKeyStroke>),
+    /// A key stroke is correct and confirm delayed confirmed candidate.
+    ConfirmDelayed(KeyStrokeCorrectResult),
+    /// A key stroke is wrong.
     Wrong,
 }
 
@@ -419,21 +430,30 @@ impl KeyStrokeResult {
     #[cfg(test)]
     /// Returns if this result is correct.
     pub(crate) fn is_correct(&self) -> bool {
-        matches!(self, Self::Correct(_))
+        matches!(self, Self::Correct(_, _) | Self::ConfirmDelayed(_))
     }
 
     #[cfg(test)]
     /// Returns the correct context if this result is correct.
-    pub(crate) fn correct_context(&self) -> Option<&KeyStrokeCorrectContext> {
+    pub(crate) fn correct_context(&self) -> Option<&KeyStrokeCorrectResult> {
         match self {
-            Self::Correct(ctx) => Some(ctx),
+            Self::Correct(ctx, _) | Self::ConfirmDelayed(ctx) => Some(ctx),
+            Self::Wrong => None,
+        }
+    }
+
+    /// Returns the wrong key strokes if this result is correct.
+    pub(crate) fn wrong_key_strokes(&self) -> Option<&[ActualKeyStroke]> {
+        match self {
+            Self::Correct(_, wrong_key_strokes) => Some(wrong_key_strokes),
+            Self::ConfirmDelayed(_) => None,
             Self::Wrong => None,
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct KeyStrokeCorrectContext {
+pub(crate) struct KeyStrokeCorrectResult {
     /// If Some, this key stroke finishes spell.
     spell_finished_context: Option<SpellFinishedContext>,
     /// If Some, this key stroke confirm the chunk.
@@ -441,7 +461,7 @@ pub(crate) struct KeyStrokeCorrectContext {
     chunk_confirmation: Option<Vec<ActualKeyStroke>>,
 }
 
-impl KeyStrokeCorrectContext {
+impl KeyStrokeCorrectResult {
     pub(crate) fn new(
         spell_finished_context: Option<SpellFinishedContext>,
         chunk_confirmation: Option<Vec<ActualKeyStroke>>,
