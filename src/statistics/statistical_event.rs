@@ -115,6 +115,11 @@ impl KeyStrokeCorrectContext {
             wrong_key_strokes,
         }
     }
+
+    /// Returns wrong key strokes for typing this key stroke.
+    pub(crate) fn wrong_key_strokes(&self) -> &[KeyStrokeChar] {
+        &self.wrong_key_strokes
+    }
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]

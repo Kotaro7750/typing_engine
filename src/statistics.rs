@@ -130,6 +130,7 @@ pub(crate) fn construct_on_typing_statistics_target(
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// Holding and updating whole realtime statistics.
 pub(crate) struct StatisticsManager {
+    key_stroke: PrimitiveStatisticsCounter,
     ideal_key_stroke: PrimitiveStatisticsCounter,
     spell: PrimitiveStatisticsCounter,
     chunk: PrimitiveStatisticsCounter,
@@ -146,6 +147,7 @@ pub(crate) struct StatisticsManager {
 impl StatisticsManager {
     pub(crate) fn new() -> Self {
         Self {
+            key_stroke: PrimitiveStatisticsCounter::empty_counter(),
             ideal_key_stroke: PrimitiveStatisticsCounter::empty_counter(),
             spell: PrimitiveStatisticsCounter::empty_counter(),
             chunk: PrimitiveStatisticsCounter::empty_counter(),
@@ -160,8 +162,14 @@ impl StatisticsManager {
     /// Consume event and update statistics.
     pub(crate) fn consume_event(&mut self, event: statistical_event::StatisticalEvent) {
         match event {
-            StatisticalEvent::KeyStrokeCorrect(_) => {
-                self.chunk.on_wrong(1);
+            StatisticalEvent::KeyStrokeCorrect(key_stroke_correct_context) => {
+                let wrong_key_strokes_count = key_stroke_correct_context.wrong_key_strokes().len();
+
+                self.key_stroke.on_target_add(1);
+                self.key_stroke.on_finished(1, wrong_key_strokes_count == 0);
+                self.key_stroke.on_wrong(wrong_key_strokes_count);
+
+                self.chunk.on_wrong(wrong_key_strokes_count);
             }
             StatisticalEvent::SpellFinished(spell_finished_context) => {
                 let spell_count = spell_finished_context.spell().count();
@@ -221,7 +229,9 @@ impl StatisticsManager {
 mod test {
     use crate::statistics::statistical_event::ChunkConfirmationInfo;
     use crate::statistics::statistical_event::SpellFinishedContext;
-    use crate::statistics::statistical_event::{ChunkAddedContext, StatisticalEvent};
+    use crate::statistics::statistical_event::{
+        ChunkAddedContext, KeyStrokeCorrectContext, StatisticalEvent,
+    };
     use crate::statistics::PrimitiveStatisticsCounter;
     use crate::statistics::StatisticsCounter;
     use crate::typing_primitive_types::chunk::key_stroke_candidate::KeyStrokeElementCount;
@@ -249,6 +259,10 @@ mod test {
                 1,
                 KeyStrokeElementCount::Sigle(2),
             )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'u'.try_into().unwrap(),
+                vec![],
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("う".to_string().try_into().unwrap()),
                 0,
@@ -262,6 +276,10 @@ mod test {
                 1,
                 vec![(true, Some(1))],
             )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'w'.try_into().unwrap(),
+                vec![],
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("っ".to_string().try_into().unwrap()),
                 0,
@@ -274,6 +292,14 @@ mod test {
                 1,
                 1,
                 vec![(true, Some(1))],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'w'.try_into().unwrap(),
+                vec![],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'u'.try_into().unwrap(),
+                vec![],
             )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("う".to_string().try_into().unwrap()),
@@ -305,6 +331,10 @@ mod test {
         assert_eq!(
             statistics_manager.spell,
             PrimitiveStatisticsCounter::new(3, 4, 3, 0)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke,
+            PrimitiveStatisticsCounter::new(4, 4, 4, 0)
         );
         assert_eq!(
             statistics_manager.ideal_key_stroke,
@@ -349,6 +379,14 @@ mod test {
                 1,
                 KeyStrokeElementCount::Sigle(2),
             )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'k'.try_into().unwrap(),
+                vec![],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'a'.try_into().unwrap(),
+                vec![],
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("か".to_string().try_into().unwrap()),
                 0,
@@ -362,6 +400,10 @@ mod test {
                 1,
                 vec![(true, None), (true, Some(1))],
             )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'n'.try_into().unwrap(),
+                vec![],
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 0,
@@ -374,6 +416,14 @@ mod test {
                 1,
                 1,
                 vec![(true, Some(1))],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'k'.try_into().unwrap(),
+                vec!['j'.try_into().unwrap()],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'i'.try_into().unwrap(),
+                vec![],
             )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("き".to_string().try_into().unwrap()),
@@ -396,11 +446,15 @@ mod test {
 
         assert_eq!(
             statistics_manager.chunk,
-            PrimitiveStatisticsCounter::new(3, 3, 0, 0)
+            PrimitiveStatisticsCounter::new(3, 3, 0, 1)
         );
         assert_eq!(
             statistics_manager.spell,
             PrimitiveStatisticsCounter::new(3, 3, 2, 1)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke,
+            PrimitiveStatisticsCounter::new(5, 5, 4, 1)
         );
         assert_eq!(
             statistics_manager.ideal_key_stroke,
@@ -445,6 +499,14 @@ mod test {
                 1,
                 KeyStrokeElementCount::Sigle(2),
             )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'k'.try_into().unwrap(),
+                vec![],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'a'.try_into().unwrap(),
+                vec![],
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("か".to_string().try_into().unwrap()),
                 0,
@@ -458,6 +520,14 @@ mod test {
                 1,
                 vec![(true, None), (true, Some(1))],
             )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'n'.try_into().unwrap(),
+                vec![],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'n'.try_into().unwrap(),
+                vec!['j'.try_into().unwrap()],
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 1,
@@ -470,6 +540,14 @@ mod test {
                 1,
                 1,
                 vec![(true, None), (false, None), (true, Some(1))],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'k'.try_into().unwrap(),
+                vec![],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'i'.try_into().unwrap(),
+                vec![],
             )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("き".to_string().try_into().unwrap()),
@@ -492,11 +570,15 @@ mod test {
 
         assert_eq!(
             statistics_manager.chunk,
-            PrimitiveStatisticsCounter::new(3, 3, 0, 0)
+            PrimitiveStatisticsCounter::new(3, 3, 0, 1)
         );
         assert_eq!(
             statistics_manager.spell,
             PrimitiveStatisticsCounter::new(3, 3, 2, 1)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke,
+            PrimitiveStatisticsCounter::new(6, 6, 5, 1)
         );
         assert_eq!(
             statistics_manager.ideal_key_stroke,
@@ -537,6 +619,10 @@ mod test {
                 1,
                 KeyStrokeElementCount::Sigle(1),
             )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'n'.try_into().unwrap(),
+                vec![],
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 0,
@@ -549,6 +635,10 @@ mod test {
                 1,
                 1,
                 vec![(true, Some(1))],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'p'.try_into().unwrap(),
+                vec![],
             )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("ぴ".to_string().try_into().unwrap()),
@@ -575,6 +665,10 @@ mod test {
         );
         assert_eq!(
             statistics_manager.spell,
+            PrimitiveStatisticsCounter::new(2, 2, 2, 0)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke,
             PrimitiveStatisticsCounter::new(2, 2, 2, 0)
         );
         assert_eq!(
@@ -624,6 +718,18 @@ mod test {
                 2,
                 KeyStrokeElementCount::Sigle(2),
             )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'k'.try_into().unwrap(),
+                vec![],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'y'.try_into().unwrap(),
+                vec!['u'.try_into().unwrap()],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'o'.try_into().unwrap(),
+                vec![],
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("きょ".to_string().try_into().unwrap()),
                 1,
@@ -637,9 +743,29 @@ mod test {
                 2,
                 vec![(true, None), (false, None), (true, None), (true, Some(2))],
             )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'k'.try_into().unwrap(),
+                vec![],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'i'.try_into().unwrap(),
+                vec![],
+            )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("き".to_string().try_into().unwrap()),
                 0,
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'x'.try_into().unwrap(),
+                vec!['j'.try_into().unwrap()],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'y'.try_into().unwrap(),
+                vec![],
+            )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'o'.try_into().unwrap(),
+                vec![],
             )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
                 ChunkSpell::new("ょ".to_string().try_into().unwrap()),
@@ -661,6 +787,10 @@ mod test {
                     (true, Some(1)),
                 ],
             )),
+            StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+                'k'.try_into().unwrap(),
+                vec!['c'.try_into().unwrap()],
+            )),
         ];
 
         events.iter().for_each(|statistical_event| {
@@ -669,11 +799,15 @@ mod test {
 
         assert_eq!(
             statistics_manager.chunk,
-            PrimitiveStatisticsCounter::new(2, 4, 0, 0)
+            PrimitiveStatisticsCounter::new(2, 4, 0, 3)
         );
         assert_eq!(
             statistics_manager.spell,
             PrimitiveStatisticsCounter::new(4, 8, 1, 3)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke,
+            PrimitiveStatisticsCounter::new(9, 9, 6, 3)
         );
         assert_eq!(
             statistics_manager.ideal_key_stroke,
