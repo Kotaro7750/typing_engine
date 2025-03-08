@@ -1,3 +1,4 @@
+use crate::utility::calc_ceil_div;
 use crate::{
     typing_primitive_types::chunk::{
         confirmed::ChunkConfirmed, has_actual_key_strokes::ChunkHasActualKeyStrokes,
@@ -6,6 +7,57 @@ use crate::{
     },
     KeyStrokeChar,
 };
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+/// A struct representing the information for updating statistics when chunk is confirmed
+pub(crate) struct ChunkConfirmedContext {
+    /// Ideal key stroke count of confirmed chunk.
+    ideal_key_stroke_count: usize,
+    /// Wrong key stroke count for each key stroke of confirmed chunk.
+    wrong_key_stroke_count_of_key_stroke_index: Vec<usize>,
+}
+
+impl ChunkConfirmedContext {
+    pub(crate) fn new(
+        ideal_key_stroke_count: usize,
+        wrong_key_stroke_count_of_key_stroke_index: Vec<usize>,
+    ) -> Self {
+        Self {
+            ideal_key_stroke_count,
+            wrong_key_stroke_count_of_key_stroke_index,
+        }
+    }
+
+    /// Returns ideal key stroke count of confirmed chunk.
+    pub(crate) fn ideal_key_stroke_count(&self) -> usize {
+        self.ideal_key_stroke_count
+    }
+
+    /// Returns completely correctness of confirmed chunk.
+    pub(crate) fn completely_correct(&self) -> bool {
+        self.wrong_key_stroke_count_of_key_stroke_index
+            .iter()
+            .all(|&count| count == 0)
+    }
+
+    /// Returns wrong key stroke count for each ideal key stroke of confirmed chunk.
+    pub(crate) fn wrong_key_stroke_count_of_ideal_key_stroke_index(&self) -> Vec<usize> {
+        let mut wrong_count = vec![0; self.ideal_key_stroke_count];
+        let key_stroke_count = self.wrong_key_stroke_count_of_key_stroke_index.len();
+
+        self.wrong_key_stroke_count_of_key_stroke_index
+            .iter()
+            .enumerate()
+            .for_each(|(i, count)| {
+                let ideal_key_stroke_index =
+                    calc_ceil_div(self.ideal_key_stroke_count() * (i + 1), key_stroke_count) - 1;
+
+                wrong_count[ideal_key_stroke_index] += count;
+            });
+
+        wrong_count
+    }
+}
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// A struct representing the information for updating statistics when chunk is confirmed
@@ -131,7 +183,7 @@ pub(crate) enum StatisticalEvent {
     /// Event generated when chunk is added
     ChunkAdded(ChunkAddedContext),
     /// Event generated when chunk is confirmed
-    ChunkConfirmed(ChunkConfirmationInfo),
+    ChunkConfirmed((ChunkConfirmationInfo, ChunkConfirmedContext)),
 }
 
 impl StatisticalEvent {
@@ -201,14 +253,22 @@ impl StatisticalEvent {
             })
             .collect();
 
-        StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-            key_stroke_element_count,
-            ideal_key_stroke_element_count,
-            spell_count,
-            candidate_key_stroke_count,
-            ideal_candidate_key_stroke_count,
-            effective_spell_count,
-            actual_key_stroke_info,
+        StatisticalEvent::ChunkConfirmed((
+            ChunkConfirmationInfo::new(
+                key_stroke_element_count,
+                ideal_key_stroke_element_count,
+                spell_count,
+                candidate_key_stroke_count,
+                ideal_candidate_key_stroke_count,
+                effective_spell_count,
+                actual_key_stroke_info,
+            ),
+            ChunkConfirmedContext::new(
+                confirmed_chunk
+                    .ideal_key_stroke_candidate()
+                    .calc_key_stroke_count(),
+                confirmed_chunk.wrong_key_stroke_count_of_key_stroke_index(),
+            ),
         ))
     }
 }

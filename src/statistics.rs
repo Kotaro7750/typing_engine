@@ -168,6 +168,7 @@ impl StatisticsManager {
                 self.key_stroke.on_target_add(1);
                 self.key_stroke.on_finished(1, wrong_key_strokes_count == 0);
                 self.key_stroke.on_wrong(wrong_key_strokes_count);
+                self.ideal_key_stroke.on_wrong(wrong_key_strokes_count);
 
                 self.chunk.on_wrong(wrong_key_strokes_count);
             }
@@ -179,9 +180,19 @@ impl StatisticsManager {
                 self.spell
                     .on_finished(spell_count, wrong_key_stroke_count == 0);
             }
-            StatisticalEvent::ChunkConfirmed(chunk_confirmation_info) => {
-                // TODO completely correct must be treated correctly.
-                self.chunk.on_finished(1, false);
+            StatisticalEvent::ChunkConfirmed((
+                chunk_confirmation_info,
+                chunk_confirmed_context,
+            )) => {
+                self.chunk
+                    .on_finished(1, chunk_confirmed_context.completely_correct());
+
+                chunk_confirmed_context
+                    .wrong_key_stroke_count_of_ideal_key_stroke_index()
+                    .iter()
+                    .for_each(|count| {
+                        self.ideal_key_stroke.on_finished(1, *count == 0);
+                    });
 
                 self.confirmed_only_statistics_counter.on_add_chunk(
                     chunk_confirmation_info.key_stroke_element_count,
@@ -228,6 +239,7 @@ impl StatisticsManager {
 #[cfg(test)]
 mod test {
     use crate::statistics::statistical_event::ChunkConfirmationInfo;
+    use crate::statistics::statistical_event::ChunkConfirmedContext;
     use crate::statistics::statistical_event::SpellFinishedContext;
     use crate::statistics::statistical_event::{
         ChunkAddedContext, KeyStrokeCorrectContext, StatisticalEvent,
@@ -267,14 +279,17 @@ mod test {
                 ChunkSpell::new("う".to_string().try_into().unwrap()),
                 0,
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(1),
-                KeyStrokeElementCount::Sigle(1),
-                1,
-                1,
-                1,
-                1,
-                vec![(true, Some(1))],
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(1),
+                    KeyStrokeElementCount::Sigle(1),
+                    1,
+                    1,
+                    1,
+                    1,
+                    vec![(true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(1, vec![0]),
             )),
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'w'.try_into().unwrap(),
@@ -284,14 +299,17 @@ mod test {
                 ChunkSpell::new("っ".to_string().try_into().unwrap()),
                 0,
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(1),
-                KeyStrokeElementCount::Sigle(1),
-                1,
-                1,
-                1,
-                1,
-                vec![(true, Some(1))],
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(1),
+                    KeyStrokeElementCount::Sigle(1),
+                    1,
+                    1,
+                    1,
+                    1,
+                    vec![(true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(1, vec![0]),
             )),
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'w'.try_into().unwrap(),
@@ -305,14 +323,17 @@ mod test {
                 ChunkSpell::new("う".to_string().try_into().unwrap()),
                 0,
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(2),
-                KeyStrokeElementCount::Sigle(2),
-                1,
-                2,
-                2,
-                1,
-                vec![(true, None), (true, Some(1))],
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(2),
+                    KeyStrokeElementCount::Sigle(2),
+                    1,
+                    2,
+                    2,
+                    1,
+                    vec![(true, None), (true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(2, vec![0, 0]),
             )),
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
                 1,
@@ -326,7 +347,7 @@ mod test {
 
         assert_eq!(
             statistics_manager.chunk,
-            PrimitiveStatisticsCounter::new(3, 4, 0, 0)
+            PrimitiveStatisticsCounter::new(3, 4, 3, 0)
         );
         assert_eq!(
             statistics_manager.spell,
@@ -338,7 +359,7 @@ mod test {
         );
         assert_eq!(
             statistics_manager.ideal_key_stroke,
-            PrimitiveStatisticsCounter::new(0, 5, 0, 0)
+            PrimitiveStatisticsCounter::new(4, 5, 4, 0)
         );
 
         assert_eq!(
@@ -391,14 +412,17 @@ mod test {
                 ChunkSpell::new("か".to_string().try_into().unwrap()),
                 0,
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(2),
-                KeyStrokeElementCount::Sigle(2),
-                1,
-                2,
-                2,
-                1,
-                vec![(true, None), (true, Some(1))],
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(2),
+                    KeyStrokeElementCount::Sigle(2),
+                    1,
+                    2,
+                    2,
+                    1,
+                    vec![(true, None), (true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(2, vec![0, 0]),
             )),
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'n'.try_into().unwrap(),
@@ -408,14 +432,17 @@ mod test {
                 ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 0,
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(1),
-                KeyStrokeElementCount::Sigle(1),
-                1,
-                1,
-                1,
-                1,
-                vec![(true, Some(1))],
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(1),
+                    KeyStrokeElementCount::Sigle(1),
+                    1,
+                    1,
+                    1,
+                    1,
+                    vec![(true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(1, vec![0]),
             )),
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'k'.try_into().unwrap(),
@@ -429,14 +456,17 @@ mod test {
                 ChunkSpell::new("き".to_string().try_into().unwrap()),
                 1,
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(2),
-                KeyStrokeElementCount::Sigle(2),
-                1,
-                2,
-                2,
-                1,
-                vec![(false, None), (true, None), (true, Some(1))],
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(2),
+                    KeyStrokeElementCount::Sigle(2),
+                    1,
+                    2,
+                    2,
+                    1,
+                    vec![(false, None), (true, None), (true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(2, vec![1, 0]),
             )),
         ];
 
@@ -446,7 +476,7 @@ mod test {
 
         assert_eq!(
             statistics_manager.chunk,
-            PrimitiveStatisticsCounter::new(3, 3, 0, 1)
+            PrimitiveStatisticsCounter::new(3, 3, 2, 1)
         );
         assert_eq!(
             statistics_manager.spell,
@@ -458,7 +488,7 @@ mod test {
         );
         assert_eq!(
             statistics_manager.ideal_key_stroke,
-            PrimitiveStatisticsCounter::new(0, 5, 0, 0)
+            PrimitiveStatisticsCounter::new(5, 5, 4, 1)
         );
 
         assert_eq!(
@@ -511,14 +541,17 @@ mod test {
                 ChunkSpell::new("か".to_string().try_into().unwrap()),
                 0,
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(2),
-                KeyStrokeElementCount::Sigle(2),
-                1,
-                2,
-                2,
-                1,
-                vec![(true, None), (true, Some(1))],
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(2),
+                    KeyStrokeElementCount::Sigle(2),
+                    1,
+                    2,
+                    2,
+                    1,
+                    vec![(true, None), (true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(2, vec![0, 0]),
             )),
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'n'.try_into().unwrap(),
@@ -532,14 +565,17 @@ mod test {
                 ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 1,
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(2),
-                KeyStrokeElementCount::Sigle(1),
-                1,
-                2,
-                1,
-                1,
-                vec![(true, None), (false, None), (true, Some(1))],
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(2),
+                    KeyStrokeElementCount::Sigle(1),
+                    1,
+                    2,
+                    1,
+                    1,
+                    vec![(true, None), (false, None), (true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(1, vec![0, 1]),
             )),
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'k'.try_into().unwrap(),
@@ -553,14 +589,17 @@ mod test {
                 ChunkSpell::new("き".to_string().try_into().unwrap()),
                 0,
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(2),
-                KeyStrokeElementCount::Sigle(2),
-                1,
-                2,
-                2,
-                1,
-                vec![(true, None), (true, Some(1))],
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(2),
+                    KeyStrokeElementCount::Sigle(2),
+                    1,
+                    2,
+                    2,
+                    1,
+                    vec![(true, None), (true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(2, vec![0, 0]),
             )),
         ];
 
@@ -570,7 +609,7 @@ mod test {
 
         assert_eq!(
             statistics_manager.chunk,
-            PrimitiveStatisticsCounter::new(3, 3, 0, 1)
+            PrimitiveStatisticsCounter::new(3, 3, 2, 1)
         );
         assert_eq!(
             statistics_manager.spell,
@@ -582,7 +621,7 @@ mod test {
         );
         assert_eq!(
             statistics_manager.ideal_key_stroke,
-            PrimitiveStatisticsCounter::new(0, 5, 0, 0)
+            PrimitiveStatisticsCounter::new(5, 5, 4, 1)
         );
 
         assert_eq!(
@@ -627,14 +666,17 @@ mod test {
                 ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 0,
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(1),
-                KeyStrokeElementCount::Sigle(1),
-                1,
-                1,
-                1,
-                1,
-                vec![(true, Some(1))],
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(1),
+                    KeyStrokeElementCount::Sigle(1),
+                    1,
+                    1,
+                    1,
+                    1,
+                    vec![(true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(1, vec![0]),
             )),
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'p'.try_into().unwrap(),
@@ -644,14 +686,17 @@ mod test {
                 ChunkSpell::new("ぴ".to_string().try_into().unwrap()),
                 0,
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(1),
-                KeyStrokeElementCount::Sigle(1),
-                1,
-                1,
-                1,
-                1,
-                vec![(true, Some(1))],
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(1),
+                    KeyStrokeElementCount::Sigle(1),
+                    1,
+                    1,
+                    1,
+                    1,
+                    vec![(true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(1, vec![0]),
             )),
         ];
 
@@ -661,7 +706,7 @@ mod test {
 
         assert_eq!(
             statistics_manager.chunk,
-            PrimitiveStatisticsCounter::new(2, 2, 0, 0)
+            PrimitiveStatisticsCounter::new(2, 2, 2, 0)
         );
         assert_eq!(
             statistics_manager.spell,
@@ -673,7 +718,7 @@ mod test {
         );
         assert_eq!(
             statistics_manager.ideal_key_stroke,
-            PrimitiveStatisticsCounter::new(0, 2, 0, 0)
+            PrimitiveStatisticsCounter::new(2, 2, 2, 0)
         );
 
         assert_eq!(
@@ -734,14 +779,17 @@ mod test {
                 ChunkSpell::new("きょ".to_string().try_into().unwrap()),
                 1,
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(3),
-                KeyStrokeElementCount::Sigle(3),
-                2,
-                3,
-                3,
-                2,
-                vec![(true, None), (false, None), (true, None), (true, Some(2))],
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(3),
+                    KeyStrokeElementCount::Sigle(3),
+                    2,
+                    3,
+                    3,
+                    2,
+                    vec![(true, None), (false, None), (true, None), (true, Some(2))],
+                ),
+                ChunkConfirmedContext::new(3, vec![0, 1, 0]),
             )),
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'k'.try_into().unwrap(),
@@ -771,21 +819,24 @@ mod test {
                 ChunkSpell::new("ょ".to_string().try_into().unwrap()),
                 1,
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Double((2, 3)),
-                KeyStrokeElementCount::Sigle(3),
-                2,
-                5,
-                3,
-                1,
-                vec![
-                    (true, None),
-                    (true, Some(1)),
-                    (false, None),
-                    (true, None),
-                    (true, None),
-                    (true, Some(1)),
-                ],
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Double((2, 3)),
+                    KeyStrokeElementCount::Sigle(3),
+                    2,
+                    5,
+                    3,
+                    1,
+                    vec![
+                        (true, None),
+                        (true, Some(1)),
+                        (false, None),
+                        (true, None),
+                        (true, None),
+                        (true, Some(1)),
+                    ],
+                ),
+                ChunkConfirmedContext::new(3, vec![0, 0, 1, 0, 0]),
             )),
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'k'.try_into().unwrap(),
@@ -811,7 +862,7 @@ mod test {
         );
         assert_eq!(
             statistics_manager.ideal_key_stroke,
-            PrimitiveStatisticsCounter::new(0, 11, 0, 0)
+            PrimitiveStatisticsCounter::new(6, 11, 4, 3)
         );
 
         assert_eq!(

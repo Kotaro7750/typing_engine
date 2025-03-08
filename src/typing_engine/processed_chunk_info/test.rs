@@ -4,7 +4,7 @@ use std::num::NonZeroUsize;
 use std::time::Duration;
 
 use crate::statistics::statistical_event::{
-    ChunkAddedContext, ChunkConfirmationInfo, SpellFinishedContext,
+    ChunkAddedContext, ChunkConfirmationInfo, ChunkConfirmedContext, SpellFinishedContext,
 };
 use crate::statistics::statistics_counter::{PrimitiveStatisticsCounter, StatisticsCounter};
 use crate::statistics::OnTypingStatisticsTarget;
@@ -170,15 +170,18 @@ fn stroke_key_1() {
                 ChunkSpell::new("う".to_string().try_into().unwrap()),
                 0
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(1),
-                KeyStrokeElementCount::Sigle(1),
-                1,
-                1,
-                1,
-                1,
-                vec![(true, Some(1))]
-            ))
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(1),
+                    KeyStrokeElementCount::Sigle(1),
+                    1,
+                    1,
+                    1,
+                    1,
+                    vec![(true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(1, vec![0]),
+            )),
         ]
     );
 
@@ -243,15 +246,18 @@ fn stroke_key_1() {
                 ChunkSpell::new("っ".to_string().try_into().unwrap()),
                 0
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(1),
-                KeyStrokeElementCount::Sigle(1),
-                1,
-                1,
-                1,
-                1,
-                vec![(true, Some(1))]
-            ))
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(1),
+                    KeyStrokeElementCount::Sigle(1),
+                    1,
+                    1,
+                    1,
+                    1,
+                    vec![(true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(1, vec![0]),
+            )),
         ]
     );
 
@@ -389,15 +395,18 @@ fn stroke_key_1() {
                 ChunkSpell::new("う".to_string().try_into().unwrap()),
                 0
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(2),
-                KeyStrokeElementCount::Sigle(2),
-                1,
-                2,
-                2,
-                1,
-                vec![(true, None), (true, Some(1))]
-            ))
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(2),
+                    KeyStrokeElementCount::Sigle(2),
+                    1,
+                    2,
+                    2,
+                    1,
+                    vec![(true, None), (true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(2, vec![0, 0]),
+            )),
         ]
     );
 
@@ -722,15 +731,18 @@ fn stroke_key_2() {
                 ChunkSpell::new("か".to_string().try_into().unwrap()),
                 0
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(2),
-                KeyStrokeElementCount::Sigle(2),
-                1,
-                2,
-                2,
-                1,
-                vec![(true, None), (true, Some(1))]
-            ))
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(2),
+                    KeyStrokeElementCount::Sigle(2),
+                    1,
+                    2,
+                    2,
+                    1,
+                    vec![(true, None), (true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(2, vec![0, 0]),
+            )),
         ]
     );
 
@@ -885,14 +897,17 @@ fn stroke_key_2() {
                 ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 0
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(1),
-                KeyStrokeElementCount::Sigle(1),
-                1,
-                1,
-                1,
-                1,
-                vec![(true, Some(1))]
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(1),
+                    KeyStrokeElementCount::Sigle(1),
+                    1,
+                    1,
+                    1,
+                    1,
+                    vec![(true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(1, vec![0]),
             )),
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'k'.try_into().unwrap(),
@@ -960,15 +975,18 @@ fn stroke_key_2() {
                 ChunkSpell::new("き".to_string().try_into().unwrap()),
                 1
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(2),
-                KeyStrokeElementCount::Sigle(2),
-                1,
-                2,
-                2,
-                1,
-                vec![(false, None), (true, None), (true, Some(1))]
-            ))
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(2),
+                    KeyStrokeElementCount::Sigle(2),
+                    1,
+                    2,
+                    2,
+                    1,
+                    vec![(false, None), (true, None), (true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(2, vec![1, 0]),
+            )),
         ]
     );
 
@@ -1201,15 +1219,18 @@ fn stroke_key_3() {
                 ChunkSpell::new("か".to_string().try_into().unwrap()),
                 0
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(2),
-                KeyStrokeElementCount::Sigle(2),
-                1,
-                2,
-                2,
-                1,
-                vec![(true, None), (true, Some(1))]
-            ))
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(2),
+                    KeyStrokeElementCount::Sigle(2),
+                    1,
+                    2,
+                    2,
+                    1,
+                    vec![(true, None), (true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(2, vec![0, 0]),
+            )),
         ]
     );
 
@@ -1368,15 +1389,18 @@ fn stroke_key_3() {
                 ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 1
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(2),
-                KeyStrokeElementCount::Sigle(1),
-                1,
-                2,
-                1,
-                1,
-                vec![(true, None), (false, None), (true, Some(1))]
-            ))
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(2),
+                    KeyStrokeElementCount::Sigle(1),
+                    1,
+                    2,
+                    1,
+                    1,
+                    vec![(true, None), (false, None), (true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(1, vec![0, 1]),
+            )),
         ]
     );
 
@@ -1495,15 +1519,18 @@ fn stroke_key_3() {
                 ChunkSpell::new("き".to_string().try_into().unwrap()),
                 0
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(2),
-                KeyStrokeElementCount::Sigle(2),
-                1,
-                2,
-                2,
-                1,
-                vec![(true, None), (true, Some(1))]
-            ))
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(2),
+                    KeyStrokeElementCount::Sigle(2),
+                    1,
+                    2,
+                    2,
+                    1,
+                    vec![(true, None), (true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(2, vec![0, 0]),
+            )),
         ]
     );
 
@@ -1693,14 +1720,17 @@ fn stroke_key_4() {
                 ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 0
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(1),
-                KeyStrokeElementCount::Sigle(1),
-                1,
-                1,
-                1,
-                1,
-                vec![(true, Some(1))]
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(1),
+                    KeyStrokeElementCount::Sigle(1),
+                    1,
+                    1,
+                    1,
+                    1,
+                    vec![(true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(1, vec![0]),
             )),
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'p'.try_into().unwrap(),
@@ -1710,15 +1740,18 @@ fn stroke_key_4() {
                 ChunkSpell::new("ぴ".to_string().try_into().unwrap()),
                 0
             )),
-            StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                KeyStrokeElementCount::Sigle(1),
-                KeyStrokeElementCount::Sigle(1),
-                1,
-                1,
-                1,
-                1,
-                vec![(true, Some(1))]
-            ))
+            StatisticalEvent::ChunkConfirmed((
+                ChunkConfirmationInfo::new(
+                    KeyStrokeElementCount::Sigle(1),
+                    KeyStrokeElementCount::Sigle(1),
+                    1,
+                    1,
+                    1,
+                    1,
+                    vec![(true, Some(1))],
+                ),
+                ChunkConfirmedContext::new(1, vec![0]),
+            )),
         ]
     );
 
@@ -1871,15 +1904,18 @@ fn construct_display_info_1() {
                         ChunkSpell::new("きょ".to_string().try_into().unwrap()),
                         1
                     )),
-                    StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                        KeyStrokeElementCount::Sigle(3),
-                        KeyStrokeElementCount::Sigle(3),
-                        2,
-                        3,
-                        3,
-                        2,
-                        vec![(true, None), (false, None), (true, None), (true, Some(2))]
-                    ))
+                    StatisticalEvent::ChunkConfirmed((
+                        ChunkConfirmationInfo::new(
+                            KeyStrokeElementCount::Sigle(3),
+                            KeyStrokeElementCount::Sigle(3),
+                            2,
+                            3,
+                            3,
+                            2,
+                            vec![(true, None), (false, None), (true, None), (true, Some(2))],
+                        ),
+                        ChunkConfirmedContext::new(3, vec![0, 1, 0]),
+                    )),
                 ]
             ),
             (
@@ -1928,22 +1964,25 @@ fn construct_display_info_1() {
                         ChunkSpell::new("ょ".to_string().try_into().unwrap()),
                         1
                     )),
-                    StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                        KeyStrokeElementCount::Double((2, 3)),
-                        KeyStrokeElementCount::Sigle(3),
-                        2,
-                        5,
-                        3,
-                        1,
-                        vec![
-                            (true, None),
-                            (true, Some(1)),
-                            (false, None),
-                            (true, None),
-                            (true, None),
-                            (true, Some(1))
-                        ]
-                    ))
+                    StatisticalEvent::ChunkConfirmed((
+                        ChunkConfirmationInfo::new(
+                            KeyStrokeElementCount::Double((2, 3)),
+                            KeyStrokeElementCount::Sigle(3),
+                            2,
+                            5,
+                            3,
+                            1,
+                            vec![
+                                (true, None),
+                                (true, Some(1)),
+                                (false, None),
+                                (true, None),
+                                (true, None),
+                                (true, Some(1)),
+                            ],
+                        ),
+                        ChunkConfirmedContext::new(3, vec![0, 0, 1, 0, 0]),
+                    )),
                 ]
             ),
             (KeyStrokeHitMiss::Wrong, vec![]),
@@ -2669,14 +2708,17 @@ fn construct_display_info_3() {
                     ChunkSpell::new("ん".to_string().try_into().unwrap()),
                     1
                 )),
-                StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                    KeyStrokeElementCount::Sigle(2),
-                    KeyStrokeElementCount::Sigle(1),
-                    1,
-                    2,
-                    1,
-                    1,
-                    vec![(true, None), (false, None), (true, Some(1))]
+                StatisticalEvent::ChunkConfirmed((
+                    ChunkConfirmationInfo::new(
+                        KeyStrokeElementCount::Sigle(2),
+                        KeyStrokeElementCount::Sigle(1),
+                        1,
+                        2,
+                        1,
+                        1,
+                        vec![(true, None), (false, None), (true, Some(1))]
+                    ),
+                    ChunkConfirmedContext::new(1, vec![0, 1])
                 ))
             ]
         )
@@ -2946,14 +2988,17 @@ fn construct_display_info_4() {
                     ChunkSpell::new("あ".to_string().try_into().unwrap()),
                     0
                 )),
-                StatisticalEvent::ChunkConfirmed(ChunkConfirmationInfo::new(
-                    KeyStrokeElementCount::Sigle(1),
-                    KeyStrokeElementCount::Sigle(1),
-                    1,
-                    1,
-                    1,
-                    1,
-                    vec![(true, Some(1))]
+                StatisticalEvent::ChunkConfirmed((
+                    ChunkConfirmationInfo::new(
+                        KeyStrokeElementCount::Sigle(1),
+                        KeyStrokeElementCount::Sigle(1),
+                        1,
+                        1,
+                        1,
+                        1,
+                        vec![(true, Some(1))]
+                    ),
+                    ChunkConfirmedContext::new(1, vec![0])
                 ))
             ]
         )

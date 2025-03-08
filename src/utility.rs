@@ -39,12 +39,16 @@ pub fn is_japanese_symbol(c: char) -> bool {
     )
 }
 
+/// Return ceil(a/b)
+pub(crate) fn calc_ceil_div(a: usize, b: usize) -> usize {
+    (a + b - 1) / b
+}
+
 /// 対象間の数の違いを考慮して位置の変換をする
 pub(crate) fn convert_by_weighted_count(
     from_count: usize,
     to_count: usize,
     from_delta: usize,
 ) -> usize {
-    // ceil(a/b)は (a+b-1)/b とできる
-    ((from_delta * to_count) + from_count - 1) / from_count
+    calc_ceil_div(from_delta * to_count, from_count)
 }
