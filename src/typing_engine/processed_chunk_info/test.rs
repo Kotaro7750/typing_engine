@@ -2077,9 +2077,12 @@ fn construct_display_info_1() {
         0,
     );
 
+    let spell_statistics_counter = PrimitiveStatisticsCounter::new(4, 8, 1, 3);
+
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     assert_eq!(
@@ -2120,6 +2123,7 @@ fn construct_display_info_1() {
     let (_, ksdi) = pci.construct_display_info(
         LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     assert_eq!(
@@ -2148,6 +2152,7 @@ fn construct_display_info_1() {
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     assert_eq!(
@@ -2283,9 +2288,12 @@ fn construct_display_info_2() {
 
     let confirmed_only_statistics_counter = StatisticsCounter::new();
 
+    let spell_statistics_counter = PrimitiveStatisticsCounter::new(0, 2, 0, 0);
+
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     // 入力を終えた遅延確定候補は表示の上では確定したとみなす
@@ -2323,6 +2331,7 @@ fn construct_display_info_2() {
     let (_, ksdi) = pci.construct_display_info(
         LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     assert_eq!(
@@ -2347,6 +2356,7 @@ fn construct_display_info_2() {
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     assert_eq!(
@@ -2429,9 +2439,12 @@ fn construct_display_info_2() {
         0,
     );
 
+    let spell_statistics_counter = PrimitiveStatisticsCounter::new(1, 2, 1, 0);
+
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     // 遅延確定候補で確定したのでミスタイプは引き続き次のチャンクに属する
@@ -2468,6 +2481,7 @@ fn construct_display_info_2() {
     let (_, ksdi) = pci.construct_display_info(
         LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     assert_eq!(
@@ -2492,6 +2506,7 @@ fn construct_display_info_2() {
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     assert_eq!(
@@ -2621,10 +2636,12 @@ fn construct_display_info_3() {
     );
 
     let confirmed_only_statistics_counter = StatisticsCounter::new();
+    let spell_statistics_counter = PrimitiveStatisticsCounter::new(0, 2, 0, 0);
 
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     // 入力を終えた遅延確定候補は表示の上では確定したとみなす
@@ -2662,6 +2679,7 @@ fn construct_display_info_3() {
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     assert_eq!(
@@ -2771,9 +2789,12 @@ fn construct_display_info_3() {
         0,
     );
 
+    let spell_statistics_counter = PrimitiveStatisticsCounter::new(1, 2, 0, 1);
+
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     // 遅延確定候補ではない候補で確定したのでミスタイプはその候補に属する
@@ -2810,6 +2831,7 @@ fn construct_display_info_3() {
     let (_, ksdi) = pci.construct_display_info(
         LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     assert_eq!(
@@ -2834,6 +2856,7 @@ fn construct_display_info_3() {
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     // 遅延確定候補ではない候補で確定したのでミスタイプはその候補に属する
@@ -3069,9 +3092,12 @@ fn construct_display_info_4() {
         0,
     );
 
+    let spell_statistics_counter = PrimitiveStatisticsCounter::new(1, 4, 1, 0);
+
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     assert_eq!(
@@ -3107,6 +3133,7 @@ fn construct_display_info_4() {
     let (_, ksdi) = pci.construct_display_info(
         LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     assert_eq!(
@@ -3131,6 +3158,7 @@ fn construct_display_info_4() {
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
         &confirmed_only_statistics_counter,
+        &spell_statistics_counter,
     );
 
     assert_eq!(

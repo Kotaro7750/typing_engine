@@ -90,6 +90,14 @@ impl ChunkInflight {
         &self.ideal_candidate
     }
 
+    /// Returns the count of wrong key strokes in pending key strokes.
+    pub(crate) fn wrong_key_stroke_count_in_pending_key_strokes(&self) -> usize {
+        self.pending_key_strokes()
+            .iter()
+            .filter(|actual_key_stroke| !actual_key_stroke.is_correct())
+            .count()
+    }
+
     /// Returns the key stroke candidate that is the shortest when typed and satisfies the chunk
     /// head restriction.
     /// When there are multiple candidates with the same key stroke count, the one that appears
@@ -117,6 +125,18 @@ impl ChunkInflight {
             });
 
         assert!(min_candidate.is_some());
+
+        // When there is a delayed confirmable candidate, it must be the minimum candidate.
+        if let Some(i) = self.delayed_confirmable_candidate_index() {
+            assert!(min_candidate.unwrap().is_delayed_confirmed_candidate());
+            assert!(
+                i == self
+                    .key_stroke_candidates
+                    .iter()
+                    .position(|c| *c == **(min_candidate.as_ref().unwrap()))
+                    .unwrap()
+            );
+        }
 
         min_candidate.as_ref().unwrap()
     }
@@ -204,9 +224,9 @@ impl ChunkInflight {
         self.is_candidate_confirmed(key_stroke_candidates.first().unwrap())
     }
 
-    /// Returns the index pf delayed confirmable candidate.
+    /// Returns the index of delayed confirmable candidate.
     /// None is returned when there is no delayed confirmable candidate or the delayed confirmable
-    /// candidate is not confirmed yes.
+    /// candidate is not confirmed yet.
     pub(crate) fn delayed_confirmable_candidate_index(&self) -> Option<usize> {
         let index: Vec<usize> = self
             .key_stroke_candidates()

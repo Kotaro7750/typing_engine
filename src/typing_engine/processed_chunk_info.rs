@@ -4,7 +4,7 @@ use std::time::Duration;
 use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
 use crate::statistics::lap_statistics::LapStatiticsBuilder;
 use crate::statistics::statistical_event::{KeyStrokeCorrectContext, StatisticalEvent};
-use crate::statistics::statistics_counter::StatisticsCounter;
+use crate::statistics::statistics_counter::{PrimitiveStatisticsCounter, StatisticsCounter};
 use crate::statistics::{construct_on_typing_statistics_target, LapRequest};
 use crate::typing_primitive_types::chunk::confirmed::ChunkConfirmed;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
@@ -106,12 +106,7 @@ impl ProcessedChunkInfo {
     /// 遅延確定候補のために保持しているキーストロークの中にミスタイプがあるかどうか
     fn has_wrong_stroke_in_pending_key_strokes(&self) -> bool {
         self.inflight_chunk.as_ref().is_some_and(|inflight_chunk| {
-            inflight_chunk
-                .pending_key_strokes()
-                .iter()
-                .map(|actual_key_stroke| !actual_key_stroke.is_correct())
-                .reduce(|accum, is_correct| accum || is_correct)
-                .map_or(false, |r| r)
+            inflight_chunk.wrong_key_stroke_count_in_pending_key_strokes() != 0
         })
     }
 
@@ -200,6 +195,7 @@ impl ProcessedChunkInfo {
         &self,
         lap_request: LapRequest,
         confirmed_only_statistics_counter: &StatisticsCounter,
+        spell_statistics_counter: &PrimitiveStatisticsCounter,
     ) -> (SpellDisplayInfo, KeyStrokeDisplayInfo) {
         let mut spell = String::new();
         let mut spell_head_position = 0;
@@ -211,6 +207,7 @@ impl ProcessedChunkInfo {
         let mut key_stroke_wrong_positions: Vec<usize> = vec![];
         let mut realtime_statistics_counter = confirmed_only_statistics_counter.clone();
         let mut lap_statistics_builder = LapStatiticsBuilder::new(lap_request);
+        let mut spell_statistics_counter = spell_statistics_counter.clone();
 
         // 1. 確定したチャンク
         // 2. タイプ中のチャンク
@@ -289,8 +286,15 @@ impl ProcessedChunkInfo {
             spell_cursor_positions = vec![spell_head_position];
             assert!(self.is_finished());
         } else {
+            // Processing inflight chunk consists of 4 steps.
+            // 2-1. Update statistics
+            // 2-2. Update cursor and wrong positions of key stroke
+            // 2-3. Update cursor and wrong positions of spell
+            // 2-4. Update key stroke and spell strings for display
+
             let inflight_chunk = self.inflight_chunk.as_ref().unwrap();
 
+            // 2-1
             let spell_count = inflight_chunk.effective_spell_count();
 
             realtime_statistics_counter.on_add_chunk(
@@ -358,21 +362,42 @@ impl ProcessedChunkInfo {
                     }
                 });
 
-            // Update cursor positions and wrong positions for key stroke
+            // 2 corrections to spell statistics counter are needed.
+            // 2-1-1: Correction for wrong key strokes for unfinished spells in inflight chunk.
+            // 2-1-2: Correction regarding as finished for delayed confirmable candidate.
+
+            // 2-1-1
+            let current_spell_wrong_count = inflight_chunk.wrong_key_stroke_count_of_element_index(
+                inflight_chunk.spell_cursor_position().into(),
+            );
+            let current_spell_count = inflight_chunk
+                .spell()
+                .spell_at_index(inflight_chunk.spell_cursor_position().into())
+                .count();
+            spell_statistics_counter.on_wrong(current_spell_wrong_count * current_spell_count);
+
+            // 2-1-2
+            if inflight_chunk
+                .delayed_confirmable_candidate_index()
+                .is_some()
+            {
+                spell_statistics_counter
+                    .on_finished(current_spell_count, current_spell_wrong_count == 0);
+            }
+
+            // 2-2
             key_stroke_wrong_positions
                 .extend(inflight_chunk.wrong_key_stroke_positions(key_stroke_cursor_position));
             key_stroke_cursor_position += inflight_chunk.key_stroke_cursor_position(); // この時点ではカーソル位置はこのチャンクの先頭を指しているので単純に足すだけで良い
 
-            // Update cursor positions and wrong positions for spell
+            // 2-3
             spell_cursor_positions = inflight_chunk
                 .spell_cursor_position()
                 .into_absolute_cursor_position(spell_head_position);
-
             spell_wrong_positions.extend(inflight_chunk.wrong_spell_positions(spell_head_position));
             spell_head_position += inflight_chunk.spell().count();
 
-            // 最後にチャンクの統計情報と表示用の文字列を更新する
-
+            // 2-4
             key_stroke.push_str(&inflight_chunk.min_candidate(None).whole_key_stroke());
             spell.push_str(inflight_chunk.spell().as_ref());
         }
@@ -418,6 +443,14 @@ impl ProcessedChunkInfo {
                             for i in 0..spell_count {
                                 spell_cursor_positions.push(spell_head_position + i);
                             }
+
+                            // When inflight chunk is delayed confirmable, wrong key strokes in
+                            // pending key strokes are treated as wrong strokes in next chunk.
+                            spell_statistics_counter.on_wrong(
+                                spell_count
+                                    * inflight_chunk
+                                        .wrong_key_stroke_count_in_pending_key_strokes(),
+                            );
 
                             // 保留中のミスタイプは次のチャンクのミスタイプとみなす
                             if self.has_wrong_stroke_in_pending_key_strokes() {
@@ -471,12 +504,8 @@ impl ProcessedChunkInfo {
                 };
             });
 
-        let (
-            key_stroke_statistics_counter,
-            ideal_key_stroke_statistics_counter,
-            spell_statistics_counter,
-            _,
-        ) = realtime_statistics_counter.emit();
+        let (key_stroke_statistics_counter, ideal_key_stroke_statistics_counter, _, _) =
+            realtime_statistics_counter.emit();
         let (
             key_stroke_lap_statistics_builder,
             ideal_key_stroke_lap_statistics_builder,

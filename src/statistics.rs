@@ -155,6 +155,11 @@ impl StatisticsManager {
         }
     }
 
+    /// Returns PrimitiveStatisticsCounter for spell.
+    pub(crate) fn spell_statistics_counter(&self) -> &PrimitiveStatisticsCounter {
+        &self.spell
+    }
+
     pub(crate) fn confirmed_only_statistics_counter(&self) -> &StatisticsCounter {
         &self.confirmed_only_statistics_counter
     }

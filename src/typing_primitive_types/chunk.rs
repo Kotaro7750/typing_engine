@@ -1,5 +1,6 @@
 use crate::typing_primitive_types::spell::SpellString;
 use has_actual_key_strokes::ChunkHasActualKeyStrokes;
+use inflight::ChunkSpellCursorPosition;
 use key_stroke_candidate::ChunkKeyStrokeCandidate;
 
 pub(crate) mod candidate_unappended;
@@ -30,6 +31,18 @@ impl ChunkElementIndex {
         match self {
             Self::OnlyFirst | Self::DoubleFirst => offset,
             Self::DoubleSecond => offset + 1,
+        }
+    }
+}
+
+impl From<ChunkSpellCursorPosition> for ChunkElementIndex {
+    fn from(cursor_position: ChunkSpellCursorPosition) -> Self {
+        match cursor_position {
+            ChunkSpellCursorPosition::Single | ChunkSpellCursorPosition::DoubleCombined => {
+                Self::OnlyFirst
+            }
+            ChunkSpellCursorPosition::DoubleFirst => Self::DoubleFirst,
+            ChunkSpellCursorPosition::DoubleSecond => Self::DoubleSecond,
         }
     }
 }
