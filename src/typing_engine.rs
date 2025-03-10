@@ -213,6 +213,7 @@ impl TypingEngine {
                 .construct_display_info(
                     lap_request,
                     self.statistics_manager.confirmed_only_statistics_counter(),
+                    self.statistics_manager.key_stroke_statistics_counter(),
                     self.statistics_manager.spell_statistics_counter(),
                 );
 

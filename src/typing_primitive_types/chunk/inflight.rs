@@ -98,6 +98,17 @@ impl ChunkInflight {
             .count()
     }
 
+    /// Returns the count of remaining key strokes of passed candidate.
+    pub(crate) fn remaining_key_strokes(&self, candidate: &ChunkKeyStrokeCandidate) -> usize {
+        candidate.calc_key_stroke_count() - self.key_stroke_cursor_position()
+    }
+
+    /// Returns the count of wrong key strokes for current typing key stroke.
+    pub(crate) fn wrong_key_stroke_count_of_current_key_stroke(&self) -> usize {
+        self.wrong_key_strokes_for_correct_key_stroke_index(self.key_stroke_cursor_position())
+            .len()
+    }
+
     /// Returns the key stroke candidate that is the shortest when typed and satisfies the chunk
     /// head restriction.
     /// When there are multiple candidates with the same key stroke count, the one that appears

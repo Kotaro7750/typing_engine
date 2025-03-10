@@ -155,6 +155,11 @@ impl StatisticsManager {
         }
     }
 
+    /// Returns PrimitiveStatisticsCounter for key stroke.
+    pub(crate) fn key_stroke_statistics_counter(&self) -> &PrimitiveStatisticsCounter {
+        &self.key_stroke
+    }
+
     /// Returns PrimitiveStatisticsCounter for spell.
     pub(crate) fn spell_statistics_counter(&self) -> &PrimitiveStatisticsCounter {
         &self.spell

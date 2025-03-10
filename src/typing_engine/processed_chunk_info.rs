@@ -195,6 +195,7 @@ impl ProcessedChunkInfo {
         &self,
         lap_request: LapRequest,
         confirmed_only_statistics_counter: &StatisticsCounter,
+        key_stroke_statistics_counter: &PrimitiveStatisticsCounter,
         spell_statistics_counter: &PrimitiveStatisticsCounter,
     ) -> (SpellDisplayInfo, KeyStrokeDisplayInfo) {
         let mut spell = String::new();
@@ -207,6 +208,7 @@ impl ProcessedChunkInfo {
         let mut key_stroke_wrong_positions: Vec<usize> = vec![];
         let mut realtime_statistics_counter = confirmed_only_statistics_counter.clone();
         let mut lap_statistics_builder = LapStatiticsBuilder::new(lap_request);
+        let mut key_stroke_statistics_counter = key_stroke_statistics_counter.clone();
         let mut spell_statistics_counter = spell_statistics_counter.clone();
 
         // 1. 確定したチャンク
@@ -362,11 +364,23 @@ impl ProcessedChunkInfo {
                     }
                 });
 
-            // 2 corrections to spell statistics counter are needed.
-            // 2-1-1: Correction for wrong key strokes for unfinished spells in inflight chunk.
-            // 2-1-2: Correction regarding as finished for delayed confirmable candidate.
+            // 2 corrections to key stroke statistics counter are needed.
+            // 2-1-1: Correction for unfinished key strokes in inflight chunk.
+            // 2-1-2: Correction for wrong key strokes for current (unfinished) key stroke in inflight chunk.
 
             // 2-1-1
+            key_stroke_statistics_counter.on_target_add(
+                inflight_chunk.remaining_key_strokes(inflight_chunk.effective_candidate()),
+            );
+            // 2-1-2
+            key_stroke_statistics_counter
+                .on_wrong(inflight_chunk.wrong_key_stroke_count_of_current_key_stroke());
+
+            // 2 corrections to spell statistics counter are needed.
+            // 2-1-3: Correction for wrong key strokes for unfinished spells in inflight chunk.
+            // 2-1-4: Correction regarding as finished for delayed confirmable candidate.
+
+            // 2-1-3
             let current_spell_wrong_count = inflight_chunk.wrong_key_stroke_count_of_element_index(
                 inflight_chunk.spell_cursor_position().into(),
             );
@@ -376,7 +390,7 @@ impl ProcessedChunkInfo {
                 .count();
             spell_statistics_counter.on_wrong(current_spell_wrong_count * current_spell_count);
 
-            // 2-1-2
+            // 2-1-4
             if inflight_chunk
                 .delayed_confirmable_candidate_index()
                 .is_some()
@@ -446,6 +460,9 @@ impl ProcessedChunkInfo {
 
                             // When inflight chunk is delayed confirmable, wrong key strokes in
                             // pending key strokes are treated as wrong strokes in next chunk.
+                            key_stroke_statistics_counter.on_wrong(
+                                inflight_chunk.wrong_key_stroke_count_in_pending_key_strokes(),
+                            );
                             spell_statistics_counter.on_wrong(
                                 spell_count
                                     * inflight_chunk
@@ -481,6 +498,7 @@ impl ProcessedChunkInfo {
                 spell_head_position += unprocessed_chunk.spell().count();
 
                 // チャンクの統計情報を更新する
+                key_stroke_statistics_counter.on_target_add(candidate.calc_key_stroke_count());
 
                 let key_stroke_element_count = unprocessed_chunk
                     .ideal_key_stroke_candidate()
@@ -504,8 +522,7 @@ impl ProcessedChunkInfo {
                 };
             });
 
-        let (key_stroke_statistics_counter, ideal_key_stroke_statistics_counter, _, _) =
-            realtime_statistics_counter.emit();
+        let (_, ideal_key_stroke_statistics_counter, _, _) = realtime_statistics_counter.emit();
         let (
             key_stroke_lap_statistics_builder,
             ideal_key_stroke_lap_statistics_builder,
