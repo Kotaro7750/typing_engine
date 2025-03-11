@@ -6,7 +6,7 @@ use std::time::Duration;
 use crate::statistics::statistical_event::{
     ChunkAddedContext, ChunkConfirmationInfo, ChunkConfirmedContext, SpellFinishedContext,
 };
-use crate::statistics::statistics_counter::{PrimitiveStatisticsCounter, StatisticsCounter};
+use crate::statistics::statistics_counter::PrimitiveStatisticsCounter;
 use crate::statistics::OnTypingStatisticsTarget;
 use crate::typing_engine::processed_chunk_info::KeyStrokeDisplayInfo;
 use crate::typing_engine::processed_chunk_info::SpellDisplayInfo;
@@ -2063,27 +2063,14 @@ fn construct_display_info_1() {
         }
     );
 
-    let confirmed_only_statistics_counter = StatisticsCounter::new_with_values(
-        PrimitiveStatisticsCounter::new(8, 8, 6, 2),
-        PrimitiveStatisticsCounter::new(6, 6, 4, 2),
-        PrimitiveStatisticsCounter::new(4, 4, 1, 3),
-        PrimitiveStatisticsCounter::new(2, 2, 0, 2),
-        false,
-        false,
-        false,
-        false,
-        None,
-        None,
-        0,
-    );
-
     let key_stroke_statistics_counter = PrimitiveStatisticsCounter::new(9, 9, 6, 3);
+    let ideal_key_stroke_statistics_counter = PrimitiveStatisticsCounter::new(6, 11, 4, 3);
     let spell_statistics_counter = PrimitiveStatisticsCounter::new(4, 8, 1, 3);
 
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -2124,8 +2111,8 @@ fn construct_display_info_1() {
 
     let (_, ksdi) = pci.construct_display_info(
         LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -2154,8 +2141,8 @@ fn construct_display_info_1() {
 
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -2290,15 +2277,14 @@ fn construct_display_info_2() {
         }
     );
 
-    let confirmed_only_statistics_counter = StatisticsCounter::new();
-
     let key_stroke_statistics_counter = PrimitiveStatisticsCounter::new(1, 1, 1, 0);
+    let ideal_key_stroke_statistics_counter = PrimitiveStatisticsCounter::new(0, 3, 0, 0);
     let spell_statistics_counter = PrimitiveStatisticsCounter::new(0, 2, 0, 0);
 
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -2336,8 +2322,8 @@ fn construct_display_info_2() {
 
     let (_, ksdi) = pci.construct_display_info(
         LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -2362,8 +2348,8 @@ fn construct_display_info_2() {
 
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -2433,27 +2419,14 @@ fn construct_display_info_2() {
         }
     );
 
-    let confirmed_only_statistics_counter = StatisticsCounter::new_with_values(
-        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-        false,
-        false,
-        false,
-        false,
-        None,
-        None,
-        0,
-    );
-
     let key_stroke_statistics_counter = PrimitiveStatisticsCounter::new(2, 2, 1, 1);
+    let ideal_key_stroke_statistics_counter = PrimitiveStatisticsCounter::new(1, 3, 1, 1);
     let spell_statistics_counter = PrimitiveStatisticsCounter::new(1, 2, 1, 0);
 
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -2490,8 +2463,8 @@ fn construct_display_info_2() {
 
     let (_, ksdi) = pci.construct_display_info(
         LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -2516,8 +2489,8 @@ fn construct_display_info_2() {
 
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -2647,14 +2620,14 @@ fn construct_display_info_3() {
         }
     );
 
-    let confirmed_only_statistics_counter = StatisticsCounter::new();
     let key_stroke_statistics_counter = PrimitiveStatisticsCounter::new(1, 1, 1, 0);
+    let ideal_key_stroke_statistics_counter = PrimitiveStatisticsCounter::new(0, 3, 0, 0);
     let spell_statistics_counter = PrimitiveStatisticsCounter::new(0, 2, 0, 0);
 
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -2692,8 +2665,8 @@ fn construct_display_info_3() {
 
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -2790,27 +2763,14 @@ fn construct_display_info_3() {
         }
     );
 
-    let confirmed_only_statistics_counter = StatisticsCounter::new_with_values(
-        PrimitiveStatisticsCounter::new(2, 2, 1, 1),
-        PrimitiveStatisticsCounter::new(1, 1, 0, 1),
-        PrimitiveStatisticsCounter::new(1, 1, 0, 1),
-        PrimitiveStatisticsCounter::new(1, 1, 0, 1),
-        false,
-        false,
-        false,
-        false,
-        None,
-        None,
-        0,
-    );
-
     let key_stroke_statistics_counter = PrimitiveStatisticsCounter::new(2, 2, 1, 1);
+    let ideal_key_stroke_statistics_counter = PrimitiveStatisticsCounter::new(1, 3, 0, 1);
     let spell_statistics_counter = PrimitiveStatisticsCounter::new(1, 2, 0, 1);
 
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -2847,8 +2807,8 @@ fn construct_display_info_3() {
 
     let (_, ksdi) = pci.construct_display_info(
         LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -2873,8 +2833,8 @@ fn construct_display_info_3() {
 
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -3097,27 +3057,14 @@ fn construct_display_info_4() {
         }
     );
 
-    let confirmed_only_statistics_counter = StatisticsCounter::new_with_values(
-        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-        PrimitiveStatisticsCounter::new(1, 1, 1, 0),
-        false,
-        false,
-        false,
-        false,
-        None,
-        None,
-        0,
-    );
-
     let key_stroke_statistics_counter = PrimitiveStatisticsCounter::new(1, 1, 1, 0);
+    let ideal_key_stroke_statistics_counter = PrimitiveStatisticsCounter::new(1, 6, 1, 0);
     let spell_statistics_counter = PrimitiveStatisticsCounter::new(1, 4, 1, 0);
 
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -3153,8 +3100,8 @@ fn construct_display_info_4() {
 
     let (_, ksdi) = pci.construct_display_info(
         LapRequest::IdealKeyStroke(NonZeroUsize::new(2).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 
@@ -3179,8 +3126,8 @@ fn construct_display_info_4() {
 
     let (sdi, ksdi) = pci.construct_display_info(
         LapRequest::Spell(NonZeroUsize::new(1).unwrap()),
-        &confirmed_only_statistics_counter,
         &key_stroke_statistics_counter,
+        &ideal_key_stroke_statistics_counter,
         &spell_statistics_counter,
     );
 

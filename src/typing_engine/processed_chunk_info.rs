@@ -4,7 +4,7 @@ use std::time::Duration;
 use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
 use crate::statistics::lap_statistics::LapStatiticsBuilder;
 use crate::statistics::statistical_event::{KeyStrokeCorrectContext, StatisticalEvent};
-use crate::statistics::statistics_counter::{PrimitiveStatisticsCounter, StatisticsCounter};
+use crate::statistics::statistics_counter::PrimitiveStatisticsCounter;
 use crate::statistics::{construct_on_typing_statistics_target, LapRequest};
 use crate::typing_primitive_types::chunk::confirmed::ChunkConfirmed;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
@@ -194,8 +194,8 @@ impl ProcessedChunkInfo {
     pub(crate) fn construct_display_info(
         &self,
         lap_request: LapRequest,
-        confirmed_only_statistics_counter: &StatisticsCounter,
         key_stroke_statistics_counter: &PrimitiveStatisticsCounter,
+        ideal_key_stroke_statistics_counter: &PrimitiveStatisticsCounter,
         spell_statistics_counter: &PrimitiveStatisticsCounter,
     ) -> (SpellDisplayInfo, KeyStrokeDisplayInfo) {
         let mut spell = String::new();
@@ -206,9 +206,9 @@ impl ProcessedChunkInfo {
         let mut key_stroke = String::new();
         let mut key_stroke_cursor_position = 0;
         let mut key_stroke_wrong_positions: Vec<usize> = vec![];
-        let mut realtime_statistics_counter = confirmed_only_statistics_counter.clone();
         let mut lap_statistics_builder = LapStatiticsBuilder::new(lap_request);
         let mut key_stroke_statistics_counter = key_stroke_statistics_counter.clone();
+        let mut ideal_key_stroke_statistics_counter = ideal_key_stroke_statistics_counter.clone();
         let mut spell_statistics_counter = spell_statistics_counter.clone();
 
         // 1. 確定したチャンク
@@ -297,17 +297,6 @@ impl ProcessedChunkInfo {
             let inflight_chunk = self.inflight_chunk.as_ref().unwrap();
 
             // 2-1
-            let spell_count = inflight_chunk.effective_spell_count();
-
-            realtime_statistics_counter.on_add_chunk(
-                inflight_chunk
-                    .min_candidate(None)
-                    .construct_key_stroke_element_count(),
-                inflight_chunk
-                    .ideal_key_stroke_candidate()
-                    .construct_key_stroke_element_count(),
-                inflight_chunk.spell().count(),
-            );
             lap_statistics_builder.on_add_chunk(
                 inflight_chunk
                     .min_candidate(None)
@@ -318,18 +307,6 @@ impl ProcessedChunkInfo {
                 inflight_chunk.spell().count(),
             );
 
-            realtime_statistics_counter.on_start_chunk(
-                inflight_chunk
-                    .min_candidate(None)
-                    .whole_key_stroke()
-                    .chars()
-                    .count(),
-                inflight_chunk
-                    .ideal_key_stroke_candidate()
-                    .whole_key_stroke()
-                    .chars()
-                    .count(),
-            );
             lap_statistics_builder.on_start_chunk(
                 inflight_chunk
                     .min_candidate(None)
@@ -349,8 +326,6 @@ impl ProcessedChunkInfo {
                 .iter()
                 .zip(inflight_chunk.construct_spell_end_vector().iter())
                 .for_each(|(actual_key_stroke, spell_end)| {
-                    realtime_statistics_counter
-                        .on_stroke_key(actual_key_stroke.is_correct(), spell_count);
                     lap_statistics_builder.on_actual_key_stroke(
                         actual_key_stroke.is_correct(),
                         *actual_key_stroke.elapsed_time(),
@@ -358,7 +333,6 @@ impl ProcessedChunkInfo {
 
                     if actual_key_stroke.is_correct() {
                         if let Some(delta) = spell_end {
-                            realtime_statistics_counter.on_finish_spell(*delta);
                             lap_statistics_builder.on_finish_spell(*delta);
                         }
                     }
@@ -372,9 +346,20 @@ impl ProcessedChunkInfo {
             key_stroke_statistics_counter.on_target_add(
                 inflight_chunk.remaining_key_strokes(inflight_chunk.effective_candidate()),
             );
+            inflight_chunk
+                .wrong_key_stroke_count_of_ideal_key_stroke_index(
+                    inflight_chunk.ideal_key_stroke_candidate(),
+                )
+                .iter()
+                .for_each(|wrong_count| {
+                    ideal_key_stroke_statistics_counter.on_finished(1, *wrong_count == 0);
+                });
+
             // 2-1-2
-            key_stroke_statistics_counter
-                .on_wrong(inflight_chunk.wrong_key_stroke_count_of_current_key_stroke());
+            let current_key_stroke_wrong_count =
+                inflight_chunk.wrong_key_stroke_count_of_current_key_stroke();
+            key_stroke_statistics_counter.on_wrong(current_key_stroke_wrong_count);
+            ideal_key_stroke_statistics_counter.on_wrong(current_key_stroke_wrong_count);
 
             // 2 corrections to spell statistics counter are needed.
             // 2-1-3: Correction for wrong key strokes for unfinished spells in inflight chunk.
@@ -463,6 +448,9 @@ impl ProcessedChunkInfo {
                             key_stroke_statistics_counter.on_wrong(
                                 inflight_chunk.wrong_key_stroke_count_in_pending_key_strokes(),
                             );
+                            ideal_key_stroke_statistics_counter.on_wrong(
+                                inflight_chunk.wrong_key_stroke_count_in_pending_key_strokes(),
+                            );
                             spell_statistics_counter.on_wrong(
                                 spell_count
                                     * inflight_chunk
@@ -479,8 +467,6 @@ impl ProcessedChunkInfo {
 
                             inflight_chunk.pending_key_strokes().iter().for_each(
                                 |actual_key_stroke| {
-                                    realtime_statistics_counter
-                                        .on_stroke_key(actual_key_stroke.is_correct(), spell_count);
                                     lap_statistics_builder.on_actual_key_stroke(
                                         actual_key_stroke.is_correct(),
                                         *actual_key_stroke.elapsed_time(),
@@ -504,11 +490,6 @@ impl ProcessedChunkInfo {
                     .ideal_key_stroke_candidate()
                     .construct_key_stroke_element_count();
 
-                realtime_statistics_counter.on_add_chunk(
-                    key_stroke_element_count.clone(),
-                    key_stroke_element_count.clone(),
-                    unprocessed_chunk.spell().count(),
-                );
                 lap_statistics_builder.on_add_chunk(
                     key_stroke_element_count.clone(),
                     key_stroke_element_count,
@@ -522,7 +503,6 @@ impl ProcessedChunkInfo {
                 };
             });
 
-        let (_, ideal_key_stroke_statistics_counter, _, _) = realtime_statistics_counter.emit();
         let (
             key_stroke_lap_statistics_builder,
             ideal_key_stroke_lap_statistics_builder,

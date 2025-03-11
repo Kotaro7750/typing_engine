@@ -1,7 +1,10 @@
 use std::collections::HashSet;
 
 use super::{Chunk, ChunkElementIndex, ChunkKeyStrokeCandidate, ChunkSpell};
-use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
+use crate::{
+    statistics::multi_target_position_convert::convert_between_key_stroke_delta,
+    typing_primitive_types::key_stroke::ActualKeyStroke,
+};
 
 pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
     fn actual_key_strokes(&self) -> &[ActualKeyStroke];
@@ -42,6 +45,42 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
         });
 
         wrong_key_stroke_count
+    }
+
+    /// Returns the count of wrong key strokes of the ideal key stroke index.
+    fn wrong_key_stroke_count_of_ideal_key_stroke_index(
+        &self,
+        ideal_candidate: &ChunkKeyStrokeCandidate,
+    ) -> Vec<usize> {
+        let mut wrong_ideal_key_stroke_count = vec![];
+
+        self.wrong_key_stroke_count_of_key_stroke_index()
+            .into_iter()
+            .enumerate()
+            .map(|(i, count)| {
+                let ideal_key_stroke_index = convert_between_key_stroke_delta(
+                    &self
+                        .effective_candidate()
+                        .construct_key_stroke_element_count(),
+                    &ideal_candidate.construct_key_stroke_element_count(),
+                    self.spell().count(),
+                    i + 1,
+                ) - 1;
+
+                (ideal_key_stroke_index, count)
+            })
+            .for_each(|(ideal_key_stroke_index, count)| {
+                if wrong_ideal_key_stroke_count
+                    .get(ideal_key_stroke_index)
+                    .is_none()
+                {
+                    wrong_ideal_key_stroke_count.push(0);
+                }
+
+                wrong_ideal_key_stroke_count[ideal_key_stroke_index] += count;
+            });
+
+        wrong_ideal_key_stroke_count
     }
 
     /// Returns the position indexes of wrong key strokes of this chunk.

@@ -3,7 +3,7 @@ use std::{num::NonZeroUsize, time::Duration};
 use serde::{Deserialize, Serialize};
 
 pub(crate) mod lap_statistics;
-mod multi_target_position_convert;
+pub(crate) mod multi_target_position_convert;
 pub(crate) mod result;
 pub(crate) mod statistical_event;
 pub(crate) mod statistics_counter;
@@ -11,7 +11,6 @@ pub(crate) mod statistics_counter;
 use crate::statistics::statistical_event::StatisticalEvent;
 use lap_statistics::PrimitiveLapStatisticsBuilder;
 use statistics_counter::PrimitiveStatisticsCounter;
-use statistics_counter::StatisticsCounter;
 
 use self::multi_target_position_convert::BaseTarget;
 
@@ -134,14 +133,6 @@ pub(crate) struct StatisticsManager {
     ideal_key_stroke: PrimitiveStatisticsCounter,
     spell: PrimitiveStatisticsCounter,
     chunk: PrimitiveStatisticsCounter,
-    /// `StatisticsCounter` only for confirmed chunks.
-    /// This limitation is because the statistics counter for key stroke is not deterministic prior
-    /// to the chunk is confirmed.
-    /// Simply put, the statistics counter for key stroke depends on active candidate and active
-    /// candidate is fixed when the chunk is confirmed.
-    ///
-    /// Although additional counts for inflight and unprocessed chunk are needed for completing statistics counter, there is no need to count for confirmed chunks and calculation cost is reduced.
-    confirmed_only_statistics_counter: StatisticsCounter,
 }
 
 impl StatisticsManager {
@@ -151,7 +142,6 @@ impl StatisticsManager {
             ideal_key_stroke: PrimitiveStatisticsCounter::empty_counter(),
             spell: PrimitiveStatisticsCounter::empty_counter(),
             chunk: PrimitiveStatisticsCounter::empty_counter(),
-            confirmed_only_statistics_counter: StatisticsCounter::new(),
         }
     }
 
@@ -160,13 +150,14 @@ impl StatisticsManager {
         &self.key_stroke
     }
 
+    /// Returns PrimitiveStatisticsCounter for ideal key stroke.
+    pub(crate) fn ideal_key_stroke_statistics_counter(&self) -> &PrimitiveStatisticsCounter {
+        &self.ideal_key_stroke
+    }
+
     /// Returns PrimitiveStatisticsCounter for spell.
     pub(crate) fn spell_statistics_counter(&self) -> &PrimitiveStatisticsCounter {
         &self.spell
-    }
-
-    pub(crate) fn confirmed_only_statistics_counter(&self) -> &StatisticsCounter {
-        &self.confirmed_only_statistics_counter
     }
 
     /// Consume event and update statistics.
@@ -190,10 +181,7 @@ impl StatisticsManager {
                 self.spell
                     .on_finished(spell_count, wrong_key_stroke_count == 0);
             }
-            StatisticalEvent::ChunkConfirmed((
-                chunk_confirmation_info,
-                chunk_confirmed_context,
-            )) => {
+            StatisticalEvent::ChunkConfirmed((_, chunk_confirmed_context)) => {
                 self.chunk
                     .on_finished(1, chunk_confirmed_context.completely_correct());
 
@@ -203,35 +191,6 @@ impl StatisticsManager {
                     .for_each(|count| {
                         self.ideal_key_stroke.on_finished(1, *count == 0);
                     });
-
-                self.confirmed_only_statistics_counter.on_add_chunk(
-                    chunk_confirmation_info.key_stroke_element_count,
-                    chunk_confirmation_info.ideal_key_stroke_element_count,
-                    chunk_confirmation_info.spell_count,
-                );
-
-                self.confirmed_only_statistics_counter.on_start_chunk(
-                    chunk_confirmation_info.candidate_key_stroke_count,
-                    chunk_confirmation_info.ideal_candidate_key_stroke_count,
-                );
-
-                chunk_confirmation_info
-                    .actual_key_stroke_info
-                    .iter()
-                    .for_each(|(is_correct, spell_end)| {
-                        self.confirmed_only_statistics_counter.on_stroke_key(
-                            *is_correct,
-                            chunk_confirmation_info.effective_spell_count,
-                        );
-                        if *is_correct {
-                            if let Some(delta) = spell_end {
-                                self.confirmed_only_statistics_counter
-                                    .on_finish_spell(*delta);
-                            }
-                        }
-                    });
-
-                self.confirmed_only_statistics_counter.on_finish_chunk();
             }
             StatisticalEvent::ChunkAdded(chunk_added_context) => {
                 self.chunk.on_target_add(1);
@@ -255,7 +214,6 @@ mod test {
         ChunkAddedContext, KeyStrokeCorrectContext, StatisticalEvent,
     };
     use crate::statistics::PrimitiveStatisticsCounter;
-    use crate::statistics::StatisticsCounter;
     use crate::typing_primitive_types::chunk::key_stroke_candidate::KeyStrokeElementCount;
     use crate::typing_primitive_types::chunk::ChunkSpell;
 
@@ -371,23 +329,6 @@ mod test {
             statistics_manager.ideal_key_stroke,
             PrimitiveStatisticsCounter::new(4, 5, 4, 0)
         );
-
-        assert_eq!(
-            *statistics_manager.confirmed_only_statistics_counter(),
-            StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(4, 4, 4, 0),
-                PrimitiveStatisticsCounter::new(4, 4, 4, 0),
-                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
-                PrimitiveStatisticsCounter::new(3, 3, 3, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0,
-            )
-        );
     }
 
     #[test]
@@ -499,23 +440,6 @@ mod test {
         assert_eq!(
             statistics_manager.ideal_key_stroke,
             PrimitiveStatisticsCounter::new(5, 5, 4, 1)
-        );
-
-        assert_eq!(
-            *statistics_manager.confirmed_only_statistics_counter(),
-            StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(5, 5, 4, 1),
-                PrimitiveStatisticsCounter::new(5, 5, 4, 1),
-                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
-                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0,
-            )
         );
     }
 
@@ -633,23 +557,6 @@ mod test {
             statistics_manager.ideal_key_stroke,
             PrimitiveStatisticsCounter::new(5, 5, 4, 1)
         );
-
-        assert_eq!(
-            *statistics_manager.confirmed_only_statistics_counter(),
-            StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(6, 6, 5, 1),
-                PrimitiveStatisticsCounter::new(5, 5, 4, 1),
-                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
-                PrimitiveStatisticsCounter::new(3, 3, 2, 1),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0,
-            )
-        );
     }
 
     #[test]
@@ -729,23 +636,6 @@ mod test {
         assert_eq!(
             statistics_manager.ideal_key_stroke,
             PrimitiveStatisticsCounter::new(2, 2, 2, 0)
-        );
-
-        assert_eq!(
-            *statistics_manager.confirmed_only_statistics_counter(),
-            StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                PrimitiveStatisticsCounter::new(2, 2, 2, 0),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         );
     }
 
@@ -873,23 +763,6 @@ mod test {
         assert_eq!(
             statistics_manager.ideal_key_stroke,
             PrimitiveStatisticsCounter::new(6, 11, 4, 3)
-        );
-
-        assert_eq!(
-            *statistics_manager.confirmed_only_statistics_counter(),
-            StatisticsCounter::new_with_values(
-                PrimitiveStatisticsCounter::new(8, 8, 6, 2),
-                PrimitiveStatisticsCounter::new(6, 6, 4, 2),
-                PrimitiveStatisticsCounter::new(4, 4, 1, 3),
-                PrimitiveStatisticsCounter::new(2, 2, 0, 2),
-                false,
-                false,
-                false,
-                false,
-                None,
-                None,
-                0
-            )
         );
     }
 }

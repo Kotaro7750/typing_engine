@@ -143,7 +143,7 @@ impl MultiTargetDeltaConverter {
 }
 
 /// Convert the position delta between key strokes and ideal key strokes.
-fn convert_between_key_stroke_delta(
+pub(crate) fn convert_between_key_stroke_delta(
     from: &KeyStrokeElementCount,
     to: &KeyStrokeElementCount,
     spell_count: usize,

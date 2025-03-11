@@ -209,11 +209,11 @@ impl TypingEngine {
                 .processed_chunk_info
                 .as_ref()
                 .unwrap()
-                // XXX 引数で指定するようにする
                 .construct_display_info(
                     lap_request,
-                    self.statistics_manager.confirmed_only_statistics_counter(),
                     self.statistics_manager.key_stroke_statistics_counter(),
+                    self.statistics_manager
+                        .ideal_key_stroke_statistics_counter(),
                     self.statistics_manager.spell_statistics_counter(),
                 );
 

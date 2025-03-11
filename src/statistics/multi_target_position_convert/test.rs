@@ -1,6 +1,52 @@
 use super::*;
 
 #[test]
+fn convert_between_key_stroke_delta_1() {
+    // position conversion of key stroke to ideal key stroke for double spell like "きょ"
+    let from = KeyStrokeElementCount::new(&vec![2, 3]);
+    let to = KeyStrokeElementCount::new(&vec![3]);
+    let spell_count = 2;
+
+    assert_eq!(
+        convert_between_key_stroke_delta(&from, &to, spell_count, 1),
+        1
+    );
+    assert_eq!(
+        convert_between_key_stroke_delta(&from, &to, spell_count, 2),
+        1
+    );
+    assert_eq!(
+        convert_between_key_stroke_delta(&from, &to, spell_count, 3),
+        2
+    );
+    assert_eq!(
+        convert_between_key_stroke_delta(&from, &to, spell_count, 4),
+        3
+    );
+    assert_eq!(
+        convert_between_key_stroke_delta(&from, &to, spell_count, 5),
+        3
+    );
+}
+
+#[test]
+fn convert_between_key_stroke_delta_2() {
+    // position conversion of key stroke to ideal key stroke for single spell like "ん"
+    let from = KeyStrokeElementCount::new(&vec![2]);
+    let to = KeyStrokeElementCount::new(&vec![1]);
+    let spell_count = 1;
+
+    assert_eq!(
+        convert_between_key_stroke_delta(&from, &to, spell_count, 1),
+        1
+    );
+    assert_eq!(
+        convert_between_key_stroke_delta(&from, &to, spell_count, 2),
+        1
+    );
+}
+
+#[test]
 fn multi_target_delta_converter_1() {
     let m = MultiTargetDeltaConverter::new(
         2,
