@@ -85,11 +85,6 @@ impl ChunkInflight {
         }
     }
 
-    /// Returns the ideal key stroke candidate of this chunk.
-    pub(crate) fn ideal_key_stroke_candidate(&self) -> &ChunkKeyStrokeCandidate {
-        &self.ideal_candidate
-    }
-
     /// Returns the count of wrong key strokes in pending key strokes.
     pub(crate) fn wrong_key_stroke_count_in_pending_key_strokes(&self) -> usize {
         self.pending_key_strokes()
@@ -419,6 +414,10 @@ impl ChunkHasActualKeyStrokes for ChunkInflight {
 
     fn actual_key_strokes(&self) -> &[ActualKeyStroke] {
         &self.actual_key_strokes
+    }
+
+    fn ideal_key_stroke_candidate(&self) -> &ChunkKeyStrokeCandidate {
+        &self.ideal_candidate
     }
 }
 

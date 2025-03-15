@@ -219,46 +219,6 @@ impl ProcessedChunkInfo {
 
         // 1. 確定したチャンク
         self.confirmed_chunks.iter().for_each(|confirmed_chunk| {
-            lap_statistics_builder.on_add_chunk(
-                confirmed_chunk
-                    .effective_candidate()
-                    .construct_key_stroke_element_count(),
-                confirmed_chunk
-                    .ideal_key_stroke_candidate()
-                    .construct_key_stroke_element_count(),
-                confirmed_chunk.spell().count(),
-            );
-            lap_statistics_builder.on_start_chunk(
-                confirmed_chunk
-                    .confirmed_key_stroke_candidates()
-                    .whole_key_stroke()
-                    .chars()
-                    .count(),
-                confirmed_chunk
-                    .ideal_key_stroke_candidate()
-                    .whole_key_stroke()
-                    .chars()
-                    .count(),
-            );
-
-            // Update statistics using actual key strokes
-            confirmed_chunk
-                .actual_key_strokes()
-                .iter()
-                .zip(confirmed_chunk.construct_spell_end_vector().iter())
-                .for_each(|(actual_key_stroke, spell_end)| {
-                    lap_statistics_builder.on_actual_key_stroke(
-                        actual_key_stroke.is_correct(),
-                        *actual_key_stroke.elapsed_time(),
-                    );
-
-                    if actual_key_stroke.is_correct() {
-                        if let Some(delta) = spell_end {
-                            lap_statistics_builder.on_finish_spell(*delta);
-                        }
-                    }
-                });
-
             // Update cursor positions and wrong positions for key stroke
             key_stroke_wrong_positions
                 .extend(confirmed_chunk.wrong_key_stroke_positions(key_stroke_cursor_position));
@@ -271,7 +231,7 @@ impl ProcessedChunkInfo {
                 .extend(confirmed_chunk.wrong_spell_positions(spell_head_position));
             spell_head_position += confirmed_chunk.spell().count();
 
-            // 最後にチャンクの統計情報と表示用の文字列を更新する
+            // Update key stroke and spell strings for display
             key_stroke.push_str(
                 &confirmed_chunk
                     .confirmed_key_stroke_candidates()
@@ -279,7 +239,8 @@ impl ProcessedChunkInfo {
             );
             spell.push_str(confirmed_chunk.spell().as_ref());
 
-            lap_statistics_builder.on_finish_chunk();
+            // Update lap statistics
+            update_lap_statistics(&mut lap_statistics_builder, confirmed_chunk, true);
         });
 
         // 2. タイプ中のチャンク
@@ -297,46 +258,7 @@ impl ProcessedChunkInfo {
             let inflight_chunk = self.inflight_chunk.as_ref().unwrap();
 
             // 2-1
-            lap_statistics_builder.on_add_chunk(
-                inflight_chunk
-                    .min_candidate(None)
-                    .construct_key_stroke_element_count(),
-                inflight_chunk
-                    .ideal_key_stroke_candidate()
-                    .construct_key_stroke_element_count(),
-                inflight_chunk.spell().count(),
-            );
-
-            lap_statistics_builder.on_start_chunk(
-                inflight_chunk
-                    .min_candidate(None)
-                    .whole_key_stroke()
-                    .chars()
-                    .count(),
-                inflight_chunk
-                    .ideal_key_stroke_candidate()
-                    .whole_key_stroke()
-                    .chars()
-                    .count(),
-            );
-
-            // Update statistics using actual key strokes
-            inflight_chunk
-                .actual_key_strokes()
-                .iter()
-                .zip(inflight_chunk.construct_spell_end_vector().iter())
-                .for_each(|(actual_key_stroke, spell_end)| {
-                    lap_statistics_builder.on_actual_key_stroke(
-                        actual_key_stroke.is_correct(),
-                        *actual_key_stroke.elapsed_time(),
-                    );
-
-                    if actual_key_stroke.is_correct() {
-                        if let Some(delta) = spell_end {
-                            lap_statistics_builder.on_finish_spell(*delta);
-                        }
-                    }
-                });
+            update_lap_statistics(&mut lap_statistics_builder, inflight_chunk, false);
 
             // 2 corrections to key stroke statistics counter are needed.
             // 2-1-1: Correction for unfinished key strokes in inflight chunk.
@@ -403,16 +325,13 @@ impl ProcessedChunkInfo {
 
         // 3. 未処理のチャンク
 
-        let mut next_chunk_head_constraint = if self.inflight_chunk.is_some() {
-            self.inflight_chunk
-                .as_ref()
-                .unwrap()
-                .min_candidate(None)
-                .next_chunk_head_constraint()
-                .clone()
-        } else {
-            None
-        };
+        let mut next_chunk_head_constraint =
+            self.inflight_chunk.as_ref().map_or(None, |inflight_chunk| {
+                inflight_chunk
+                    .min_candidate(None)
+                    .next_chunk_head_constraint()
+                    .clone()
+            });
 
         self.unprocessed_chunks
             .iter()
@@ -535,5 +454,57 @@ impl ProcessedChunkInfo {
                 ),
             ),
         )
+    }
+}
+
+/// Update `LapStatisticsBuilder` using `ChunkHasActualKeyStrokes`.
+fn update_lap_statistics(
+    lap_statistics_builder: &mut LapStatiticsBuilder,
+    chunk: &dyn ChunkHasActualKeyStrokes,
+    fininsh_chunk: bool,
+) {
+    lap_statistics_builder.on_add_chunk(
+        chunk
+            .effective_candidate()
+            .construct_key_stroke_element_count(),
+        chunk
+            .ideal_key_stroke_candidate()
+            .construct_key_stroke_element_count(),
+        chunk.spell().count(),
+    );
+
+    lap_statistics_builder.on_start_chunk(
+        chunk
+            .effective_candidate()
+            .whole_key_stroke()
+            .chars()
+            .count(),
+        chunk
+            .ideal_key_stroke_candidate()
+            .whole_key_stroke()
+            .chars()
+            .count(),
+    );
+
+    // Update statistics using actual key strokes
+    chunk
+        .actual_key_strokes()
+        .iter()
+        .zip(chunk.construct_spell_end_vector().iter())
+        .for_each(|(actual_key_stroke, spell_end)| {
+            lap_statistics_builder.on_actual_key_stroke(
+                actual_key_stroke.is_correct(),
+                *actual_key_stroke.elapsed_time(),
+            );
+
+            if actual_key_stroke.is_correct() {
+                if let Some(delta) = spell_end {
+                    lap_statistics_builder.on_finish_spell(*delta);
+                }
+            }
+        });
+
+    if fininsh_chunk {
+        lap_statistics_builder.on_finish_chunk();
     }
 }

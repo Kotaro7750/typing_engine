@@ -37,11 +37,6 @@ impl ChunkConfirmed {
         }
     }
 
-    /// Returns ideal key stroke candidate.
-    pub(crate) fn ideal_key_stroke_candidate(&self) -> &ChunkKeyStrokeCandidate {
-        &self.ideal_candidate
-    }
-
     /// Returns confirmed key stroke candidate.
     pub(crate) fn confirmed_key_stroke_candidates(&self) -> &ChunkKeyStrokeCandidate {
         &self.confirmed_key_stroke_candidates
@@ -61,5 +56,9 @@ impl ChunkHasActualKeyStrokes for ChunkConfirmed {
 
     fn actual_key_strokes(&self) -> &[ActualKeyStroke] {
         &self.actual_key_strokes
+    }
+
+    fn ideal_key_stroke_candidate(&self) -> &ChunkKeyStrokeCandidate {
+        &self.ideal_candidate
     }
 }

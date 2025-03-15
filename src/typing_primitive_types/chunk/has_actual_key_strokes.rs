@@ -7,9 +7,12 @@ use crate::{
 };
 
 pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
+    /// Returns actual key strokes of this chunk.
     fn actual_key_strokes(&self) -> &[ActualKeyStroke];
-    /// 表示などに使う候補
+    /// Returns candidate effective for display.
     fn effective_candidate(&self) -> &ChunkKeyStrokeCandidate;
+    /// Returns ideal key stroke candidate.
+    fn ideal_key_stroke_candidate(&self) -> &ChunkKeyStrokeCandidate;
 
     /// Returns all wrong ActualKeyStroke for typing passed key stroke index
     fn wrong_key_strokes_for_correct_key_stroke_index(
