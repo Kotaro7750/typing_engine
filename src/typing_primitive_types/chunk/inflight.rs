@@ -60,7 +60,7 @@ impl ChunkInflight {
         self.key_stroke_cursor_position
     }
 
-    pub(crate) fn key_stroke_candidates(&self) -> &[ChunkKeyStrokeCandidate] {
+    fn key_stroke_candidates(&self) -> &[ChunkKeyStrokeCandidate] {
         &self.key_stroke_candidates
     }
 
@@ -186,7 +186,7 @@ impl ChunkInflight {
 
     /// Reduce the candidates of this chunk.
     /// Retain only the candidates whose index is true in the retain_vector.
-    pub(crate) fn reduce_candidate(&mut self, retain_index: &[usize]) {
+    fn reduce_candidate(&mut self, retain_index: &[usize]) {
         let contain_set = retain_index
             .iter()
             .collect::<std::collections::HashSet<_>>();
@@ -210,13 +210,13 @@ impl ChunkInflight {
     }
 
     /// Return if the passed candidate is confirmed.
-    pub(crate) fn is_candidate_confirmed(&self, candidate: &ChunkKeyStrokeCandidate) -> bool {
+    fn is_candidate_confirmed(&self, candidate: &ChunkKeyStrokeCandidate) -> bool {
         self.key_stroke_cursor_position() == candidate.calc_key_stroke_count()
     }
 
     /// チャンクが確定したか
     /// 遅延確定候補自体を打ち終えても確定自体はまだのとき確定としてはいけない
-    pub(crate) fn is_confirmed(&mut self) -> bool {
+    pub(crate) fn is_confirmed(&self) -> bool {
         let key_stroke_candidates = self.key_stroke_candidates();
 
         // 確定している条件は
@@ -369,7 +369,7 @@ impl ChunkInflight {
 
     /// Just append the actual key stroke to this chunk.
     /// This is usefull when drain the key strokes from pending list.
-    pub(crate) fn append_actual_key_stroke(&mut self, actual_key_stroke: ActualKeyStroke) {
+    fn append_actual_key_stroke(&mut self, actual_key_stroke: ActualKeyStroke) {
         self.actual_key_strokes.push(actual_key_stroke);
     }
 
