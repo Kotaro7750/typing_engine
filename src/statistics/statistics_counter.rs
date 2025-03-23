@@ -111,35 +111,6 @@ impl StatisticsCounter {
         }
     }
 
-    #[cfg(test)]
-    pub(crate) fn new_with_values(
-        key_stroke: PrimitiveStatisticsCounter,
-        ideal_key_stroke: PrimitiveStatisticsCounter,
-        spell: PrimitiveStatisticsCounter,
-        chunk: PrimitiveStatisticsCounter,
-        this_key_stroke_wrong: bool,
-        this_ideal_key_stroke_wrong: bool,
-        this_spell_wrong: bool,
-        this_chunk_wrong: bool,
-        this_candidate_key_stroke_count: Option<usize>,
-        this_ideal_candidate_key_stroke_count: Option<usize>,
-        in_candidate_key_stroke_count: usize,
-    ) -> Self {
-        Self {
-            key_stroke,
-            ideal_key_stroke,
-            spell,
-            chunk,
-            this_key_stroke_wrong,
-            this_ideal_key_stroke_wrong,
-            this_spell_wrong,
-            this_chunk_wrong,
-            this_candidate_key_stroke_count,
-            this_ideal_candidate_key_stroke_count,
-            in_candidate_key_stroke_count,
-        }
-    }
-
     /// Update statistics when a chunk is took into account.
     pub(crate) fn on_add_chunk(
         &mut self,

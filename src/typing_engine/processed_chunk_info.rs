@@ -74,7 +74,7 @@ impl ProcessedChunkInfo {
 
         // まずは現在打っているチャンクを確定済みチャンク列に追加する
         let next_chunk_head_constraint = if self.inflight_chunk.is_some() {
-            let mut current_inflight_chunk = self.inflight_chunk.take().unwrap();
+            let current_inflight_chunk = self.inflight_chunk.take().unwrap();
             assert!(current_inflight_chunk.is_confirmed());
 
             let confirming_chunk = current_inflight_chunk.try_into_confirmed().unwrap();
@@ -324,7 +324,7 @@ impl ProcessedChunkInfo {
         // 3. 未処理のチャンク
 
         let mut next_chunk_head_constraint =
-            self.inflight_chunk.as_ref().map_or(None, |inflight_chunk| {
+            self.inflight_chunk.as_ref().and_then(|inflight_chunk| {
                 inflight_chunk
                     .min_candidate(None)
                     .next_chunk_head_constraint()
