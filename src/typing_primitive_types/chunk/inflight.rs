@@ -11,6 +11,9 @@ use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
 use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
 use crate::typing_primitive_types::spell::SpellString;
 
+#[cfg(test)]
+mod test;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// A struct representing a fundamental typing unit.
 /// For alphabet, it is just a single character.
