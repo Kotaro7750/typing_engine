@@ -457,13 +457,11 @@ pub(crate) enum KeyStrokeResult {
 }
 
 impl KeyStrokeResult {
-    #[cfg(test)]
     /// Returns if this result is correct.
     pub(crate) fn is_correct(&self) -> bool {
         matches!(self, Self::Correct(_, _) | Self::ConfirmDelayed(_))
     }
 
-    #[cfg(test)]
     /// Returns the correct context if this result is correct.
     pub(crate) fn correct_context(&self) -> Option<&KeyStrokeCorrectResult> {
         match self {

@@ -138,9 +138,10 @@ pub(crate) enum KeyStrokeHitMiss {
 
 impl From<KeyStrokeResult> for KeyStrokeHitMiss {
     fn from(result: KeyStrokeResult) -> Self {
-        match result {
-            KeyStrokeResult::Correct(_, _) | KeyStrokeResult::ConfirmDelayed(_) => Self::Correct,
-            KeyStrokeResult::Wrong => Self::Wrong,
+        if result.is_correct() {
+            Self::Correct
+        } else {
+            Self::Wrong
         }
     }
 }

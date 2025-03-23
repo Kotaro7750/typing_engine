@@ -138,9 +138,7 @@ impl ProcessedChunkInfo {
                         original_result.replace(result.clone());
                     }
 
-                    if let KeyStrokeResult::Correct(correct_context, _)
-                    | KeyStrokeResult::ConfirmDelayed(correct_context) = &result
-                    {
+                    if let Some(correct_context) = &result.correct_context() {
                         if let Some(wrong_key_strokes) = result.wrong_key_strokes() {
                             statistical_events.push(StatisticalEvent::new_from_key_stroke_correct(
                                 KeyStrokeCorrectContext::new(
