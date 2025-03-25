@@ -425,6 +425,136 @@ mod test {
     };
 
     #[test]
+    fn append_key_stroke_to_displayable_ascii() {
+        let mut chunks = vec![gen_chunk_candidate_unappended!("a")];
+
+        let chunks = append_key_stroke_to_chunks(&mut chunks);
+
+        assert_eq!(
+            chunks[0].ideal_key_stroke_candidate(),
+            &gen_candidate!(gen_candidate_key_stroke!("a"))
+        );
+        assert_eq!(
+            chunks[0].key_stroke_candidates(),
+            vec![gen_candidate!(gen_candidate_key_stroke!("a"))].as_slice()
+        );
+    }
+
+    #[test]
+    fn append_key_stroke_to_repellent_with_single_n_availability() {
+        let mut chunks = vec![
+            gen_chunk_candidate_unappended!("ん"),
+            gen_chunk_candidate_unappended!("じ"),
+        ];
+
+        let chunks = append_key_stroke_to_chunks(&mut chunks);
+
+        assert_eq!(
+            chunks[0].ideal_key_stroke_candidate(),
+            &gen_candidate!(gen_candidate_key_stroke!("n"), ['z', 'j'])
+        );
+        assert_eq!(
+            chunks[0].key_stroke_candidates(),
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!("n"), ['z', 'j']),
+                gen_candidate!(gen_candidate_key_stroke!("nn")),
+                gen_candidate!(gen_candidate_key_stroke!("xn"))
+            ]
+            .as_slice()
+        );
+    }
+
+    #[test]
+    fn append_key_stroke_to_repellent_without_single_n_availability_due_to_last_chunk() {
+        let mut chunks = vec![gen_chunk_candidate_unappended!("ん")];
+
+        let chunks = append_key_stroke_to_chunks(&mut chunks);
+
+        assert_eq!(
+            chunks[0].ideal_key_stroke_candidate(),
+            &gen_candidate!(gen_candidate_key_stroke!("nn")),
+        );
+        assert_eq!(
+            chunks[0].key_stroke_candidates(),
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!("nn")),
+                gen_candidate!(gen_candidate_key_stroke!("xn"))
+            ]
+            .as_slice()
+        );
+    }
+
+    #[test]
+    fn append_key_stroke_to_repellent_without_single_n_availability_due_to_ascii_of_next_chunk() {
+        let mut chunks = vec![
+            gen_chunk_candidate_unappended!("ん"),
+            gen_chunk_candidate_unappended!("a"),
+        ];
+
+        let chunks = append_key_stroke_to_chunks(&mut chunks);
+
+        assert_eq!(
+            chunks[0].ideal_key_stroke_candidate(),
+            &gen_candidate!(gen_candidate_key_stroke!("nn")),
+        );
+        assert_eq!(
+            chunks[0].key_stroke_candidates(),
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!("nn")),
+                gen_candidate!(gen_candidate_key_stroke!("xn"))
+            ]
+            .as_slice()
+        );
+    }
+
+    #[test]
+    fn append_key_stroke_to_repellent_without_single_n_availability_due_to_next_chunk_head() {
+        let mut chunks = vec![
+            gen_chunk_candidate_unappended!("ん"),
+            gen_chunk_candidate_unappended!("な"),
+        ];
+
+        let chunks = append_key_stroke_to_chunks(&mut chunks);
+
+        assert_eq!(
+            chunks[0].ideal_key_stroke_candidate(),
+            &gen_candidate!(gen_candidate_key_stroke!("nn")),
+        );
+        assert_eq!(
+            chunks[0].key_stroke_candidates(),
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!("nn")),
+                gen_candidate!(gen_candidate_key_stroke!("xn"))
+            ]
+            .as_slice()
+        );
+    }
+
+    #[test]
+    fn append_key_stroke_to_repellent_partial_single_n_availability_due_to_next_chunk_head() {
+        let mut chunks = vec![
+            gen_chunk_candidate_unappended!("ん"),
+            gen_chunk_candidate_unappended!("う"),
+        ];
+
+        let chunks = append_key_stroke_to_chunks(&mut chunks);
+
+        assert_eq!(
+            chunks[0].ideal_key_stroke_candidate(),
+            &gen_candidate!(gen_candidate_key_stroke!("n"), 'w', ['w'])
+        );
+        assert_eq!(
+            chunks[0].key_stroke_candidates(),
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!("n"), 'w', ['w']),
+                gen_candidate!(gen_candidate_key_stroke!("nn")),
+                gen_candidate!(gen_candidate_key_stroke!("xn"))
+            ]
+            .as_slice()
+        );
+    }
+
+    #[test]
     fn append_key_stroke_to_chunks_1() {
         let mut chunks = vec![
             gen_chunk_candidate_unappended!("じょ"),
@@ -501,80 +631,6 @@ mod test {
                         gen_candidate!(gen_candidate_key_stroke!("whu"))
                     ],
                     gen_candidate!(gen_candidate_key_stroke!("wu"))
-                ),
-            ]
-        );
-    }
-
-    #[test]
-    fn append_key_stroke_to_chunks_3() {
-        let mut chunks = vec![
-            gen_chunk_candidate_unappended!("か"),
-            gen_chunk_candidate_unappended!("ん"),
-            gen_chunk_candidate_unappended!("じ"),
-        ];
-
-        let chunks = append_key_stroke_to_chunks(&mut chunks);
-
-        assert_eq!(
-            chunks,
-            vec![
-                gen_chunk_unprocessed!(
-                    "か",
-                    vec![
-                        gen_candidate!(gen_candidate_key_stroke!("ka")),
-                        gen_candidate!(gen_candidate_key_stroke!("ca"))
-                    ],
-                    gen_candidate!(gen_candidate_key_stroke!("ka"))
-                ),
-                gen_chunk_unprocessed!(
-                    "ん",
-                    vec![
-                        gen_candidate!(gen_candidate_key_stroke!("n"), ['z', 'j']),
-                        gen_candidate!(gen_candidate_key_stroke!("nn")),
-                        gen_candidate!(gen_candidate_key_stroke!("xn"))
-                    ],
-                    gen_candidate!(gen_candidate_key_stroke!("n"), ['z', 'j'])
-                ),
-                gen_chunk_unprocessed!(
-                    "じ",
-                    vec![
-                        gen_candidate!(gen_candidate_key_stroke!("zi")),
-                        gen_candidate!(gen_candidate_key_stroke!("ji"))
-                    ],
-                    gen_candidate!(gen_candidate_key_stroke!("zi"))
-                ),
-            ]
-        );
-    }
-
-    #[test]
-    fn append_key_stroke_to_chunks_4() {
-        let mut chunks = vec![
-            gen_chunk_candidate_unappended!("B"),
-            gen_chunk_candidate_unappended!("i"),
-            gen_chunk_candidate_unappended!("g"),
-        ];
-
-        let chunks = append_key_stroke_to_chunks(&mut chunks);
-
-        assert_eq!(
-            chunks,
-            vec![
-                gen_chunk_unprocessed!(
-                    "B",
-                    vec![gen_candidate!(gen_candidate_key_stroke!("B"))],
-                    gen_candidate!(gen_candidate_key_stroke!("B"))
-                ),
-                gen_chunk_unprocessed!(
-                    "i",
-                    vec![gen_candidate!(gen_candidate_key_stroke!("i"))],
-                    gen_candidate!(gen_candidate_key_stroke!("i"))
-                ),
-                gen_chunk_unprocessed!(
-                    "g",
-                    vec![gen_candidate!(gen_candidate_key_stroke!("g"))],
-                    gen_candidate!(gen_candidate_key_stroke!("g"))
                 ),
             ]
         );
@@ -704,40 +760,6 @@ mod test {
                         gen_candidate!(gen_candidate_key_stroke!("whu"))
                     ],
                     gen_candidate!(gen_candidate_key_stroke!("u"))
-                ),
-            ]
-        );
-    }
-
-    #[test]
-    fn append_key_stroke_to_chunks_8() {
-        let mut chunks = vec![
-            gen_chunk_candidate_unappended!("ん"),
-            gen_chunk_candidate_unappended!("う"),
-        ];
-
-        let chunks = append_key_stroke_to_chunks(&mut chunks);
-
-        assert_eq!(
-            chunks,
-            vec![
-                gen_chunk_unprocessed!(
-                    "ん",
-                    vec![
-                        gen_candidate!(gen_candidate_key_stroke!("n"), 'w', ['w']),
-                        gen_candidate!(gen_candidate_key_stroke!("nn")),
-                        gen_candidate!(gen_candidate_key_stroke!("xn")),
-                    ],
-                    gen_candidate!(gen_candidate_key_stroke!("n"), 'w', ['w'])
-                ),
-                gen_chunk_unprocessed!(
-                    "う",
-                    vec![
-                        gen_candidate!(gen_candidate_key_stroke!("u")),
-                        gen_candidate!(gen_candidate_key_stroke!("wu")),
-                        gen_candidate!(gen_candidate_key_stroke!("whu"))
-                    ],
-                    gen_candidate!(gen_candidate_key_stroke!("wu"))
                 ),
             ]
         );

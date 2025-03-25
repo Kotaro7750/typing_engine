@@ -164,12 +164,11 @@ impl Chunk for ChunkUnprocessed {
 
 #[cfg(test)]
 mod test {
+    use crate::{gen_candidate, gen_candidate_key_stroke, gen_chunk_unprocessed};
     use std::num::NonZeroUsize;
 
-    use crate::{gen_candidate, gen_candidate_key_stroke, gen_chunk_unprocessed};
-
     #[test]
-    fn strict_key_stroke_count_1() {
+    fn strict_key_stroke_to_unprocessed_chunk_remove_duplication() {
         let mut chunk = gen_chunk_unprocessed!(
             "じょ",
             vec![
@@ -200,7 +199,7 @@ mod test {
     }
 
     #[test]
-    fn strict_key_stroke_count_2() {
+    fn strict_key_stroke_to_unprocessed_chunk_make_delayed_confirm_candidate_into_usual_candidate() {
         let mut chunk = gen_chunk_unprocessed!(
             "ん",
             vec![
