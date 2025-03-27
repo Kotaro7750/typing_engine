@@ -62,25 +62,25 @@ impl ChunkConfirmedContext {
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// A struct representing the context for updating statistics when chunk is added
 pub(crate) struct ChunkAddedContext {
-    /// Spell count of added chunk
-    spell_count: usize,
+    /// Spell of added chunk.
+    spell: ChunkSpell,
     /// Ideal key stroke element count of added chunk
     ideal_key_stroke_element_count: KeyStrokeElementCount,
 }
 
 impl ChunkAddedContext {
     pub(crate) fn new(
-        spell_count: usize,
+        spell: ChunkSpell,
         ideal_key_stroke_element_count: KeyStrokeElementCount,
     ) -> Self {
         Self {
-            spell_count,
+            spell,
             ideal_key_stroke_element_count,
         }
     }
 
     pub(crate) fn spell_count(&self) -> usize {
-        self.spell_count
+        self.spell.count()
     }
 
     pub(crate) fn ideal_key_stroke_element_count(&self) -> &KeyStrokeElementCount {
@@ -167,13 +167,12 @@ impl StatisticalEvent {
 
     /// Create ChunkAdded event from chunk
     pub(crate) fn new_from_added_chunk(added_chunk: &ChunkUnprocessed) -> StatisticalEvent {
-        let spell_count = added_chunk.spell().count();
         let ideal_key_stroke_element_count = added_chunk
             .ideal_key_stroke_candidate()
             .construct_key_stroke_element_count();
 
         StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-            spell_count,
+            added_chunk.spell().clone(),
             ideal_key_stroke_element_count,
         ))
     }

@@ -228,7 +228,7 @@ mod test {
     fn consume_chunk_added_event() {
         let mut statistics_manager = StatisticsManager::new();
         let event = StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-            2,
+            ChunkSpell::new("きょ".to_string().try_into().unwrap()),
             KeyStrokeElementCount::Sigle(3),
         ));
 

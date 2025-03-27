@@ -52,11 +52,11 @@ fn create_processed_chunk_info_returns_chunk_added_events() {
         events,
         vec![
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                2,
+                ChunkSpell::new("きょ".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(3)
             )),
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                1,
+                ChunkSpell::new("う".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(1)
             )),
         ]
@@ -92,11 +92,11 @@ fn append_chunks_to_processed_chunk_info_returns_chunk_added_events() {
         events,
         vec![
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                2,
+                ChunkSpell::new("きょ".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(3)
             )),
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                1,
+                ChunkSpell::new("う".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(1)
             )),
         ]
@@ -512,19 +512,19 @@ fn construct_display_info_1() {
         statistical_events,
         vec![
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                2,
+                ChunkSpell::new("きょ".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(3)
             )),
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                2,
+                ChunkSpell::new("きょ".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(3)
             )),
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                2,
+                ChunkSpell::new("きょ".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(3)
             )),
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                2,
+                ChunkSpell::new("きょ".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(2)
             ))
         ],
@@ -857,11 +857,11 @@ fn construct_display_info_2() {
         statistical_events,
         vec![
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                1,
+                ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(1)
             )),
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                1,
+                ChunkSpell::new("じ".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(2)
             ))
         ],
@@ -1200,11 +1200,11 @@ fn construct_display_info_3() {
         statistical_events,
         vec![
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                1,
+                ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(1)
             )),
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                1,
+                ChunkSpell::new("じ".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(2)
             ))
         ],
@@ -1592,19 +1592,19 @@ fn construct_display_info_4() {
         statistical_events,
         vec![
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                1,
+                ChunkSpell::new("あ".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(1)
             )),
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                1,
+                ChunkSpell::new("っ".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(1)
             )),
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                1,
+                ChunkSpell::new("か".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(2)
             )),
             StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
-                1,
+                ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 KeyStrokeElementCount::Sigle(2)
             ))
         ],
