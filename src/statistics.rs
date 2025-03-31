@@ -8,7 +8,11 @@ pub(crate) mod result;
 pub(crate) mod statistical_event;
 pub(crate) mod statistics_counter;
 
-use crate::statistics::statistical_event::StatisticalEvent;
+use crate::{
+    statistics::statistical_event::StatisticalEvent,
+    typing_primitive_types::chunk::{inflight::ChunkSpellCursorPosition, ChunkSpell},
+    KeyStrokeChar,
+};
 use lap_statistics::PrimitiveLapStatisticsBuilder;
 use statistics_counter::PrimitiveStatisticsCounter;
 
@@ -127,6 +131,204 @@ pub(crate) fn construct_on_typing_statistics_target(
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
+/// A struct representing display string
+pub(crate) struct DisplayStringBuilder {
+    spell: SpellDisplayStringBuilder,
+    key_stroke: KeyStrokeDisplayStringBuilder,
+}
+
+impl DisplayStringBuilder {
+    pub(crate) fn new() -> Self {
+        Self {
+            spell: SpellDisplayStringBuilder::new(),
+            key_stroke: KeyStrokeDisplayStringBuilder::new(),
+        }
+    }
+
+    /// Consume event and update display string.
+    pub(crate) fn consume_event(&mut self, event: StatisticalEvent) {
+        match event {
+            StatisticalEvent::KeyStrokeCorrect(key_stroke_correct_context) => {
+                if !key_stroke_correct_context.wrong_key_strokes().is_empty() {
+                    self.key_stroke.add_to_wrong_positions();
+                }
+
+                self.key_stroke
+                    .append(key_stroke_correct_context.key_stroke());
+            }
+            StatisticalEvent::SpellFinished(spell_finished_context) => {
+                if spell_finished_context.wrong_key_stroke_count() != 0 {
+                    self.spell
+                        .add_to_wrong_positions(spell_finished_context.spell());
+                }
+                self.spell
+                    .advance_head_position(spell_finished_context.spell().as_ref());
+            }
+            StatisticalEvent::ChunkAdded(chunk_added_context) => {
+                self.spell.append(chunk_added_context.spell().as_ref());
+            }
+            StatisticalEvent::KeyStrokeSnapshotted(key_stroke_snapshotted_context) => {
+                self.key_stroke
+                    .append_without_advancing_cursor(key_stroke_snapshotted_context.key_stroke());
+
+                if let Some(wrong_key_strokes) = key_stroke_snapshotted_context.wrong_key_strokes()
+                {
+                    if !wrong_key_strokes.is_empty() {
+                        self.key_stroke.add_to_wrong_positions();
+                    }
+                }
+            }
+            StatisticalEvent::InflightSpellSnapshotted(inflight_spell_snapshotted_context) => {
+                if !inflight_spell_snapshotted_context
+                    .wrong_key_strokes()
+                    .is_empty()
+                {
+                    self.spell
+                        .add_to_wrong_positions(inflight_spell_snapshotted_context.spell());
+                }
+
+                self.spell.set_cursor_position(
+                    inflight_spell_snapshotted_context.chunk_spell_cursor_position(),
+                );
+            }
+            _ => {}
+        }
+    }
+
+    fn spell(&self) -> &SpellDisplayStringBuilder {
+        &self.spell
+    }
+
+    fn key_stroke(&self) -> &KeyStrokeDisplayStringBuilder {
+        &self.key_stroke
+    }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+/// An enum representing cursor position of spell.
+pub(crate) enum SpellCursorPosition {
+    Single(usize),
+    Double(usize, usize),
+}
+
+impl SpellCursorPosition {
+    fn new() -> Self {
+        Self::Single(0)
+    }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+/// A struct representing display string of spell.
+struct SpellDisplayStringBuilder {
+    /// Display string of spell.
+    spell: String,
+    /// Cursor position of spell.
+    cursor_positions: SpellCursorPosition,
+    /// Wrong positions of spell.
+    wrong_positions: Vec<usize>,
+    /// Head position of unfinished spell.
+    current_head_position: usize,
+}
+
+impl SpellDisplayStringBuilder {
+    fn new() -> Self {
+        Self {
+            spell: String::new(),
+            cursor_positions: SpellCursorPosition::new(),
+            wrong_positions: vec![],
+            current_head_position: 0,
+        }
+    }
+
+    fn spell(&self) -> &str {
+        &self.spell
+    }
+
+    fn cursor_position(&self) -> &SpellCursorPosition {
+        &self.cursor_positions
+    }
+
+    fn wrong_positions(&self) -> &[usize] {
+        &self.wrong_positions
+    }
+
+    /// Append spell to display string.
+    fn append(&mut self, spell: &str) {
+        self.spell.push_str(spell);
+    }
+
+    /// Advance head position which is used like cursor.
+    fn advance_head_position(&mut self, spell: &str) {
+        self.current_head_position += spell.chars().count();
+    }
+
+    /// Set cursor position.
+    fn set_cursor_position(&mut self, chunk_spell_cursor_position: &ChunkSpellCursorPosition) {
+        if chunk_spell_cursor_position.is_cursor_count_double() {
+            self.cursor_positions = SpellCursorPosition::Double(
+                self.current_head_position,
+                self.current_head_position + 1,
+            );
+        } else {
+            self.cursor_positions = SpellCursorPosition::Single(self.current_head_position);
+        }
+    }
+
+    /// Add current head position to wrong positions.
+    fn add_to_wrong_positions(&mut self, chunk_spell: &ChunkSpell) {
+        for i in 0..chunk_spell.count() {
+            self.wrong_positions.push(self.current_head_position + i);
+        }
+    }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+/// A struct representing display string of key stroke.
+struct KeyStrokeDisplayStringBuilder {
+    key_stroke: String,
+    cursor_position: usize,
+    wrong_positions: Vec<usize>,
+}
+
+impl KeyStrokeDisplayStringBuilder {
+    fn new() -> Self {
+        Self {
+            key_stroke: String::new(),
+            cursor_position: 0,
+            wrong_positions: vec![],
+        }
+    }
+
+    fn key_stroke(&self) -> &str {
+        &self.key_stroke
+    }
+
+    fn cursor_position(&self) -> usize {
+        self.cursor_position
+    }
+
+    fn wrong_positions(&self) -> &[usize] {
+        &self.wrong_positions
+    }
+
+    /// Append key stroke to display string and advance cursor.
+    fn append(&mut self, key_stroke: &KeyStrokeChar) {
+        self.append_without_advancing_cursor(key_stroke);
+        self.cursor_position += 1;
+    }
+
+    /// Append key stroke to display string without advancing cursor.
+    fn append_without_advancing_cursor(&mut self, key_stroke: &KeyStrokeChar) {
+        self.key_stroke.push(key_stroke.clone().into());
+    }
+
+    /// Add current cursor position to wrong positions.
+    fn add_to_wrong_positions(&mut self) {
+        self.wrong_positions.push(self.cursor_position);
+    }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// Holding and updating whole realtime statistics.
 pub(crate) struct StatisticsManager {
     key_stroke: PrimitiveStatisticsCounter,
@@ -207,12 +409,16 @@ impl StatisticsManager {
                         .whole_count(),
                 );
             }
+            _ => {}
         }
     }
 }
 
 #[cfg(test)]
 mod test {
+    use statistical_event::InflightSpellSnapshottedContext;
+    use statistical_event::KeyStrokeSnapshottedContext;
+
     use crate::statistics::statistical_event::ChunkConfirmedContext;
     use crate::statistics::statistical_event::SpellFinishedContext;
     use crate::statistics::statistical_event::{
@@ -222,10 +428,10 @@ mod test {
     use crate::typing_primitive_types::chunk::key_stroke_candidate::KeyStrokeElementCount;
     use crate::typing_primitive_types::chunk::ChunkSpell;
 
-    use super::StatisticsManager;
+    use super::*;
 
     #[test]
-    fn consume_chunk_added_event() {
+    fn consume_chunk_added_event_update_statistics_manager() {
         let mut statistics_manager = StatisticsManager::new();
         let event = StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
             ChunkSpell::new("きょ".to_string().try_into().unwrap()),
@@ -253,7 +459,20 @@ mod test {
     }
 
     #[test]
-    fn consume_key_stroke_correct_event_without_wrong_stroke() {
+    fn consume_chunk_added_event_update_display_string() {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event = StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+            ChunkSpell::new("きょ".to_string().try_into().unwrap()),
+            KeyStrokeElementCount::Sigle(3),
+        ));
+
+        display_string_builder.consume_event(event);
+
+        assert_eq!(display_string_builder.spell().spell(), "きょ");
+    }
+
+    #[test]
+    fn consume_key_stroke_correct_event_without_wrong_stroke_update_statistics_manager() {
         let mut statistics_manager = StatisticsManager::new();
         let event = StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
             'u'.try_into().unwrap(),
@@ -281,7 +500,7 @@ mod test {
     }
 
     #[test]
-    fn consume_key_stroke_correct_event_with_wrong_stroke() {
+    fn consume_key_stroke_correct_event_with_wrong_stroke_update_statistics_manager() {
         let mut statistics_manager = StatisticsManager::new();
         let event = StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
             'u'.try_into().unwrap(),
@@ -309,7 +528,36 @@ mod test {
     }
 
     #[test]
-    fn consume_spell_finished_event_without_wrong_key_stroke() {
+    fn consume_key_stroke_correct_event_without_wrong_stroke_update_display_string() {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event = StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+            'u'.try_into().unwrap(),
+            vec![],
+        ));
+
+        display_string_builder.consume_event(event);
+
+        assert_eq!(display_string_builder.key_stroke().key_stroke(), "u");
+        assert_eq!(display_string_builder.key_stroke().cursor_position(), 1);
+    }
+
+    #[test]
+    fn consume_key_stroke_correct_event_with_wrong_stroke_update_display_string() {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event = StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
+            'u'.try_into().unwrap(),
+            vec!['y'.try_into().unwrap(), 'i'.try_into().unwrap()],
+        ));
+
+        display_string_builder.consume_event(event);
+
+        assert_eq!(display_string_builder.key_stroke().key_stroke(), "u");
+        assert_eq!(display_string_builder.key_stroke().cursor_position(), 1);
+        assert_eq!(display_string_builder.key_stroke().wrong_positions(), &[0]);
+    }
+
+    #[test]
+    fn consume_spell_finished_event_without_wrong_key_stroke_update_statistics_manager() {
         let mut statistics_manager = StatisticsManager::new();
         let event = StatisticalEvent::SpellFinished(SpellFinishedContext::new(
             ChunkSpell::new("う".to_string().try_into().unwrap()),
@@ -337,7 +585,7 @@ mod test {
     }
 
     #[test]
-    fn consume_spell_finished_event_with_wrong_key_stroke() {
+    fn consume_spell_finished_event_with_wrong_key_stroke_update_statistics_manager() {
         let mut statistics_manager = StatisticsManager::new();
         let event = StatisticalEvent::SpellFinished(SpellFinishedContext::new(
             ChunkSpell::new("う".to_string().try_into().unwrap()),
@@ -362,6 +610,37 @@ mod test {
             statistics_manager.ideal_key_stroke_statistics_counter(),
             &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
         );
+    }
+
+    #[test]
+    fn consume_spell_finished_event_without_wrong_key_stroke_update_display_string() {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event = StatisticalEvent::SpellFinished(SpellFinishedContext::new(
+            ChunkSpell::new("う".to_string().try_into().unwrap()),
+            0,
+        ));
+
+        display_string_builder.consume_event(event);
+
+        assert_eq!(display_string_builder.spell().wrong_positions(), &[]);
+    }
+
+    #[test]
+    fn consume_spell_finished_event_with_wrong_key_stroke_update_display_string() {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event = StatisticalEvent::SpellFinished(SpellFinishedContext::new(
+            ChunkSpell::new("う".to_string().try_into().unwrap()),
+            0,
+        ));
+        display_string_builder.consume_event(event);
+        let event = StatisticalEvent::SpellFinished(SpellFinishedContext::new(
+            ChunkSpell::new("きょ".to_string().try_into().unwrap()),
+            2,
+        ));
+
+        display_string_builder.consume_event(event);
+
+        assert_eq!(display_string_builder.spell().wrong_positions(), &[1, 2]);
     }
 
     #[test]
@@ -412,6 +691,129 @@ mod test {
         assert_eq!(
             statistics_manager.ideal_key_stroke_statistics_counter(),
             &PrimitiveStatisticsCounter::new(3, 0, 1, 0)
+        );
+    }
+
+    #[test]
+    fn consume_key_stroke_snapshotted_event_unstarted_update_display_string() {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event = StatisticalEvent::KeyStrokeSnapshotted(
+            KeyStrokeSnapshottedContext::new_unstarted(&'u'.try_into().unwrap()),
+        );
+
+        display_string_builder.consume_event(event);
+
+        assert_eq!(display_string_builder.key_stroke().key_stroke(), "u");
+        assert_eq!(display_string_builder.key_stroke().cursor_position(), 0);
+    }
+
+    #[test]
+    fn consume_key_stroke_snapshotted_event_started_without_wrong_stroke_update_display_string() {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event = StatisticalEvent::KeyStrokeSnapshotted(
+            KeyStrokeSnapshottedContext::new_started(&'u'.try_into().unwrap(), vec![]),
+        );
+
+        display_string_builder.consume_event(event);
+
+        assert_eq!(display_string_builder.key_stroke().key_stroke(), "u");
+        assert_eq!(display_string_builder.key_stroke().cursor_position(), 0);
+        assert_eq!(display_string_builder.key_stroke().wrong_positions(), &[]);
+    }
+
+    #[test]
+    fn consume_key_stroke_snapshotted_event_started_with_wrong_stroke_update_display_string() {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event =
+            StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_started(
+                &'u'.try_into().unwrap(),
+                vec!['y'.try_into().unwrap(), 'i'.try_into().unwrap()],
+            ));
+
+        display_string_builder.consume_event(event);
+
+        assert_eq!(display_string_builder.key_stroke().key_stroke(), "u");
+        assert_eq!(display_string_builder.key_stroke().cursor_position(), 0);
+        assert_eq!(display_string_builder.key_stroke().wrong_positions(), &[0]);
+    }
+
+    #[test]
+    fn consume_inflight_spell_snapshotted_event_without_wrong_stroke_with_single_spell_update_display_string(
+    ) {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event =
+            StatisticalEvent::InflightSpellSnapshotted(InflightSpellSnapshottedContext::new(
+                ChunkSpell::new("ょ".to_string().try_into().unwrap()),
+                ChunkSpellCursorPosition::DoubleSecond,
+                vec![],
+            ));
+
+        display_string_builder.consume_event(event);
+
+        assert_eq!(display_string_builder.spell().wrong_positions(), &[]);
+        assert_eq!(
+            display_string_builder.spell().cursor_position(),
+            &SpellCursorPosition::Single(0)
+        );
+    }
+
+    #[test]
+    fn consume_inflight_spell_snapshotted_event_without_wrong_stroke_with_double_spell_update_display_string(
+    ) {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event =
+            StatisticalEvent::InflightSpellSnapshotted(InflightSpellSnapshottedContext::new(
+                ChunkSpell::new("きょ".to_string().try_into().unwrap()),
+                ChunkSpellCursorPosition::DoubleCombined,
+                vec![],
+            ));
+
+        display_string_builder.consume_event(event);
+
+        assert_eq!(display_string_builder.spell().wrong_positions(), &[]);
+        assert_eq!(
+            display_string_builder.spell().cursor_position(),
+            &SpellCursorPosition::Double(0, 1)
+        );
+    }
+
+    #[test]
+    fn consume_inflight_spell_snapshotted_event_with_wrong_stroke_with_single_spell_update_display_string(
+    ) {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event =
+            StatisticalEvent::InflightSpellSnapshotted(InflightSpellSnapshottedContext::new(
+                ChunkSpell::new("あ".to_string().try_into().unwrap()),
+                ChunkSpellCursorPosition::Single,
+                vec!['y'.try_into().unwrap(), 'i'.try_into().unwrap()],
+            ));
+
+        display_string_builder.consume_event(event);
+
+        assert_eq!(display_string_builder.spell().wrong_positions(), &[0]);
+        assert_eq!(
+            display_string_builder.spell().cursor_position(),
+            &SpellCursorPosition::Single(0)
+        );
+    }
+
+    #[test]
+    fn consume_inflight_spell_snapshotted_event_with_wrong_stroke_with_double_spell_update_display_string(
+    ) {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event =
+            StatisticalEvent::InflightSpellSnapshotted(InflightSpellSnapshottedContext::new(
+                ChunkSpell::new("きょ".to_string().try_into().unwrap()),
+                ChunkSpellCursorPosition::DoubleCombined,
+                vec!['y'.try_into().unwrap(), 'i'.try_into().unwrap()],
+            ));
+
+        display_string_builder.consume_event(event);
+
+        assert_eq!(display_string_builder.spell().wrong_positions(), &[0, 1]);
+        assert_eq!(
+            display_string_builder.spell().cursor_position(),
+            &SpellCursorPosition::Double(0, 1)
         );
     }
 }

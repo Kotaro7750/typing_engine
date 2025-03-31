@@ -8,6 +8,8 @@ use crate::{
     KeyStrokeChar,
 };
 
+use super::ChunkSpellCursorPosition;
+
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// A struct representing the information for updating statistics when chunk is confirmed
 pub(crate) struct ChunkConfirmedContext {
@@ -79,6 +81,10 @@ impl ChunkAddedContext {
         }
     }
 
+    pub(crate) fn spell(&self) -> &ChunkSpell {
+        &self.spell
+    }
+
     pub(crate) fn spell_count(&self) -> usize {
         self.spell.count()
     }
@@ -134,7 +140,88 @@ impl KeyStrokeCorrectContext {
         }
     }
 
+    /// Returns key stroke that generate event.
+    pub(crate) fn key_stroke(&self) -> &KeyStrokeChar {
+        &self.key_stroke
+    }
+
     /// Returns wrong key strokes for typing this key stroke.
+    pub(crate) fn wrong_key_strokes(&self) -> &[KeyStrokeChar] {
+        &self.wrong_key_strokes
+    }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+/// A struct representing the context for updating statistics when inflight spell is snapshotted
+pub(crate) struct KeyStrokeSnapshottedContext {
+    /// Key stroke that generate event.
+    key_stroke: KeyStrokeChar,
+    /// Wrong key strokes for typing this key stroke.
+    /// This is None when this key stroke is not started.
+    wrong_key_strokes: Option<Vec<KeyStrokeChar>>,
+}
+
+impl KeyStrokeSnapshottedContext {
+    pub(crate) fn new_unstarted(key_stroke: &KeyStrokeChar) -> Self {
+        Self {
+            key_stroke: key_stroke.clone(),
+            wrong_key_strokes: None,
+        }
+    }
+
+    pub(crate) fn new_started(
+        key_stroke: &KeyStrokeChar,
+        wrong_key_strokes: Vec<KeyStrokeChar>,
+    ) -> Self {
+        Self {
+            key_stroke: key_stroke.clone(),
+            wrong_key_strokes: Some(wrong_key_strokes),
+        }
+    }
+
+    /// Returns key stroke that generate event.
+    pub(crate) fn key_stroke(&self) -> &KeyStrokeChar {
+        &self.key_stroke
+    }
+
+    /// Returns wrong key strokes for typing this key stroke.
+    pub(crate) fn wrong_key_strokes(&self) -> Option<&[KeyStrokeChar]> {
+        self.wrong_key_strokes.as_deref()
+    }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+/// A struct representing the context for updating statistics when inflight spell is snapshotted
+pub(crate) struct InflightSpellSnapshottedContext {
+    /// Spell that generate event.
+    spell: ChunkSpell,
+    /// Cursor position of chunk spell
+    chunk_spell_cursor_position: ChunkSpellCursorPosition,
+    /// Wrong key strokes for typing this inflight spell.
+    wrong_key_strokes: Vec<KeyStrokeChar>,
+}
+
+impl InflightSpellSnapshottedContext {
+    pub(crate) fn new(
+        spell: ChunkSpell,
+        chunk_spell_cursor_position: ChunkSpellCursorPosition,
+        wrong_key_strokes: Vec<KeyStrokeChar>,
+    ) -> Self {
+        Self {
+            spell,
+            chunk_spell_cursor_position,
+            wrong_key_strokes,
+        }
+    }
+
+    pub(crate) fn spell(&self) -> &ChunkSpell {
+        &self.spell
+    }
+
+    pub(crate) fn chunk_spell_cursor_position(&self) -> &ChunkSpellCursorPosition {
+        &self.chunk_spell_cursor_position
+    }
+
     pub(crate) fn wrong_key_strokes(&self) -> &[KeyStrokeChar] {
         &self.wrong_key_strokes
     }
@@ -150,6 +237,13 @@ pub(crate) enum StatisticalEvent {
     ChunkAdded(ChunkAddedContext),
     /// Event generated when chunk is confirmed
     ChunkConfirmed(ChunkConfirmedContext),
+    // Below events are snapshotted or deemed events.
+    // These events should not be treated as confirmed event because information of these events
+    // may change in the future.
+    /// Event generated when key stroke is snapshotted.
+    KeyStrokeSnapshotted(KeyStrokeSnapshottedContext),
+    /// Event generated when inflight spell is snapshotted.
+    InflightSpellSnapshotted(InflightSpellSnapshottedContext),
 }
 
 impl StatisticalEvent {

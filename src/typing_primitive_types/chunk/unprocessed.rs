@@ -3,7 +3,7 @@ use std::num::NonZeroUsize;
 
 use super::inflight::ChunkInflight;
 use super::key_stroke_candidate::ChunkKeyStrokeCandidate;
-use super::Chunk;
+use super::{Chunk, ChunkElementIndex, ChunkSpellCursorPosition};
 use crate::typing_primitive_types::chunk::ChunkSpell;
 use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
 use crate::typing_primitive_types::spell::SpellString;
@@ -109,6 +109,23 @@ impl ChunkUnprocessed {
         min_candidate.as_ref().unwrap()
     }
 
+    /// Returns the first cursor position of spell for the candidate.
+    pub(crate) fn chunk_spell_cursor_position_for_candidate(
+        &self,
+        candidate: &ChunkKeyStrokeCandidate,
+    ) -> ChunkSpellCursorPosition {
+        match candidate.belonging_element_index_of_key_stroke(0).unwrap() {
+            ChunkElementIndex::OnlyFirst => match self.spell() {
+                ChunkSpell::DoubleChar(_) => ChunkSpellCursorPosition::DoubleCombined,
+                _ => ChunkSpellCursorPosition::Single,
+            },
+            ChunkElementIndex::DoubleFirst => ChunkSpellCursorPosition::DoubleFirst,
+            ChunkElementIndex::DoubleSecond => {
+                unreachable!("The first key stroke char is always the first element of the chunk.")
+            }
+        }
+    }
+
     /// Calculate the minimum number of key strokes required to type this chunk.
     /// This is calculated by selecting the shortest key stroke candidate.
     pub fn calc_min_key_stroke_count(&self) -> usize {
@@ -199,7 +216,8 @@ mod test {
     }
 
     #[test]
-    fn strict_key_stroke_to_unprocessed_chunk_make_delayed_confirm_candidate_into_usual_candidate() {
+    fn strict_key_stroke_to_unprocessed_chunk_make_delayed_confirm_candidate_into_usual_candidate()
+    {
         let mut chunk = gen_chunk_unprocessed!(
             "ん",
             vec![

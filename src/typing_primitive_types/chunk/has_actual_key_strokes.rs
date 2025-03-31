@@ -119,6 +119,29 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
             .map_or(0, |count| count)
     }
 
+    /// Returns the wrong key strokes of the element index.
+    fn wrong_key_strokes_of_element_index(
+        &self,
+        element_index: ChunkElementIndex,
+    ) -> Vec<ActualKeyStroke> {
+        let mut wrong_key_strokes = vec![];
+
+        self.actual_key_strokes()
+            .iter()
+            .enumerate()
+            .for_each(|(i, key_stroke)| {
+                if self
+                    .effective_candidate()
+                    .belonging_element_index_of_key_stroke(i)
+                    .is_some_and(|index| index == element_index && !key_stroke.is_correct())
+                {
+                    wrong_key_strokes.push(key_stroke.clone());
+                }
+            });
+
+        wrong_key_strokes
+    }
+
     /// Returns the position indexes of wrong spell elements of this chunk.
     /// Basically indexes are relative inner the chunk, but offset can be used for adjusting absolute position.
     fn wrong_spell_element_positions(&self, offset: usize) -> Vec<usize> {

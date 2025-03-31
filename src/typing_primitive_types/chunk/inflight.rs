@@ -96,15 +96,43 @@ impl ChunkInflight {
             .count()
     }
 
+    /// Returns wrong key strokes in pending key strokes.
+    pub(crate) fn wrong_key_strokes_in_pending_key_strokes(&self) -> Vec<ActualKeyStroke> {
+        self.pending_key_strokes()
+            .iter()
+            .filter(|actual_key_stroke| !actual_key_stroke.is_correct())
+            .cloned()
+            .collect()
+    }
+
     /// Returns the count of remaining key strokes of passed candidate.
-    pub(crate) fn remaining_key_strokes(&self, candidate: &ChunkKeyStrokeCandidate) -> usize {
+    pub(crate) fn remaining_key_stroke_count(&self, candidate: &ChunkKeyStrokeCandidate) -> usize {
         candidate.calc_key_stroke_count() - self.key_stroke_cursor_position()
+    }
+
+    /// Returns remaining key stroke chars of passed candidate.
+    pub(crate) fn remaining_key_stroke_chars(
+        &self,
+        candidate: &ChunkKeyStrokeCandidate,
+    ) -> Vec<KeyStrokeChar> {
+        candidate
+            .key_stroke()
+            .whole_key_stroke()
+            .key_stroke_chars()
+            .into_iter()
+            .skip(self.key_stroke_cursor_position())
+            .collect()
     }
 
     /// Returns the count of wrong key strokes for current typing key stroke.
     pub(crate) fn wrong_key_stroke_count_of_current_key_stroke(&self) -> usize {
         self.wrong_key_strokes_for_correct_key_stroke_index(self.key_stroke_cursor_position())
             .len()
+    }
+
+    /// Returns wrong key strokes of current key stroke.
+    pub(crate) fn wrong_key_strokes_of_current_key_stroke(&self) -> Vec<ActualKeyStroke> {
+        self.wrong_key_strokes_for_correct_key_stroke_index(self.key_stroke_cursor_position())
     }
 
     /// Returns the key stroke candidate that is the shortest when typed and satisfies the chunk
@@ -256,6 +284,14 @@ impl ChunkInflight {
         assert!(index.len() <= 1);
 
         index.first().copied()
+    }
+
+    /// Returns the delayed confirmable candidate if exist.
+    /// None is returned when there is no delayed confirmable candidate or the delayed confirmable
+    /// candidate is not confirmed yet.
+    pub(crate) fn delayed_confirmable_candidate(&self) -> Option<&ChunkKeyStrokeCandidate> {
+        self.delayed_confirmable_candidate_index()
+            .map(|index| self.key_stroke_candidates().get(index).unwrap())
     }
 
     /// Stroke a key to this chunk.
@@ -424,6 +460,7 @@ impl ChunkHasActualKeyStrokes for ChunkInflight {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// An enum representing the cursor position of spell for chunk.
 pub(crate) enum ChunkSpellCursorPosition {
     /// A cursor is on the first and only character of the spell.
@@ -444,6 +481,11 @@ impl ChunkSpellCursorPosition {
             Self::DoubleSecond => vec![offset + 1],
             Self::DoubleCombined => vec![offset, offset + 1],
         }
+    }
+
+    /// Returns if the cursor count is double.
+    pub(crate) fn is_cursor_count_double(&self) -> bool {
+        matches!(self, Self::DoubleCombined)
     }
 }
 

@@ -32,7 +32,7 @@ impl CandidateKeyStroke {
     }
 
     /// Returns whole key stroke.
-    fn whole_key_stroke(&self) -> KeyStrokeString {
+    pub(crate) fn whole_key_stroke(&self) -> KeyStrokeString {
         match self {
             Self::Normal(s) | Self::Double(s) => s.clone(),
             Self::DoubleSplitted(s1, s2) => {
@@ -176,7 +176,7 @@ impl ChunkKeyStrokeCandidate {
     }
 
     /// Returns delay confirmed candidate information of this candidate.
-    pub(super) fn delayed_confirmed_candidate_info(
+    pub(crate) fn delayed_confirmed_candidate_info(
         &self,
     ) -> &Option<DelayedConfirmedCandidateInfo> {
         &self.delayed_confirmed_candidate_info
@@ -302,6 +302,11 @@ impl DelayedConfirmedCandidateInfo {
     /// Returns if passed key stroke is valid for the next chunk head and can confirm the chunk.
     pub(crate) fn can_confirm_with_key_stroke(&self, key_stroke: KeyStrokeChar) -> bool {
         self.next_chunk_head.contains(&key_stroke)
+    }
+
+    /// Returns first element of next chunk head
+    pub(crate) fn first_next_chunk_head(&self) -> &KeyStrokeChar {
+        self.next_chunk_head.first().unwrap()
     }
 }
 

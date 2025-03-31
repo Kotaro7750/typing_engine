@@ -10,6 +10,7 @@ use crate::statistics::statistics_counter::PrimitiveStatisticsCounter;
 use crate::statistics::OnTypingStatisticsTarget;
 use crate::typing_engine::processed_chunk_info::KeyStrokeDisplayInfo;
 use crate::typing_engine::processed_chunk_info::SpellDisplayInfo;
+use crate::typing_primitive_types::chunk::inflight::ChunkSpellCursorPosition;
 use crate::typing_primitive_types::chunk::key_stroke_candidate::KeyStrokeElementCount;
 use crate::typing_primitive_types::chunk::ChunkSpell;
 use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
@@ -465,6 +466,230 @@ fn after_last_chunk_confirmation_processed_chunk_info_is_finished() {
     pci.stroke_key('i'.try_into().unwrap(), Duration::new(5, 0));
 
     assert!(pci.is_finished());
+}
+
+#[test]
+fn snapshot_processed_chunk_info_with_unprocessed_chunk_generate_key_stroke_snapshotted_event() {
+    let (pci, _) = ProcessedChunkInfo::new(vec![gen_chunk_unprocessed!(
+        "きょ",
+        vec![
+            gen_candidate!(gen_candidate_key_stroke!("kyo")),
+            gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"])),
+            gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"])),
+        ],
+        gen_candidate!(gen_candidate_key_stroke!("kyo"))
+    )]);
+
+    let events = pci.snapshot();
+
+    assert_eq!(
+        events,
+        vec![
+            StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_unstarted(
+                &'k'.try_into().unwrap()
+            )),
+            StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_unstarted(
+                &'y'.try_into().unwrap()
+            )),
+            StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_unstarted(
+                &'o'.try_into().unwrap()
+            )),
+        ]
+    );
+}
+
+#[test]
+fn snapshot_processed_chunk_info_with_inflight_chunk_with_double_splitted_generate_key_stroke_snapshotted_event_and_inflight_spell_snapshotted_event(
+) {
+    let pci = ProcessedChunkInfo {
+        unprocessed_chunks: vec![].into(),
+        inflight_chunk: Some(gen_chunk_inflight!(
+            "きょ",
+            vec![gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"])),],
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!(["kyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"])),
+            ],
+            gen_candidate!(gen_candidate_key_stroke!(["kyo"])),
+            [
+                ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(2, 0), 'i'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(3, 0), 'x'.try_into().unwrap(), true)
+            ],
+            3,
+            []
+        )),
+        confirmed_chunks: vec![],
+    };
+
+    let events = pci.snapshot();
+
+    assert_eq!(
+        events,
+        vec![
+            StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_started(
+                &'y'.try_into().unwrap(),
+                vec![]
+            )),
+            StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_unstarted(
+                &'o'.try_into().unwrap()
+            )),
+            StatisticalEvent::InflightSpellSnapshotted(InflightSpellSnapshottedContext::new(
+                ChunkSpell::new("ょ".to_string().try_into().unwrap()),
+                ChunkSpellCursorPosition::DoubleSecond,
+                vec![]
+            )),
+        ]
+    );
+}
+
+#[test]
+fn snapshot_processed_chunk_info_with_inflight_chunk_without_wrong_key_stroke_generate_key_stroke_snapshotted_event_and_inflight_spell_snapshotted_event(
+) {
+    let pci = ProcessedChunkInfo {
+        unprocessed_chunks: vec![].into(),
+        inflight_chunk: Some(gen_chunk_inflight!(
+            "きょ",
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!(["kyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"])),
+            ],
+            vec![],
+            gen_candidate!(gen_candidate_key_stroke!(["kyo"])),
+            [ActualKeyStroke::new(
+                Duration::new(1, 0),
+                'k'.try_into().unwrap(),
+                true
+            )],
+            1,
+            []
+        )),
+        confirmed_chunks: vec![],
+    };
+
+    let events = pci.snapshot();
+
+    assert_eq!(
+        events,
+        vec![
+            StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_started(
+                &'y'.try_into().unwrap(),
+                vec![]
+            )),
+            StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_unstarted(
+                &'o'.try_into().unwrap()
+            )),
+            StatisticalEvent::InflightSpellSnapshotted(InflightSpellSnapshottedContext::new(
+                ChunkSpell::new("きょ".to_string().try_into().unwrap()),
+                ChunkSpellCursorPosition::DoubleCombined,
+                vec![]
+            )),
+        ]
+    );
+}
+
+#[test]
+fn snapshot_processed_chunk_info_with_inflight_chunk_with_wrong_key_stroke_generate_key_stroke_snapshotted_event_and_inflight_spell_snapshotted_event(
+) {
+    let pci = ProcessedChunkInfo {
+        unprocessed_chunks: vec![].into(),
+        inflight_chunk: Some(gen_chunk_inflight!(
+            "きょ",
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!(["kyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ki", "xyo"])),
+            ],
+            vec![],
+            gen_candidate!(gen_candidate_key_stroke!(["kyo"])),
+            [
+                ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(2, 0), 't'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(3, 0), 'u'.try_into().unwrap(), false)
+            ],
+            1,
+            []
+        )),
+        confirmed_chunks: vec![],
+    };
+
+    let events = pci.snapshot();
+
+    assert_eq!(
+        events,
+        vec![
+            StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_started(
+                &'y'.try_into().unwrap(),
+                vec!['t'.try_into().unwrap(), 'u'.try_into().unwrap()]
+            )),
+            StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_unstarted(
+                &'o'.try_into().unwrap()
+            )),
+            StatisticalEvent::InflightSpellSnapshotted(InflightSpellSnapshottedContext::new(
+                ChunkSpell::new("きょ".to_string().try_into().unwrap()),
+                ChunkSpellCursorPosition::DoubleCombined,
+                vec!['t'.try_into().unwrap(), 'u'.try_into().unwrap()]
+            )),
+        ]
+    );
+}
+
+#[test]
+fn snapshot_processed_chunk_info_with_inflight_chunk_with_delayed_confirmable_candidate_generate_key_stroke_snapshotted_event_and_inflight_spell_snapshotted_event(
+) {
+    let pci = ProcessedChunkInfo {
+        unprocessed_chunks: vec![gen_chunk_unprocessed!(
+            "じ",
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!("zi")),
+                gen_candidate!(gen_candidate_key_stroke!("ji")),
+            ],
+            gen_candidate!(gen_candidate_key_stroke!("zi"))
+        )]
+        .into(),
+        inflight_chunk: Some(gen_chunk_inflight!(
+            "ん",
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!("n"), ['z', 'j']),
+                gen_candidate!(gen_candidate_key_stroke!("nn")),
+            ],
+            vec![gen_candidate!(gen_candidate_key_stroke!("xn"))],
+            gen_candidate!(gen_candidate_key_stroke!("n"), ['z', 'j']),
+            [ActualKeyStroke::new(
+                Duration::new(1, 0),
+                'n'.try_into().unwrap(),
+                true
+            )],
+            1,
+            [ActualKeyStroke::new(
+                Duration::new(2, 0),
+                'm'.try_into().unwrap(),
+                false
+            )]
+        )),
+        confirmed_chunks: vec![],
+    };
+
+    let events = pci.snapshot();
+
+    assert_eq!(
+        events,
+        vec![
+            StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_started(
+                &'z'.try_into().unwrap(),
+                vec!['m'.try_into().unwrap()]
+            )),
+            StatisticalEvent::InflightSpellSnapshotted(InflightSpellSnapshottedContext::new(
+                ChunkSpell::new("じ".to_string().try_into().unwrap()),
+                ChunkSpellCursorPosition::Single,
+                vec!['m'.try_into().unwrap()]
+            )),
+            StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_unstarted(
+                &'i'.try_into().unwrap(),
+            )),
+        ]
+    );
 }
 
 #[test]

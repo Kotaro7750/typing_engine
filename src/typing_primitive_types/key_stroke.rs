@@ -50,6 +50,13 @@ impl TryFrom<char> for KeyStrokeChar {
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub(crate) struct KeyStrokeString(String);
 
+impl KeyStrokeString {
+    /// Returns key stroke chars of this key stroke string.
+    pub(crate) fn key_stroke_chars(&self) -> Vec<KeyStrokeChar> {
+        self.chars().map(|c| c.try_into().unwrap()).collect()
+    }
+}
+
 impl From<KeyStrokeString> for String {
     fn from(s: KeyStrokeString) -> Self {
         s.0
