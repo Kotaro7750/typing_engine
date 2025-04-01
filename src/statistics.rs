@@ -394,7 +394,8 @@ impl StatisticsManager {
 
                 self.chunk.on_wrong(wrong_key_strokes_count);
             }
-            StatisticalEvent::SpellFinished(spell_finished_context) => {
+            StatisticalEvent::SpellFinished(spell_finished_context)
+            | StatisticalEvent::SpellDeemedFinished(spell_finished_context) => {
                 let spell_count = spell_finished_context.spell().count();
                 let wrong_key_stroke_count = spell_finished_context.wrong_key_stroke_count();
 
@@ -421,6 +422,13 @@ impl StatisticsManager {
                         .ideal_key_stroke_element_count()
                         .whole_count(),
                 );
+            }
+            StatisticalEvent::InflightSpellSnapshotted(inflight_spell_snapshotted_context) => {
+                let spell_count = inflight_spell_snapshotted_context.spell().count();
+                let wrong_key_stroke_count =
+                    inflight_spell_snapshotted_context.wrong_key_strokes().len();
+
+                self.spell.on_wrong(spell_count * wrong_key_stroke_count);
             }
             _ => {}
         }
@@ -657,6 +665,93 @@ mod test {
     }
 
     #[test]
+    fn consume_spell_deemed_finished_event_without_wrong_key_stroke_update_statistics_manager() {
+        let mut statistics_manager = StatisticsManager::new();
+        let event = StatisticalEvent::SpellDeemedFinished(SpellFinishedContext::new(
+            ChunkSpell::new("う".to_string().try_into().unwrap()),
+            0,
+        ));
+
+        statistics_manager.consume_event(event);
+
+        assert_eq!(
+            statistics_manager.chunk_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(1, 0, 1, 0)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+    }
+
+    #[test]
+    fn consume_spell_deemed_finished_event_with_wrong_key_stroke_update_statistics_manager() {
+        let mut statistics_manager = StatisticsManager::new();
+        let event = StatisticalEvent::SpellDeemedFinished(SpellFinishedContext::new(
+            ChunkSpell::new("う".to_string().try_into().unwrap()),
+            2,
+        ));
+
+        statistics_manager.consume_event(event);
+
+        assert_eq!(
+            statistics_manager.chunk_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(1, 0, 0, 2)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+    }
+
+    #[test]
+    fn consume_spell_deemed_finished_event_without_wrong_key_stroke_update_display_string() {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event = StatisticalEvent::SpellDeemedFinished(SpellFinishedContext::new(
+            ChunkSpell::new("う".to_string().try_into().unwrap()),
+            0,
+        ));
+
+        display_string_builder.consume_event(event);
+
+        assert_eq!(display_string_builder.spell().wrong_positions(), &[]);
+    }
+
+    #[test]
+    fn consume_spell_deemed_finished_event_with_wrong_key_stroke_update_display_string() {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event = StatisticalEvent::SpellDeemedFinished(SpellFinishedContext::new(
+            ChunkSpell::new("う".to_string().try_into().unwrap()),
+            0,
+        ));
+        display_string_builder.consume_event(event);
+        let event = StatisticalEvent::SpellFinished(SpellFinishedContext::new(
+            ChunkSpell::new("きょ".to_string().try_into().unwrap()),
+            2,
+        ));
+
+        display_string_builder.consume_event(event);
+
+        assert_eq!(display_string_builder.spell().wrong_positions(), &[1, 2]);
+    }
+
+    #[test]
     fn consume_chunk_confirmed_event_without_wrong_key_stroke() {
         let mut statistics_manager = StatisticsManager::new();
         let event = StatisticalEvent::ChunkConfirmed(ChunkConfirmedContext::new(1, vec![0]));
@@ -827,6 +922,130 @@ mod test {
         assert_eq!(
             display_string_builder.spell().cursor_position(),
             &SpellCursorPosition::Double(0, 1)
+        );
+    }
+
+    #[test]
+    fn consume_inflight_spell_snapshotted_event_without_wrong_stroke_with_single_spell_update_statistics_manager(
+    ) {
+        let mut statistics_manager = StatisticsManager::new();
+        let event =
+            StatisticalEvent::InflightSpellSnapshotted(InflightSpellSnapshottedContext::new(
+                ChunkSpell::new("ょ".to_string().try_into().unwrap()),
+                ChunkSpellCursorPosition::DoubleSecond,
+                vec![],
+            ));
+
+        statistics_manager.consume_event(event);
+
+        assert_eq!(
+            statistics_manager.chunk_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+    }
+
+    #[test]
+    fn consume_inflight_spell_snapshotted_event_without_wrong_stroke_with_double_spell_update_statistics_manager(
+    ) {
+        let mut statistics_manager = StatisticsManager::new();
+        let event =
+            StatisticalEvent::InflightSpellSnapshotted(InflightSpellSnapshottedContext::new(
+                ChunkSpell::new("きょ".to_string().try_into().unwrap()),
+                ChunkSpellCursorPosition::DoubleCombined,
+                vec![],
+            ));
+
+        statistics_manager.consume_event(event);
+
+        assert_eq!(
+            statistics_manager.chunk_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+    }
+
+    #[test]
+    fn consume_inflight_spell_snapshotted_event_with_wrong_stroke_with_single_spell_update_statistics_manager(
+    ) {
+        let mut statistics_manager = StatisticsManager::new();
+        let event =
+            StatisticalEvent::InflightSpellSnapshotted(InflightSpellSnapshottedContext::new(
+                ChunkSpell::new("あ".to_string().try_into().unwrap()),
+                ChunkSpellCursorPosition::Single,
+                vec!['y'.try_into().unwrap(), 'i'.try_into().unwrap()],
+            ));
+
+        statistics_manager.consume_event(event);
+
+        assert_eq!(
+            statistics_manager.chunk_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 2)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+    }
+
+    #[test]
+    fn consume_inflight_spell_snapshotted_event_with_wrong_stroke_with_double_spell_update_statistics_manager(
+    ) {
+        let mut statistics_manager = StatisticsManager::new();
+        let event =
+            StatisticalEvent::InflightSpellSnapshotted(InflightSpellSnapshottedContext::new(
+                ChunkSpell::new("きょ".to_string().try_into().unwrap()),
+                ChunkSpellCursorPosition::DoubleCombined,
+                vec!['y'.try_into().unwrap(), 'i'.try_into().unwrap()],
+            ));
+
+        statistics_manager.consume_event(event);
+
+        assert_eq!(
+            statistics_manager.chunk_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 4)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
         );
     }
 
