@@ -213,10 +213,6 @@ pub(crate) enum SpellCursorPosition {
 }
 
 impl SpellCursorPosition {
-    fn new() -> Self {
-        Self::Single(0)
-    }
-
     /// Convert self into vec form
     pub(crate) fn construct_vec(&self) -> Vec<usize> {
         match self {
@@ -232,7 +228,8 @@ pub(crate) struct SpellDisplayStringBuilder {
     /// Display string of spell.
     spell: String,
     /// Cursor position of spell.
-    cursor_positions: SpellCursorPosition,
+    /// This is None when spell is not set.
+    cursor_positions: Option<SpellCursorPosition>,
     /// Wrong positions of spell.
     wrong_positions: Vec<usize>,
     /// Head position of unfinished spell.
@@ -243,7 +240,7 @@ impl SpellDisplayStringBuilder {
     fn new() -> Self {
         Self {
             spell: String::new(),
-            cursor_positions: SpellCursorPosition::new(),
+            cursor_positions: None,
             wrong_positions: vec![],
             current_head_position: 0,
         }
@@ -253,16 +250,26 @@ impl SpellDisplayStringBuilder {
         &self.spell
     }
 
-    pub(crate) fn cursor_position(&self) -> &SpellCursorPosition {
-        &self.cursor_positions
+    pub(crate) fn cursor_position(&self) -> SpellCursorPosition {
+        self.cursor_positions
+            .as_ref()
+            .map_or(SpellCursorPosition::Single(self.last_position() + 1), |p| {
+                p.clone()
+            })
     }
 
     pub(crate) fn wrong_positions(&self) -> &[usize] {
         &self.wrong_positions
     }
 
+    /// Returns the index of last spell to be typed.
+    /// This method returns 0 when spell is empty.
     pub(crate) fn last_position(&self) -> usize {
-        self.spell.chars().count() - 1
+        if self.spell().chars().count() == 0 {
+            0
+        } else {
+            self.spell.chars().count() - 1
+        }
     }
 
     /// Append spell to display string.
@@ -278,12 +285,12 @@ impl SpellDisplayStringBuilder {
     /// Set cursor position.
     fn set_cursor_position(&mut self, chunk_spell_cursor_position: &ChunkSpellCursorPosition) {
         if chunk_spell_cursor_position.is_cursor_count_double() {
-            self.cursor_positions = SpellCursorPosition::Double(
+            self.cursor_positions = Some(SpellCursorPosition::Double(
                 self.current_head_position,
                 self.current_head_position + 1,
-            );
+            ));
         } else {
-            self.cursor_positions = SpellCursorPosition::Single(self.current_head_position);
+            self.cursor_positions = Some(SpellCursorPosition::Single(self.current_head_position));
         }
     }
 
@@ -470,6 +477,22 @@ mod test {
     use super::*;
 
     #[test]
+    fn spell_cursor_position_of_display_string_builder_without_inflight_spell_snapshotted_event_is_last_position_plus_one(
+    ) {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event = StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
+            ChunkSpell::new("きょ".to_string().try_into().unwrap()),
+            KeyStrokeElementCount::Sigle(3),
+        ));
+        display_string_builder.consume_event(event);
+
+        assert_eq!(
+            display_string_builder.spell().cursor_position(),
+            SpellCursorPosition::Single(2)
+        );
+    }
+
+    #[test]
     fn consume_chunk_added_event_update_statistics_manager() {
         let mut statistics_manager = StatisticsManager::new();
         let event = StatisticalEvent::ChunkAdded(ChunkAddedContext::new(
@@ -508,6 +531,7 @@ mod test {
         display_string_builder.consume_event(event);
 
         assert_eq!(display_string_builder.spell().spell(), "きょ");
+        assert_eq!(display_string_builder.spell().last_position(), 1);
     }
 
     #[test]
@@ -963,7 +987,7 @@ mod test {
         assert_eq!(display_string_builder.spell().wrong_positions(), &[]);
         assert_eq!(
             display_string_builder.spell().cursor_position(),
-            &SpellCursorPosition::Single(0)
+            SpellCursorPosition::Single(0)
         );
     }
 
@@ -983,7 +1007,7 @@ mod test {
         assert_eq!(display_string_builder.spell().wrong_positions(), &[]);
         assert_eq!(
             display_string_builder.spell().cursor_position(),
-            &SpellCursorPosition::Double(0, 1)
+            SpellCursorPosition::Double(0, 1)
         );
     }
 
@@ -1003,7 +1027,7 @@ mod test {
         assert_eq!(display_string_builder.spell().wrong_positions(), &[0]);
         assert_eq!(
             display_string_builder.spell().cursor_position(),
-            &SpellCursorPosition::Single(0)
+            SpellCursorPosition::Single(0)
         );
     }
 
@@ -1023,7 +1047,7 @@ mod test {
         assert_eq!(display_string_builder.spell().wrong_positions(), &[0, 1]);
         assert_eq!(
             display_string_builder.spell().cursor_position(),
-            &SpellCursorPosition::Double(0, 1)
+            SpellCursorPosition::Double(0, 1)
         );
     }
 
@@ -1171,7 +1195,7 @@ mod test {
         ));
         assert_eq!(
             display_string_builder.spell().cursor_position(),
-            &SpellCursorPosition::Single(2)
+            SpellCursorPosition::Single(2)
         );
     }
 
@@ -1195,7 +1219,7 @@ mod test {
         ));
         assert_eq!(
             display_string_builder.spell().cursor_position(),
-            &SpellCursorPosition::Single(2)
+            SpellCursorPosition::Single(2)
         );
         assert_eq!(display_string_builder.spell().wrong_positions(), &[0, 1]);
     }

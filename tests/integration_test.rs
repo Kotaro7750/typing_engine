@@ -71,3 +71,52 @@ fn construct_display_info_output_correct_display_string() {
         &vec![6, 9]
     );
 }
+
+#[test]
+fn construct_display_info_when_finished_output_correct_display_string() {
+    let mut engine = TypingEngine::new();
+    let vocabularies = vec![VocabularyEntry::new(
+        "阿".to_string(),
+        vec![VocabularySpellElement::Normal(
+            "あ".to_string().try_into().unwrap(),
+        )],
+    )
+    .unwrap()];
+    let vocabularies_slice: Vec<&VocabularyEntry> = vocabularies.iter().map(|v| v).collect();
+    let query_request = QueryRequest::new(
+        &vocabularies_slice,
+        VocabularyQuantifier::Vocabulary(NonZeroUsize::new(1).unwrap()),
+        VocabularySeparator::None,
+        VocabularyOrder::InOrder,
+    );
+    engine.init(query_request);
+    engine
+        .start()
+        .expect("start() should be finished without errors");
+    engine.stroke_key('a'.try_into().unwrap()).unwrap();
+
+    let display_info = engine
+        .construct_display_info(LapRequest::Spell(NonZeroUsize::new(3).unwrap()))
+        .unwrap();
+
+    // Assertion for view
+    assert_eq!(display_info.view_info().view(), "阿");
+    assert_eq!(
+        display_info.view_info().current_cursor_positions(),
+        &vec![0]
+    );
+    assert_eq!(display_info.view_info().missed_positions(), &vec![]);
+    assert_eq!(display_info.view_info().last_position(), 0);
+    // Assertion for spell
+    assert_eq!(display_info.spell_info().spell(), "あ");
+    assert_eq!(display_info.spell_info().last_position(), 0);
+    assert_eq!(
+        display_info.spell_info().current_cursor_positions(),
+        &vec![1]
+    );
+    assert_eq!(display_info.view_info().missed_positions(), &vec![]);
+    // Assertion for key stroke
+    assert_eq!(display_info.key_stroke_info().key_stroke(), "a");
+    assert_eq!(display_info.key_stroke_info().current_cursor_position(), 1);
+    assert_eq!(display_info.key_stroke_info().missed_positions(), &vec![]);
+}
