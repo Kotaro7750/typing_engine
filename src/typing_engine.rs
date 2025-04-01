@@ -5,14 +5,12 @@ use std::time::Instant;
 use crate::display_info::{DisplayInfo, KeyStrokeDisplayInfo, SpellDisplayInfo, ViewDisplayInfo};
 use crate::query::QueryRequest;
 use crate::statistics::result::{construct_result, TypingResultStatistics};
-use crate::statistics::statistics_counter::PrimitiveStatisticsCounter;
 use crate::statistics::{DisplayStringBuilder, LapRequest, StatisticsManager};
 use crate::typing_engine::processed_chunk_info::ProcessedChunkInfo;
 use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
 use crate::typing_primitive_types::vocabulary::{
     view_position_of_spell_for_vocabulary_infos, VocabularyInfo,
 };
-use crate::OnTypingStatisticsTarget;
 
 mod processed_chunk_info;
 
@@ -215,15 +213,6 @@ impl TypingEngine {
         if self.is_started() {
             let processed_chunk_info = self.processed_chunk_info.as_ref().unwrap();
 
-            let (spell_display_info, key_stroke_display_info) = processed_chunk_info
-                .construct_display_info(
-                    lap_request,
-                    self.statistics_manager.key_stroke_statistics_counter(),
-                    self.statistics_manager
-                        .ideal_key_stroke_statistics_counter(),
-                    self.statistics_manager.spell_statistics_counter(),
-                );
-
             let mut display_string_builder = self.display_string_builder.clone();
             let mut statistics_manager = self.statistics_manager.clone();
             processed_chunk_info
@@ -233,15 +222,32 @@ impl TypingEngine {
                     display_string_builder.consume_event(event.clone());
                     statistics_manager.consume_event(event);
                 });
-            equality_check_for_construct_display_info_and_display_string_builder(
-                &spell_display_info,
-                &key_stroke_display_info,
-                &display_string_builder,
+
+            let (
+                spell_lap_statistics_builder,
+                key_stroke_lap_statistics_builder,
+                ideal_key_stroke_lap_statistics_builder,
+            ) = processed_chunk_info.construct_lap_statistics(lap_request.clone());
+
+            let key_stroke_display_info = KeyStrokeDisplayInfo::new_with(
+                display_string_builder.key_stroke(),
+                statistics_manager.key_stroke_statistics_counter(),
+                &key_stroke_lap_statistics_builder,
+                statistics_manager.ideal_key_stroke_statistics_counter(),
+                &ideal_key_stroke_lap_statistics_builder,
             );
-            equality_check_for_construct_display_info_and_statistics_manager(
+            let spell_display_info = SpellDisplayInfo::new_with(
+                display_string_builder.spell(),
+                statistics_manager.spell_statistics_counter(),
+                &spell_lap_statistics_builder,
+            );
+
+            equality_check_of_construct_display_info_and_event_base(
                 &spell_display_info,
                 &key_stroke_display_info,
-                &statistics_manager,
+                processed_chunk_info,
+                &self.statistics_manager,
+                &lap_request,
             );
 
             let view_position_of_spell = view_position_of_spell_for_vocabulary_infos(
@@ -306,63 +312,19 @@ impl Default for TypingEngine {
     }
 }
 
-/// Output equality check of [`DisplayStringBuilder`](DisplayStringBuilder)
-/// This function is temporal and for debug use
-fn equality_check_for_construct_display_info_and_display_string_builder(
+fn equality_check_of_construct_display_info_and_event_base(
     sdi: &SpellDisplayInfo,
     kdi: &KeyStrokeDisplayInfo,
-    dsb: &DisplayStringBuilder,
+    pci: &ProcessedChunkInfo,
+    statistics_manager: &StatisticsManager,
+    lap_request: &LapRequest,
 ) {
-    // Check equality between SpellDisplayStringBuilder and SpellDisplayInfo
-    assert_eq!(dsb.spell().spell(), sdi.spell());
-    assert_eq!(
-        &dsb.spell().cursor_position().construct_vec(),
-        sdi.current_cursor_positions()
+    let (spell_display_info_old, key_stroke_display_info_old) = pci.construct_display_info(
+        lap_request.clone(),
+        statistics_manager.key_stroke_statistics_counter(),
+        statistics_manager.ideal_key_stroke_statistics_counter(),
+        statistics_manager.spell_statistics_counter(),
     );
-    assert_eq!(dsb.spell().wrong_positions(), sdi.missed_positions());
-    assert_eq!(dsb.spell().last_position(), sdi.last_position());
-
-    // Check equality between KeyStrokeDisplayStringBuilder and KeyStrokeDisplayInfo
-    assert_eq!(dsb.key_stroke().key_stroke(), kdi.key_stroke());
-    assert_eq!(
-        dsb.key_stroke().cursor_position(),
-        kdi.current_cursor_position()
-    );
-    assert_eq!(dsb.key_stroke().wrong_positions(), kdi.missed_positions());
-}
-
-/// Output equality check of [`StatisticsManager`](StatisticsManager)
-/// This function is temporal and for debug use
-fn equality_check_for_construct_display_info_and_statistics_manager(
-    sdi: &SpellDisplayInfo,
-    kdi: &KeyStrokeDisplayInfo,
-    sm: &StatisticsManager,
-) {
-    equality_check_for_primitive_statistics_counter_and_on_typing_statistics_target(
-        sm.spell_statistics_counter(),
-        sdi.on_typing_statistics(),
-    );
-
-    equality_check_for_primitive_statistics_counter_and_on_typing_statistics_target(
-        sm.key_stroke_statistics_counter(),
-        kdi.on_typing_statistics(),
-    );
-
-    equality_check_for_primitive_statistics_counter_and_on_typing_statistics_target(
-        sm.ideal_key_stroke_statistics_counter(),
-        kdi.on_typing_statistics_ideal(),
-    );
-}
-
-fn equality_check_for_primitive_statistics_counter_and_on_typing_statistics_target(
-    psc: &PrimitiveStatisticsCounter,
-    otst: &OnTypingStatisticsTarget,
-) {
-    assert_eq!(
-        psc.completely_correct_count(),
-        otst.completely_correct_count()
-    );
-    assert_eq!(psc.finished_count(), otst.finished_count());
-    assert_eq!(psc.whole_count(), otst.whole_count());
-    assert_eq!(psc.wrong_count(), otst.wrong_count());
+    assert_eq!(&spell_display_info_old, sdi);
+    assert_eq!(&key_stroke_display_info_old, kdi);
 }

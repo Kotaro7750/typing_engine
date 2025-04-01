@@ -1,6 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use crate::statistics::OnTypingStatisticsTarget;
+use crate::statistics::lap_statistics::PrimitiveLapStatisticsBuilder;
+use crate::statistics::statistics_counter::PrimitiveStatisticsCounter;
+use crate::statistics::{
+    construct_on_typing_statistics_target, KeyStrokeDisplayStringBuilder, OnTypingStatisticsTarget,
+    SpellDisplayStringBuilder,
+};
 use crate::typing_primitive_types::vocabulary::{
     corresponding_view_positions_for_spell, ViewPosition,
 };
@@ -132,6 +137,25 @@ impl SpellDisplayInfo {
         }
     }
 
+    pub(crate) fn new_with(
+        spell_display_string_builder: &SpellDisplayStringBuilder,
+        spell_statistics_counter: &PrimitiveStatisticsCounter,
+        spell_lap_statistics_builder: &PrimitiveLapStatisticsBuilder,
+    ) -> Self {
+        Self::new(
+            spell_display_string_builder.spell().to_string(),
+            spell_display_string_builder
+                .cursor_position()
+                .construct_vec(),
+            spell_display_string_builder.wrong_positions().to_vec(),
+            spell_display_string_builder.last_position(),
+            construct_on_typing_statistics_target(
+                spell_statistics_counter,
+                spell_lap_statistics_builder,
+            ),
+        )
+    }
+
     /// Spell of query string.
     ///
     /// ex. When query string is `巨大`, this function returns `きょだい`.
@@ -163,10 +187,6 @@ impl SpellDisplayInfo {
     pub fn last_position(&self) -> usize {
         self.last_position
     }
-
-    pub(crate) fn on_typing_statistics(&self) -> &OnTypingStatisticsTarget {
-        &self.on_typing_statistics
-    }
 }
 
 /// Information about key stroke of query string.
@@ -194,6 +214,28 @@ impl KeyStrokeDisplayInfo {
             on_typing_statistics,
             on_typing_statistics_ideal,
         }
+    }
+
+    pub(crate) fn new_with(
+        key_stroke_display_string_builder: &KeyStrokeDisplayStringBuilder,
+        key_stroke_statistics_counter: &PrimitiveStatisticsCounter,
+        key_stroke_lap_statistics_builder: &PrimitiveLapStatisticsBuilder,
+        ideal_key_stroke_statistics_counter: &PrimitiveStatisticsCounter,
+        ideal_key_stroke_lap_statistics_builder: &PrimitiveLapStatisticsBuilder,
+    ) -> Self {
+        Self::new(
+            key_stroke_display_string_builder.key_stroke().to_string(),
+            key_stroke_display_string_builder.cursor_position(),
+            key_stroke_display_string_builder.wrong_positions().to_vec(),
+            construct_on_typing_statistics_target(
+                key_stroke_statistics_counter,
+                key_stroke_lap_statistics_builder,
+            ),
+            construct_on_typing_statistics_target(
+                ideal_key_stroke_statistics_counter,
+                ideal_key_stroke_lap_statistics_builder,
+            ),
+        )
     }
 
     /// Information about key strokes of query string.

@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 use std::time::Duration;
 
 use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
-use crate::statistics::lap_statistics::LapStatiticsBuilder;
+use crate::statistics::lap_statistics::{LapStatiticsBuilder, PrimitiveLapStatisticsBuilder};
 use crate::statistics::statistical_event::{
     IdealKeyStrokeDeemedFinishedContext, InflightSpellSnapshottedContext, KeyStrokeCorrectContext,
     KeyStrokeSnapshottedContext, SpellFinishedContext, StatisticalEvent,
@@ -373,6 +373,98 @@ impl ProcessedChunkInfo {
         events
     }
 
+    /// Construct [`LapStatisticsBuilder`](LapStatiticsBuilder) for current state.
+    /// Returned tuple is (spell, key stroke, ideal key stroke) lap statistics builder.
+    pub(crate) fn construct_lap_statistics(
+        &self,
+        lap_request: LapRequest,
+    ) -> (
+        PrimitiveLapStatisticsBuilder,
+        PrimitiveLapStatisticsBuilder,
+        PrimitiveLapStatisticsBuilder,
+    ) {
+        let mut lap_statistics_builder = LapStatiticsBuilder::new(lap_request);
+
+        // 1. 確定したチャンク
+        // 2. タイプ中のチャンク
+        // 3. 未処理のチャンク
+
+        // 1. 確定したチャンク
+        self.confirmed_chunks.iter().for_each(|confirmed_chunk| {
+            update_lap_statistics(&mut lap_statistics_builder, confirmed_chunk, true);
+        });
+
+        // 2. タイプ中のチャンク
+        if self.inflight_chunk.is_none() {
+        } else {
+            let inflight_chunk = self.inflight_chunk.as_ref().unwrap();
+            update_lap_statistics(&mut lap_statistics_builder, inflight_chunk, false);
+        }
+
+        // 3. 未処理のチャンク
+        let mut next_chunk_head_constraint =
+            self.inflight_chunk.as_ref().and_then(|inflight_chunk| {
+                inflight_chunk
+                    .min_candidate(None)
+                    .next_chunk_head_constraint()
+                    .clone()
+            });
+
+        self.unprocessed_chunks
+            .iter()
+            .enumerate()
+            .for_each(|(i, unprocessed_chunk)| {
+                // 未確定のチャンクの一番最初のみ現在打っているチャンクの遅延確定候補によって補正をする
+                if i == 0 {
+                    if let Some(inflight_chunk) = self.inflight_chunk.as_ref() {
+                        if inflight_chunk
+                            .delayed_confirmable_candidate_index()
+                            .is_some()
+                        {
+                            inflight_chunk.pending_key_strokes().iter().for_each(
+                                |actual_key_stroke| {
+                                    lap_statistics_builder.on_actual_key_stroke(
+                                        actual_key_stroke.is_correct(),
+                                        *actual_key_stroke.elapsed_time(),
+                                    );
+                                },
+                            );
+                        }
+                    }
+                }
+
+                let key_stroke_element_count = unprocessed_chunk
+                    .ideal_key_stroke_candidate()
+                    .construct_key_stroke_element_count();
+
+                lap_statistics_builder.on_add_chunk(
+                    key_stroke_element_count.clone(),
+                    key_stroke_element_count,
+                    unprocessed_chunk.spell().count(),
+                );
+
+                let candidate = unprocessed_chunk.min_candidate(next_chunk_head_constraint.clone());
+                match candidate.next_chunk_head_constraint().clone() {
+                    Some(constraint) => next_chunk_head_constraint.replace(constraint),
+                    None => next_chunk_head_constraint.take(),
+                };
+            });
+
+        let (
+            key_stroke_lap_statistics_builder,
+            ideal_key_stroke_lap_statistics_builder,
+            spell_lap_statistics_builder,
+            _,
+        ) = lap_statistics_builder.emit();
+
+        (
+            spell_lap_statistics_builder,
+            key_stroke_lap_statistics_builder,
+            ideal_key_stroke_lap_statistics_builder,
+        )
+    }
+
+    #[deprecated]
     pub(crate) fn construct_display_info(
         &self,
         lap_request: LapRequest,
