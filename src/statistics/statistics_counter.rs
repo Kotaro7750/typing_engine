@@ -37,23 +37,23 @@ impl PrimitiveStatisticsCounter {
     }
 
     /// Get count of finished entities.
-    pub(super) fn finished_count(&self) -> usize {
+    pub(crate) fn finished_count(&self) -> usize {
         self.finished_count
     }
 
     /// Get count of whole entities.
-    pub(super) fn whole_count(&self) -> usize {
+    pub(crate) fn whole_count(&self) -> usize {
         self.whole_count
     }
 
     /// Get count of entities that are finished without any miss.
-    pub(super) fn completely_correct_count(&self) -> usize {
+    pub(crate) fn completely_correct_count(&self) -> usize {
         self.completely_correct_count
     }
 
     /// Get count of entities that are wrong typed regardless of duplication.
     /// If a target is wrong typed multiple times, each mistype is counted.
-    pub(super) fn wrong_count(&self) -> usize {
+    pub(crate) fn wrong_count(&self) -> usize {
         self.wrong_count
     }
 

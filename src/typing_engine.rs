@@ -5,12 +5,14 @@ use std::time::Instant;
 use crate::display_info::{DisplayInfo, KeyStrokeDisplayInfo, SpellDisplayInfo, ViewDisplayInfo};
 use crate::query::QueryRequest;
 use crate::statistics::result::{construct_result, TypingResultStatistics};
+use crate::statistics::statistics_counter::PrimitiveStatisticsCounter;
 use crate::statistics::{DisplayStringBuilder, LapRequest, StatisticsManager};
 use crate::typing_engine::processed_chunk_info::ProcessedChunkInfo;
 use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
 use crate::typing_primitive_types::vocabulary::{
     view_position_of_spell_for_vocabulary_infos, VocabularyInfo,
 };
+use crate::OnTypingStatisticsTarget;
 
 mod processed_chunk_info;
 
@@ -223,16 +225,23 @@ impl TypingEngine {
                 );
 
             let mut display_string_builder = self.display_string_builder.clone();
+            let mut statistics_manager = self.statistics_manager.clone();
             processed_chunk_info
                 .snapshot()
                 .into_iter()
                 .for_each(|event| {
-                    display_string_builder.consume_event(event);
+                    display_string_builder.consume_event(event.clone());
+                    statistics_manager.consume_event(event);
                 });
             equality_check_for_construct_display_info_and_display_string_builder(
                 &spell_display_info,
                 &key_stroke_display_info,
                 &display_string_builder,
+            );
+            equality_check_for_construct_display_info_and_statistics_manager(
+                &spell_display_info,
+                &key_stroke_display_info,
+                &statistics_manager,
             );
 
             let view_position_of_spell = view_position_of_spell_for_vocabulary_infos(
@@ -320,4 +329,30 @@ fn equality_check_for_construct_display_info_and_display_string_builder(
         kdi.current_cursor_position()
     );
     assert_eq!(dsb.key_stroke().wrong_positions(), kdi.missed_positions());
+}
+
+/// Output equality check of [`StatisticsManager`](StatisticsManager)
+/// This function is temporal and for debug use
+fn equality_check_for_construct_display_info_and_statistics_manager(
+    sdi: &SpellDisplayInfo,
+    kdi: &KeyStrokeDisplayInfo,
+    sm: &StatisticsManager,
+) {
+    equality_check_for_primitive_statistics_counter_and_on_typing_statistics_target(
+        sm.spell_statistics_counter(),
+        sdi.on_typing_statistics(),
+    );
+}
+
+fn equality_check_for_primitive_statistics_counter_and_on_typing_statistics_target(
+    psc: &PrimitiveStatisticsCounter,
+    otst: &OnTypingStatisticsTarget,
+) {
+    assert_eq!(
+        psc.completely_correct_count(),
+        otst.completely_correct_count()
+    );
+    assert_eq!(psc.finished_count(), otst.finished_count());
+    assert_eq!(psc.whole_count(), otst.whole_count());
+    assert_eq!(psc.wrong_count(), otst.wrong_count());
 }

@@ -163,6 +163,10 @@ impl SpellDisplayInfo {
     pub fn last_position(&self) -> usize {
         self.last_position
     }
+
+    pub(crate) fn on_typing_statistics(&self) -> &OnTypingStatisticsTarget {
+        &self.on_typing_statistics
+    }
 }
 
 /// Information about key stroke of query string.
