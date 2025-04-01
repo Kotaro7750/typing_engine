@@ -301,7 +301,7 @@ impl StatisticalEvent {
             confirmed_chunk
                 .ideal_key_stroke_candidate()
                 .calc_key_stroke_count(),
-            confirmed_chunk.wrong_key_stroke_count_of_key_stroke_index(),
+            confirmed_chunk.wrong_key_stroke_count_of_each_key_stroke_index(),
         ))
     }
 }

@@ -126,13 +126,13 @@ impl ChunkInflight {
 
     /// Returns the count of wrong key strokes for current typing key stroke.
     pub(crate) fn wrong_key_stroke_count_of_current_key_stroke(&self) -> usize {
-        self.wrong_key_strokes_for_correct_key_stroke_index(self.key_stroke_cursor_position())
+        self.wrong_key_strokes_of_key_stroke_index(self.key_stroke_cursor_position())
             .len()
     }
 
     /// Returns wrong key strokes of current key stroke.
     pub(crate) fn wrong_key_strokes_of_current_key_stroke(&self) -> Vec<ActualKeyStroke> {
-        self.wrong_key_strokes_for_correct_key_stroke_index(self.key_stroke_cursor_position())
+        self.wrong_key_strokes_of_key_stroke_index(self.key_stroke_cursor_position())
     }
 
     /// Returns the key stroke candidate that is the shortest when typed and satisfies the chunk
@@ -204,7 +204,7 @@ impl ChunkInflight {
     ) -> SpellFinishedContext {
         SpellFinishedContext::new(
             self.spell().spell_at_index(finished_spell_index),
-            self.wrong_key_stroke_count_of_element_index(finished_spell_index),
+            self.wrong_key_stroke_count_of_chunk_element_index(finished_spell_index),
         )
     }
 
@@ -397,9 +397,7 @@ impl ChunkInflight {
 
             KeyStrokeResult::Correct(
                 key_stroke_correct_ctx,
-                self.wrong_key_strokes_for_correct_key_stroke_index(
-                    self.key_stroke_cursor_position() - 1,
-                ),
+                self.wrong_key_strokes_of_key_stroke_index(self.key_stroke_cursor_position() - 1),
             )
         } else {
             KeyStrokeResult::Wrong

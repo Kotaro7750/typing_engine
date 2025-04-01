@@ -207,7 +207,7 @@ impl ProcessedChunkInfo {
         if let Some(inflight_chunk) = self.inflight_chunk.as_ref() {
             // Snapshot current ideal key strokes (deemed finished) in inflight chunk.
             inflight_chunk
-                .wrong_key_stroke_count_of_ideal_key_stroke_index(
+                .wrong_key_stroke_count_of_each_ideal_key_stroke_index_only_confirmed(
                     inflight_chunk.ideal_key_stroke_candidate(),
                 )
                 .iter()
@@ -260,7 +260,7 @@ impl ProcessedChunkInfo {
                             .spell_at_index(inflight_chunk.spell_cursor_position().into()),
                         inflight_chunk.spell_cursor_position(),
                         inflight_chunk
-                            .wrong_key_strokes_of_element_index(
+                            .wrong_key_strokes_of_chunk_element_index(
                                 inflight_chunk.spell_cursor_position().into(),
                             )
                             .into_iter()
@@ -276,7 +276,7 @@ impl ProcessedChunkInfo {
                             .spell()
                             .spell_at_index(inflight_chunk.spell_cursor_position().into()),
                         inflight_chunk
-                            .wrong_key_strokes_of_element_index(
+                            .wrong_key_strokes_of_chunk_element_index(
                                 inflight_chunk.spell_cursor_position().into(),
                             )
                             .len(),
@@ -543,7 +543,7 @@ impl ProcessedChunkInfo {
                 inflight_chunk.remaining_key_stroke_count(inflight_chunk.effective_candidate()),
             );
             inflight_chunk
-                .wrong_key_stroke_count_of_ideal_key_stroke_index(
+                .wrong_key_stroke_count_of_each_ideal_key_stroke_index_only_confirmed(
                     inflight_chunk.ideal_key_stroke_candidate(),
                 )
                 .iter()
@@ -562,9 +562,10 @@ impl ProcessedChunkInfo {
             // 2-1-4: Correction regarding as finished for delayed confirmable candidate.
 
             // 2-1-3
-            let current_spell_wrong_count = inflight_chunk.wrong_key_stroke_count_of_element_index(
-                inflight_chunk.spell_cursor_position().into(),
-            );
+            let current_spell_wrong_count = inflight_chunk
+                .wrong_key_stroke_count_of_chunk_element_index(
+                    inflight_chunk.spell_cursor_position().into(),
+                );
             let current_spell_count = inflight_chunk
                 .spell()
                 .spell_at_index(inflight_chunk.spell_cursor_position().into())
