@@ -4,7 +4,8 @@ use std::num::NonZeroUsize;
 use std::time::Duration;
 
 use crate::statistics::statistical_event::{
-    ChunkAddedContext, ChunkConfirmedContext, SpellFinishedContext,
+    ChunkAddedContext, ChunkConfirmedContext, IdealKeyStrokeDeemedFinishedContext,
+    SpellFinishedContext,
 };
 use crate::statistics::statistics_counter::PrimitiveStatisticsCounter;
 use crate::statistics::OnTypingStatisticsTarget;
@@ -526,6 +527,12 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_with_double_splitted() {
     assert_eq!(
         events,
         vec![
+            StatisticalEvent::IdealKeyStrokeDeemedFinished(
+                IdealKeyStrokeDeemedFinishedContext::new(0)
+            ),
+            StatisticalEvent::IdealKeyStrokeDeemedFinished(
+                IdealKeyStrokeDeemedFinishedContext::new(0)
+            ),
             StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_started(
                 &'y'.try_into().unwrap(),
                 vec![]
@@ -571,6 +578,9 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_without_wrong_key_stroke() 
     assert_eq!(
         events,
         vec![
+            StatisticalEvent::IdealKeyStrokeDeemedFinished(
+                IdealKeyStrokeDeemedFinishedContext::new(0)
+            ),
             StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_started(
                 &'y'.try_into().unwrap(),
                 vec![]
@@ -601,9 +611,10 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_with_wrong_key_stroke() {
             vec![],
             gen_candidate!(gen_candidate_key_stroke!(["kyo"])),
             [
-                ActualKeyStroke::new(Duration::new(1, 0), 'k'.try_into().unwrap(), true),
-                ActualKeyStroke::new(Duration::new(2, 0), 't'.try_into().unwrap(), false),
-                ActualKeyStroke::new(Duration::new(3, 0), 'u'.try_into().unwrap(), false)
+                ActualKeyStroke::new(Duration::new(1, 0), 'h'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(2, 0), 'k'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(3, 0), 't'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(4, 0), 'u'.try_into().unwrap(), false)
             ],
             1,
             []
@@ -616,6 +627,9 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_with_wrong_key_stroke() {
     assert_eq!(
         events,
         vec![
+            StatisticalEvent::IdealKeyStrokeDeemedFinished(
+                IdealKeyStrokeDeemedFinishedContext::new(1)
+            ),
             StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_started(
                 &'y'.try_into().unwrap(),
                 vec!['t'.try_into().unwrap(), 'u'.try_into().unwrap()]
@@ -626,7 +640,11 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_with_wrong_key_stroke() {
             StatisticalEvent::InflightSpellSnapshotted(InflightSpellSnapshottedContext::new(
                 ChunkSpell::new("きょ".to_string().try_into().unwrap()),
                 ChunkSpellCursorPosition::DoubleCombined,
-                vec!['t'.try_into().unwrap(), 'u'.try_into().unwrap()]
+                vec![
+                    'h'.try_into().unwrap(),
+                    't'.try_into().unwrap(),
+                    'u'.try_into().unwrap()
+                ]
             )),
         ]
     );
@@ -672,6 +690,9 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_with_delayed_confirmable_ca
     assert_eq!(
         events,
         vec![
+            StatisticalEvent::IdealKeyStrokeDeemedFinished(
+                IdealKeyStrokeDeemedFinishedContext::new(0)
+            ),
             StatisticalEvent::SpellDeemedFinished(SpellFinishedContext::new(
                 ChunkSpell::new("ん".to_string().try_into().unwrap()),
                 0

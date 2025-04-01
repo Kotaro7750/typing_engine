@@ -228,6 +228,26 @@ impl InflightSpellSnapshottedContext {
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
+/// A struct representing the context for updating statistics when ideal key stroke is deemed
+/// finished
+pub(crate) struct IdealKeyStrokeDeemedFinishedContext {
+    wrong_key_stroke_count: usize,
+}
+
+impl IdealKeyStrokeDeemedFinishedContext {
+    pub(crate) fn new(wrong_key_stroke_count: usize) -> Self {
+        Self {
+            wrong_key_stroke_count,
+        }
+    }
+
+    /// Returns wrong key stroke count for typing this key stroke.
+    pub(crate) fn wrong_key_stroke_count(&self) -> usize {
+        self.wrong_key_stroke_count
+    }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// Representing events generated when statistically meaningfull things happened
 pub(crate) enum StatisticalEvent {
     KeyStrokeCorrect(KeyStrokeCorrectContext),
@@ -246,6 +266,8 @@ pub(crate) enum StatisticalEvent {
     InflightSpellSnapshotted(InflightSpellSnapshottedContext),
     /// Event generated when spell deemed finished.
     SpellDeemedFinished(SpellFinishedContext),
+    /// Event generated when ideal key stroke deemed finished.
+    IdealKeyStrokeDeemedFinished(IdealKeyStrokeDeemedFinishedContext),
 }
 
 impl StatisticalEvent {

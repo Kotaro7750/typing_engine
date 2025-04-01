@@ -4,8 +4,8 @@ use std::time::Duration;
 use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
 use crate::statistics::lap_statistics::LapStatiticsBuilder;
 use crate::statistics::statistical_event::{
-    InflightSpellSnapshottedContext, KeyStrokeCorrectContext, KeyStrokeSnapshottedContext,
-    SpellFinishedContext, StatisticalEvent,
+    IdealKeyStrokeDeemedFinishedContext, InflightSpellSnapshottedContext, KeyStrokeCorrectContext,
+    KeyStrokeSnapshottedContext, SpellFinishedContext, StatisticalEvent,
 };
 use crate::statistics::statistics_counter::PrimitiveStatisticsCounter;
 use crate::statistics::{construct_on_typing_statistics_target, LapRequest};
@@ -205,6 +205,18 @@ impl ProcessedChunkInfo {
 
         // 1
         if let Some(inflight_chunk) = self.inflight_chunk.as_ref() {
+            // Snapshot current ideal key strokes (deemed finished) in inflight chunk.
+            inflight_chunk
+                .wrong_key_stroke_count_of_ideal_key_stroke_index(
+                    inflight_chunk.ideal_key_stroke_candidate(),
+                )
+                .iter()
+                .for_each(|wrong_count| {
+                    events.push(StatisticalEvent::IdealKeyStrokeDeemedFinished(
+                        IdealKeyStrokeDeemedFinishedContext::new(*wrong_count),
+                    ));
+                });
+
             if inflight_chunk.delayed_confirmable_candidate().is_none() {
                 // Snapshot current(unfinished) key stroke in inflight chunk.
                 let current_key_stroke_char = inflight_chunk
