@@ -126,16 +126,18 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
     ) -> Vec<ActualKeyStroke> {
         let mut wrong_key_strokes = vec![];
 
-        self.actual_key_strokes()
-            .iter()
+        self.effective_candidate()
+            .whole_key_stroke()
+            .chars()
             .enumerate()
-            .for_each(|(i, key_stroke)| {
+            .for_each(|(i, _)| {
                 if self
                     .effective_candidate()
                     .belonging_element_index_of_key_stroke(i)
-                    .is_some_and(|index| index == element_index && !key_stroke.is_correct())
+                    .is_some_and(|index| index == element_index)
                 {
-                    wrong_key_strokes.push(key_stroke.clone());
+                    wrong_key_strokes
+                        .extend(self.wrong_key_strokes_for_correct_key_stroke_index(i));
                 }
             });
 
