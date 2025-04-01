@@ -342,6 +342,16 @@ fn equality_check_for_construct_display_info_and_statistics_manager(
         sm.spell_statistics_counter(),
         sdi.on_typing_statistics(),
     );
+
+    equality_check_for_primitive_statistics_counter_and_on_typing_statistics_target(
+        sm.key_stroke_statistics_counter(),
+        kdi.on_typing_statistics(),
+    );
+
+    equality_check_for_primitive_statistics_counter_and_on_typing_statistics_target(
+        sm.ideal_key_stroke_statistics_counter(),
+        kdi.on_typing_statistics_ideal(),
+    );
 }
 
 fn equality_check_for_primitive_statistics_counter_and_on_typing_statistics_target(

@@ -423,6 +423,16 @@ impl StatisticsManager {
                         .whole_count(),
                 );
             }
+            StatisticalEvent::KeyStrokeSnapshotted(key_stroke_snapshotted_context) => {
+                if let Some(wrong_key_strokes) = key_stroke_snapshotted_context.wrong_key_strokes()
+                {
+                    let wrong_key_strokes_count = wrong_key_strokes.len();
+                    self.key_stroke.on_wrong(wrong_key_strokes_count);
+                    self.ideal_key_stroke.on_wrong(wrong_key_strokes_count);
+                }
+
+                self.key_stroke.on_target_add(1);
+            }
             StatisticalEvent::InflightSpellSnapshotted(inflight_spell_snapshotted_context) => {
                 let spell_count = inflight_spell_snapshotted_context.spell().count();
                 let wrong_key_stroke_count =
@@ -430,13 +440,21 @@ impl StatisticsManager {
 
                 self.spell.on_wrong(spell_count * wrong_key_stroke_count);
             }
-            _ => {}
+            StatisticalEvent::IdealKeyStrokeDeemedFinished(
+                ideal_key_stroke_deemed_finished_context,
+            ) => {
+                self.ideal_key_stroke.on_finished(
+                    1,
+                    ideal_key_stroke_deemed_finished_context.wrong_key_stroke_count() == 0,
+                );
+            }
         }
     }
 }
 
 #[cfg(test)]
 mod test {
+    use statistical_event::IdealKeyStrokeDeemedFinishedContext;
     use statistical_event::InflightSpellSnapshottedContext;
     use statistical_event::KeyStrokeSnapshottedContext;
 
@@ -846,6 +864,90 @@ mod test {
     }
 
     #[test]
+    fn consume_key_stroke_snapshotted_event_unstarted_update_statistics_manager() {
+        let mut statistics_manager = StatisticsManager::new();
+        let event = StatisticalEvent::KeyStrokeSnapshotted(
+            KeyStrokeSnapshottedContext::new_unstarted(&'u'.try_into().unwrap()),
+        );
+
+        statistics_manager.consume_event(event);
+
+        assert_eq!(
+            statistics_manager.chunk_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 1, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+    }
+
+    #[test]
+    fn consume_key_stroke_snapshotted_event_started_without_wrong_stroke_update_statistics_manager()
+    {
+        let mut statistics_manager = StatisticsManager::new();
+        let event = StatisticalEvent::KeyStrokeSnapshotted(
+            KeyStrokeSnapshottedContext::new_started(&'u'.try_into().unwrap(), vec![]),
+        );
+
+        statistics_manager.consume_event(event);
+
+        assert_eq!(
+            statistics_manager.chunk_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 1, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+    }
+
+    #[test]
+    fn consume_key_stroke_snapshotted_event_started_with_wrong_stroke_update_statistics_manager() {
+        let mut statistics_manager = StatisticsManager::new();
+        let event =
+            StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_started(
+                &'u'.try_into().unwrap(),
+                vec!['y'.try_into().unwrap(), 'i'.try_into().unwrap()],
+            ));
+
+        statistics_manager.consume_event(event);
+
+        assert_eq!(
+            statistics_manager.chunk_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 1, 0, 2)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 2)
+        );
+    }
+
+    #[test]
     fn consume_inflight_spell_snapshotted_event_without_wrong_stroke_with_single_spell_update_display_string(
     ) {
         let mut display_string_builder = DisplayStringBuilder::new();
@@ -1096,5 +1198,61 @@ mod test {
             &SpellCursorPosition::Single(2)
         );
         assert_eq!(display_string_builder.spell().wrong_positions(), &[0, 1]);
+    }
+
+    #[test]
+    fn consume_ideal_key_stroke_deemed_finished_event_without_wrong_stroke_update_statistics_manager(
+    ) {
+        let mut statistics_manager = StatisticsManager::new();
+        let event = StatisticalEvent::IdealKeyStrokeDeemedFinished(
+            IdealKeyStrokeDeemedFinishedContext::new(0),
+        );
+
+        statistics_manager.consume_event(event);
+
+        assert_eq!(
+            statistics_manager.chunk_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(1, 0, 1, 0)
+        );
+    }
+
+    #[test]
+    fn consume_ideal_key_stroke_deemed_finished_event_with_wrong_stroke_update_statistics_manager()
+    {
+        let mut statistics_manager = StatisticsManager::new();
+        let event = StatisticalEvent::IdealKeyStrokeDeemedFinished(
+            IdealKeyStrokeDeemedFinishedContext::new(2),
+        );
+
+        statistics_manager.consume_event(event);
+
+        assert_eq!(
+            statistics_manager.chunk_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.spell_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(0, 0, 0, 0)
+        );
+        assert_eq!(
+            statistics_manager.ideal_key_stroke_statistics_counter(),
+            &PrimitiveStatisticsCounter::new(1, 0, 0, 0)
+        );
     }
 }
