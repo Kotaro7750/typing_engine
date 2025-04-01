@@ -2,10 +2,10 @@ use std::error::Error;
 use std::fmt::Display;
 use std::time::Instant;
 
-use crate::display_info::{DisplayInfo, ViewDisplayInfo};
+use crate::display_info::{DisplayInfo, KeyStrokeDisplayInfo, SpellDisplayInfo, ViewDisplayInfo};
 use crate::query::QueryRequest;
 use crate::statistics::result::{construct_result, TypingResultStatistics};
-use crate::statistics::{LapRequest, StatisticsManager};
+use crate::statistics::{DisplayStringBuilder, LapRequest, StatisticsManager};
 use crate::typing_engine::processed_chunk_info::ProcessedChunkInfo;
 use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
 use crate::typing_primitive_types::vocabulary::{
@@ -76,6 +76,7 @@ pub struct TypingEngine {
     processed_chunk_info: Option<ProcessedChunkInfo>,
     vocabulary_infos: Option<Vec<VocabularyInfo>>,
     statistics_manager: StatisticsManager,
+    display_string_builder: DisplayStringBuilder,
 }
 
 impl TypingEngine {
@@ -90,6 +91,7 @@ impl TypingEngine {
             processed_chunk_info: None,
             vocabulary_infos: None,
             statistics_manager: StatisticsManager::new(),
+            display_string_builder: DisplayStringBuilder::new(),
         }
     }
 
@@ -104,6 +106,8 @@ impl TypingEngine {
 
         statistical_events.iter().for_each(|statistical_event| {
             self.statistics_manager
+                .consume_event(statistical_event.clone());
+            self.display_string_builder
                 .consume_event(statistical_event.clone());
         });
 
@@ -188,6 +192,8 @@ impl TypingEngine {
             statistical_events.iter().for_each(|statistical_event| {
                 self.statistics_manager
                     .consume_event(statistical_event.clone());
+                self.display_string_builder
+                    .consume_event(statistical_event.clone());
             });
 
             Ok(pci.is_finished())
@@ -205,10 +211,9 @@ impl TypingEngine {
         lap_request: LapRequest,
     ) -> Result<DisplayInfo, TypingEngineError> {
         if self.is_started() {
-            let (spell_display_info, key_stroke_display_info) = self
-                .processed_chunk_info
-                .as_ref()
-                .unwrap()
+            let processed_chunk_info = self.processed_chunk_info.as_ref().unwrap();
+
+            let (spell_display_info, key_stroke_display_info) = processed_chunk_info
                 .construct_display_info(
                     lap_request,
                     self.statistics_manager.key_stroke_statistics_counter(),
@@ -216,6 +221,19 @@ impl TypingEngine {
                         .ideal_key_stroke_statistics_counter(),
                     self.statistics_manager.spell_statistics_counter(),
                 );
+
+            let mut display_string_builder = self.display_string_builder.clone();
+            processed_chunk_info
+                .snapshot()
+                .into_iter()
+                .for_each(|event| {
+                    display_string_builder.consume_event(event);
+                });
+            equality_check_for_construct_display_info_and_display_string_builder(
+                &spell_display_info,
+                &key_stroke_display_info,
+                &display_string_builder,
+            );
 
             let view_position_of_spell = view_position_of_spell_for_vocabulary_infos(
                 self.vocabulary_infos.as_ref().unwrap(),
@@ -277,4 +295,29 @@ impl Default for TypingEngine {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Output equality check of [`DisplayStringBuilder`](DisplayStringBuilder)
+/// This function is temporal and for debug use
+fn equality_check_for_construct_display_info_and_display_string_builder(
+    sdi: &SpellDisplayInfo,
+    kdi: &KeyStrokeDisplayInfo,
+    dsb: &DisplayStringBuilder,
+) {
+    // Check equality between SpellDisplayStringBuilder and SpellDisplayInfo
+    assert_eq!(dsb.spell().spell(), sdi.spell());
+    assert_eq!(
+        &dsb.spell().cursor_position().construct_vec(),
+        sdi.current_cursor_positions()
+    );
+    assert_eq!(dsb.spell().wrong_positions(), sdi.missed_positions());
+    assert_eq!(dsb.spell().last_position(), sdi.last_position());
+
+    // Check equality between KeyStrokeDisplayStringBuilder and KeyStrokeDisplayInfo
+    assert_eq!(dsb.key_stroke().key_stroke(), kdi.key_stroke());
+    assert_eq!(
+        dsb.key_stroke().cursor_position(),
+        kdi.current_cursor_position()
+    );
+    assert_eq!(dsb.key_stroke().wrong_positions(), kdi.missed_positions());
 }

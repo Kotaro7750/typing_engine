@@ -196,11 +196,11 @@ impl DisplayStringBuilder {
         }
     }
 
-    fn spell(&self) -> &SpellDisplayStringBuilder {
+    pub(crate) fn spell(&self) -> &SpellDisplayStringBuilder {
         &self.spell
     }
 
-    fn key_stroke(&self) -> &KeyStrokeDisplayStringBuilder {
+    pub(crate) fn key_stroke(&self) -> &KeyStrokeDisplayStringBuilder {
         &self.key_stroke
     }
 }
@@ -216,11 +216,19 @@ impl SpellCursorPosition {
     fn new() -> Self {
         Self::Single(0)
     }
+
+    /// Convert self into vec form
+    pub(crate) fn construct_vec(&self) -> Vec<usize> {
+        match self {
+            Self::Single(i) => vec![*i],
+            Self::Double(i1, i2) => vec![*i1, *i2],
+        }
+    }
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// A struct representing display string of spell.
-struct SpellDisplayStringBuilder {
+pub(crate) struct SpellDisplayStringBuilder {
     /// Display string of spell.
     spell: String,
     /// Cursor position of spell.
@@ -241,16 +249,20 @@ impl SpellDisplayStringBuilder {
         }
     }
 
-    fn spell(&self) -> &str {
+    pub(crate) fn spell(&self) -> &str {
         &self.spell
     }
 
-    fn cursor_position(&self) -> &SpellCursorPosition {
+    pub(crate) fn cursor_position(&self) -> &SpellCursorPosition {
         &self.cursor_positions
     }
 
-    fn wrong_positions(&self) -> &[usize] {
+    pub(crate) fn wrong_positions(&self) -> &[usize] {
         &self.wrong_positions
+    }
+
+    pub(crate) fn last_position(&self) -> usize {
+        self.spell.chars().count() - 1
     }
 
     /// Append spell to display string.
@@ -285,7 +297,7 @@ impl SpellDisplayStringBuilder {
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// A struct representing display string of key stroke.
-struct KeyStrokeDisplayStringBuilder {
+pub(crate) struct KeyStrokeDisplayStringBuilder {
     key_stroke: String,
     cursor_position: usize,
     wrong_positions: Vec<usize>,
@@ -300,15 +312,15 @@ impl KeyStrokeDisplayStringBuilder {
         }
     }
 
-    fn key_stroke(&self) -> &str {
+    pub(crate) fn key_stroke(&self) -> &str {
         &self.key_stroke
     }
 
-    fn cursor_position(&self) -> usize {
+    pub(crate) fn cursor_position(&self) -> usize {
         self.cursor_position
     }
 
-    fn wrong_positions(&self) -> &[usize] {
+    pub(crate) fn wrong_positions(&self) -> &[usize] {
         &self.wrong_positions
     }
 
