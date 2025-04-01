@@ -469,7 +469,7 @@ fn after_last_chunk_confirmation_processed_chunk_info_is_finished() {
 }
 
 #[test]
-fn snapshot_processed_chunk_info_with_unprocessed_chunk_generate_key_stroke_snapshotted_event() {
+fn snapshot_processed_chunk_info_with_unprocessed_chunk() {
     let (pci, _) = ProcessedChunkInfo::new(vec![gen_chunk_unprocessed!(
         "きょ",
         vec![
@@ -499,8 +499,7 @@ fn snapshot_processed_chunk_info_with_unprocessed_chunk_generate_key_stroke_snap
 }
 
 #[test]
-fn snapshot_processed_chunk_info_with_inflight_chunk_with_double_splitted_generate_key_stroke_snapshotted_event_and_inflight_spell_snapshotted_event(
-) {
+fn snapshot_processed_chunk_info_with_inflight_chunk_with_double_splitted() {
     let pci = ProcessedChunkInfo {
         unprocessed_chunks: vec![].into(),
         inflight_chunk: Some(gen_chunk_inflight!(
@@ -544,8 +543,7 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_with_double_splitted_genera
 }
 
 #[test]
-fn snapshot_processed_chunk_info_with_inflight_chunk_without_wrong_key_stroke_generate_key_stroke_snapshotted_event_and_inflight_spell_snapshotted_event(
-) {
+fn snapshot_processed_chunk_info_with_inflight_chunk_without_wrong_key_stroke() {
     let pci = ProcessedChunkInfo {
         unprocessed_chunks: vec![].into(),
         inflight_chunk: Some(gen_chunk_inflight!(
@@ -590,8 +588,7 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_without_wrong_key_stroke_ge
 }
 
 #[test]
-fn snapshot_processed_chunk_info_with_inflight_chunk_with_wrong_key_stroke_generate_key_stroke_snapshotted_event_and_inflight_spell_snapshotted_event(
-) {
+fn snapshot_processed_chunk_info_with_inflight_chunk_with_wrong_key_stroke() {
     let pci = ProcessedChunkInfo {
         unprocessed_chunks: vec![].into(),
         inflight_chunk: Some(gen_chunk_inflight!(
@@ -636,8 +633,7 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_with_wrong_key_stroke_gener
 }
 
 #[test]
-fn snapshot_processed_chunk_info_with_inflight_chunk_with_delayed_confirmable_candidate_generate_key_stroke_snapshotted_event_and_inflight_spell_snapshotted_event(
-) {
+fn snapshot_processed_chunk_info_with_inflight_chunk_with_delayed_confirmable_candidate() {
     let pci = ProcessedChunkInfo {
         unprocessed_chunks: vec![gen_chunk_unprocessed!(
             "じ",
@@ -676,6 +672,10 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_with_delayed_confirmable_ca
     assert_eq!(
         events,
         vec![
+            StatisticalEvent::SpellDeemedFinished(SpellFinishedContext::new(
+                ChunkSpell::new("ん".to_string().try_into().unwrap()),
+                0
+            )),
             StatisticalEvent::KeyStrokeSnapshotted(KeyStrokeSnapshottedContext::new_started(
                 &'z'.try_into().unwrap(),
                 vec!['m'.try_into().unwrap()]

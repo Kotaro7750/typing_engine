@@ -5,7 +5,7 @@ use crate::display_info::{KeyStrokeDisplayInfo, SpellDisplayInfo};
 use crate::statistics::lap_statistics::LapStatiticsBuilder;
 use crate::statistics::statistical_event::{
     InflightSpellSnapshottedContext, KeyStrokeCorrectContext, KeyStrokeSnapshottedContext,
-    StatisticalEvent,
+    SpellFinishedContext, StatisticalEvent,
 };
 use crate::statistics::statistics_counter::PrimitiveStatisticsCounter;
 use crate::statistics::{construct_on_typing_statistics_target, LapRequest};
@@ -254,6 +254,20 @@ impl ProcessedChunkInfo {
                             .into_iter()
                             .map(|c| c.key_stroke().clone())
                             .collect(),
+                    ),
+                ));
+            } else {
+                // When inflight chunk is delayed confirmable, this spell is deemed as finished
+                events.push(StatisticalEvent::SpellDeemedFinished(
+                    SpellFinishedContext::new(
+                        inflight_chunk
+                            .spell()
+                            .spell_at_index(inflight_chunk.spell_cursor_position().into()),
+                        inflight_chunk
+                            .wrong_key_strokes_of_element_index(
+                                inflight_chunk.spell_cursor_position().into(),
+                            )
+                            .len(),
                     ),
                 ));
             }

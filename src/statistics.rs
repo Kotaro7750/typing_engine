@@ -156,7 +156,8 @@ impl DisplayStringBuilder {
                 self.key_stroke
                     .append(key_stroke_correct_context.key_stroke());
             }
-            StatisticalEvent::SpellFinished(spell_finished_context) => {
+            StatisticalEvent::SpellFinished(spell_finished_context)
+            | StatisticalEvent::SpellDeemedFinished(spell_finished_context) => {
                 if spell_finished_context.wrong_key_stroke_count() != 0 {
                     self.spell
                         .add_to_wrong_positions(spell_finished_context.spell());
@@ -815,5 +816,54 @@ mod test {
             display_string_builder.spell().cursor_position(),
             &SpellCursorPosition::Double(0, 1)
         );
+    }
+
+    #[test]
+    fn consume_spell_deemed_finished_event_without_wrong_stroke_update_display_string() {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event = StatisticalEvent::SpellDeemedFinished(SpellFinishedContext::new(
+            ChunkSpell::new("きょ".to_string().try_into().unwrap()),
+            0,
+        ));
+
+        display_string_builder.consume_event(event);
+
+        // SpellDeemedFinished event solely does not update public method result.
+        display_string_builder.consume_event(StatisticalEvent::InflightSpellSnapshotted(
+            InflightSpellSnapshottedContext::new(
+                ChunkSpell::new("あ".to_string().try_into().unwrap()),
+                ChunkSpellCursorPosition::Single,
+                vec![],
+            ),
+        ));
+        assert_eq!(
+            display_string_builder.spell().cursor_position(),
+            &SpellCursorPosition::Single(2)
+        );
+    }
+
+    #[test]
+    fn consume_spell_deemed_finished_event_with_wrong_stroke_update_display_string() {
+        let mut display_string_builder = DisplayStringBuilder::new();
+        let event = StatisticalEvent::SpellDeemedFinished(SpellFinishedContext::new(
+            ChunkSpell::new("きょ".to_string().try_into().unwrap()),
+            2,
+        ));
+
+        display_string_builder.consume_event(event);
+
+        // SpellDeemedFinished event solely does not update public method result.
+        display_string_builder.consume_event(StatisticalEvent::InflightSpellSnapshotted(
+            InflightSpellSnapshottedContext::new(
+                ChunkSpell::new("あ".to_string().try_into().unwrap()),
+                ChunkSpellCursorPosition::Single,
+                vec![],
+            ),
+        ));
+        assert_eq!(
+            display_string_builder.spell().cursor_position(),
+            &SpellCursorPosition::Single(2)
+        );
+        assert_eq!(display_string_builder.spell().wrong_positions(), &[0, 1]);
     }
 }

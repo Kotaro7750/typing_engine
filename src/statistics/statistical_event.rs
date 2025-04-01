@@ -244,6 +244,8 @@ pub(crate) enum StatisticalEvent {
     KeyStrokeSnapshotted(KeyStrokeSnapshottedContext),
     /// Event generated when inflight spell is snapshotted.
     InflightSpellSnapshotted(InflightSpellSnapshottedContext),
+    /// Event generated when spell deemed finished.
+    SpellDeemedFinished(SpellFinishedContext),
 }
 
 impl StatisticalEvent {
