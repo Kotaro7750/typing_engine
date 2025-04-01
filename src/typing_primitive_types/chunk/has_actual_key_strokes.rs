@@ -235,3 +235,213 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{gen_candidate, gen_candidate_key_stroke, gen_chunk_inflight};
+    use std::time::Duration;
+
+    #[test]
+    fn wrong_positions_of_double_splitted() {
+        let typed_chunk = gen_chunk_inflight!(
+            "じょ",
+            vec![gen_candidate!(gen_candidate_key_stroke!(["ji", "xyo"])),],
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!(["zyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "xyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["jyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "lyo"])),
+            ],
+            gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+            [
+                ActualKeyStroke::new(Duration::new(1, 0), 'h'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(4, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(5, 0), 'i'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(6, 0), 'x'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(7, 0), 'x'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(8, 0), 'y'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(9, 0), 'o'.try_into().unwrap(), true)
+            ],
+            5,
+            []
+        );
+
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_for_correct_key_stroke_index(0),
+            vec![ActualKeyStroke::new(
+                Duration::new(1, 0),
+                'h'.try_into().unwrap(),
+                false
+            ),]
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_for_correct_key_stroke_index(1),
+            vec![
+                ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(4, 0), 'j'.try_into().unwrap(), false),
+            ]
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_for_correct_key_stroke_index(2),
+            vec![]
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_for_correct_key_stroke_index(3),
+            vec![ActualKeyStroke::new(
+                Duration::new(7, 0),
+                'x'.try_into().unwrap(),
+                false
+            ),]
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_for_correct_key_stroke_index(4),
+            vec![]
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_for_correct_key_stroke_index(5),
+            vec![]
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_stroke_count_of_key_stroke_index(),
+            vec![1, 2, 0, 1, 0]
+        );
+
+        assert_eq!(
+            typed_chunk.wrong_key_stroke_count_of_ideal_key_stroke_index(&gen_candidate!(
+                gen_candidate_key_stroke!(["jo"])
+            )),
+            vec![3, 1]
+        );
+
+        assert_eq!(typed_chunk.wrong_key_stroke_positions(0), vec![0, 1, 3]);
+
+        assert_eq!(
+            typed_chunk.wrong_key_stroke_count_of_element_index(ChunkElementIndex::OnlyFirst),
+            0
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_of_element_index(ChunkElementIndex::OnlyFirst),
+            vec![]
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_stroke_count_of_element_index(ChunkElementIndex::DoubleFirst),
+            3
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_of_element_index(ChunkElementIndex::DoubleFirst),
+            vec![
+                ActualKeyStroke::new(Duration::new(1, 0), 'h'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(4, 0), 'j'.try_into().unwrap(), false),
+            ]
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_stroke_count_of_element_index(ChunkElementIndex::DoubleSecond),
+            1
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_of_element_index(ChunkElementIndex::DoubleSecond),
+            vec![ActualKeyStroke::new(
+                Duration::new(7, 0),
+                'x'.try_into().unwrap(),
+                false
+            ),]
+        );
+
+        assert_eq!(typed_chunk.wrong_spell_element_positions(0), vec![0, 1]);
+        assert_eq!(typed_chunk.wrong_spell_positions(0), vec![0, 1]);
+    }
+
+    #[test]
+    fn wrong_positions_of_not_double_splitted() {
+        let typed_chunk = gen_chunk_inflight!(
+            "じょ",
+            vec![gen_candidate!(gen_candidate_key_stroke!(["jo"])),],
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!(["zyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["zi", "xyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["jyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "lyo"])),
+                gen_candidate!(gen_candidate_key_stroke!(["ji", "xyo"])),
+            ],
+            gen_candidate!(gen_candidate_key_stroke!(["jo"])),
+            [
+                ActualKeyStroke::new(Duration::new(1, 0), 'j'.try_into().unwrap(), true),
+                ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(4, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(5, 0), 'o'.try_into().unwrap(), true)
+            ],
+            2,
+            []
+        );
+
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_for_correct_key_stroke_index(0),
+            vec![]
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_for_correct_key_stroke_index(1),
+            vec![
+                ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(4, 0), 'j'.try_into().unwrap(), false),
+            ]
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_for_correct_key_stroke_index(2),
+            vec![]
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_stroke_count_of_key_stroke_index(),
+            vec![0, 3]
+        );
+
+        assert_eq!(
+            typed_chunk.wrong_key_stroke_count_of_ideal_key_stroke_index(&gen_candidate!(
+                gen_candidate_key_stroke!(["jo"])
+            )),
+            vec![0, 3]
+        );
+
+        assert_eq!(typed_chunk.wrong_key_stroke_positions(0), vec![1]);
+
+        assert_eq!(
+            typed_chunk.wrong_key_stroke_count_of_element_index(ChunkElementIndex::OnlyFirst),
+            3
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_of_element_index(ChunkElementIndex::OnlyFirst),
+            vec![
+                ActualKeyStroke::new(Duration::new(2, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(3, 0), 'j'.try_into().unwrap(), false),
+                ActualKeyStroke::new(Duration::new(4, 0), 'j'.try_into().unwrap(), false),
+            ]
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_stroke_count_of_element_index(ChunkElementIndex::DoubleFirst),
+            0
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_of_element_index(ChunkElementIndex::DoubleFirst),
+            vec![]
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_stroke_count_of_element_index(ChunkElementIndex::DoubleSecond),
+            0
+        );
+        assert_eq!(
+            typed_chunk.wrong_key_strokes_of_element_index(ChunkElementIndex::DoubleSecond),
+            vec![]
+        );
+
+        assert_eq!(typed_chunk.wrong_spell_element_positions(0), vec![0]);
+        assert_eq!(typed_chunk.wrong_spell_positions(0), vec![0, 1]);
+    }
+}
