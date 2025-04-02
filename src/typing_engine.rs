@@ -242,14 +242,6 @@ impl TypingEngine {
                 &spell_lap_statistics_builder,
             );
 
-            equality_check_of_construct_display_info_and_event_base(
-                &spell_display_info,
-                &key_stroke_display_info,
-                processed_chunk_info,
-                &self.statistics_manager,
-                &lap_request,
-            );
-
             let view_position_of_spell = view_position_of_spell_for_vocabulary_infos(
                 self.vocabulary_infos.as_ref().unwrap(),
             );
@@ -310,21 +302,4 @@ impl Default for TypingEngine {
     fn default() -> Self {
         Self::new()
     }
-}
-
-fn equality_check_of_construct_display_info_and_event_base(
-    sdi: &SpellDisplayInfo,
-    kdi: &KeyStrokeDisplayInfo,
-    pci: &ProcessedChunkInfo,
-    statistics_manager: &StatisticsManager,
-    lap_request: &LapRequest,
-) {
-    let (spell_display_info_old, key_stroke_display_info_old) = pci.construct_display_info(
-        lap_request.clone(),
-        statistics_manager.key_stroke_statistics_counter(),
-        statistics_manager.ideal_key_stroke_statistics_counter(),
-        statistics_manager.spell_statistics_counter(),
-    );
-    assert_eq!(&spell_display_info_old, sdi);
-    assert_eq!(&key_stroke_display_info_old, kdi);
 }

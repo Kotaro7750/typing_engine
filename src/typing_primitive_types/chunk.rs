@@ -25,16 +25,6 @@ pub(crate) enum ChunkElementIndex {
     DoubleSecond,
 }
 
-impl ChunkElementIndex {
-    /// Returns the absolute index of this element for this chunk with passwd offset added.
-    pub(crate) fn into_absolute_index(self, offset: usize) -> usize {
-        match self {
-            Self::OnlyFirst | Self::DoubleFirst => offset,
-            Self::DoubleSecond => offset + 1,
-        }
-    }
-}
-
 impl From<ChunkSpellCursorPosition> for ChunkElementIndex {
     fn from(cursor_position: ChunkSpellCursorPosition) -> Self {
         match cursor_position {

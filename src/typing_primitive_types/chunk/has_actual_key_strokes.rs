@@ -1,6 +1,4 @@
-use std::collections::HashSet;
-
-use super::{Chunk, ChunkElementIndex, ChunkKeyStrokeCandidate, ChunkSpell};
+use super::{Chunk, ChunkElementIndex, ChunkKeyStrokeCandidate};
 use crate::{
     statistics::multi_target_position_convert::convert_between_key_stroke_delta,
     typing_primitive_types::key_stroke::ActualKeyStroke,
@@ -13,26 +11,6 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
     fn effective_candidate(&self) -> &ChunkKeyStrokeCandidate;
     /// Returns ideal key stroke candidate.
     fn ideal_key_stroke_candidate(&self) -> &ChunkKeyStrokeCandidate;
-
-    #[deprecated(note = "Use `wrong_key_strokes_of_key_stroke_index` instead")]
-    /// Returns all wrong ActualKeyStroke for typing passed key stroke index
-    fn wrong_key_strokes_for_correct_key_stroke_index(
-        &self,
-        key_stroke_index: usize,
-    ) -> Vec<ActualKeyStroke> {
-        let mut i = 0;
-        let mut wrong_key_strokes = vec![];
-
-        self.actual_key_strokes().iter().for_each(|key_stroke| {
-            if key_stroke.is_correct() {
-                i += 1;
-            } else if i == key_stroke_index {
-                wrong_key_strokes.push(key_stroke.clone());
-            }
-        });
-
-        wrong_key_strokes
-    }
 
     /// Returns all wrong ActualKeyStroke that belongs to passed key stroke index
     /// When key stroke at passed index is not confirmed, this method returns tentative wrong key
@@ -53,24 +31,6 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
         });
 
         wrong_key_strokes
-    }
-
-    #[deprecated(note = "Use `wrong_key_stroke_count_of_each_key_stroke_index` instead")]
-    /// Returns the count of wrong key strokes of each key stroke index.
-    fn wrong_key_stroke_count_of_key_stroke_index(&self) -> Vec<usize> {
-        let mut wrong_key_stroke_count = vec![];
-        let mut wrong_count = 0;
-
-        self.actual_key_strokes().iter().for_each(|key_stroke| {
-            if key_stroke.is_correct() {
-                wrong_key_stroke_count.push(wrong_count);
-                wrong_count = 0;
-            } else {
-                wrong_count += 1;
-            }
-        });
-
-        wrong_key_stroke_count
     }
 
     /// Returns the count of wrong key strokes of each key stroke index.
@@ -116,43 +76,6 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
         wrong_key_stroke_count
     }
 
-    #[deprecated(note = "Use `wrong_key_stroke_count_of_each_ideal_key_stroke_index` instead")]
-    /// Returns the count of wrong key strokes of the ideal key stroke index.
-    fn wrong_key_stroke_count_of_ideal_key_stroke_index(
-        &self,
-        ideal_candidate: &ChunkKeyStrokeCandidate,
-    ) -> Vec<usize> {
-        let mut wrong_ideal_key_stroke_count = vec![];
-
-        self.wrong_key_stroke_count_of_key_stroke_index()
-            .into_iter()
-            .enumerate()
-            .map(|(i, count)| {
-                let ideal_key_stroke_index = convert_between_key_stroke_delta(
-                    &self
-                        .effective_candidate()
-                        .construct_key_stroke_element_count(),
-                    &ideal_candidate.construct_key_stroke_element_count(),
-                    self.spell().count(),
-                    i + 1,
-                ) - 1;
-
-                (ideal_key_stroke_index, count)
-            })
-            .for_each(|(ideal_key_stroke_index, count)| {
-                if wrong_ideal_key_stroke_count
-                    .get(ideal_key_stroke_index)
-                    .is_none()
-                {
-                    wrong_ideal_key_stroke_count.push(0);
-                }
-
-                wrong_ideal_key_stroke_count[ideal_key_stroke_index] += count;
-            });
-
-        wrong_ideal_key_stroke_count
-    }
-
     /// Returns the count of wrong key strokes of the ideal key stroke index.
     /// This method only returns the count for confirmed or under typing key strokes.
     fn wrong_key_stroke_count_of_each_ideal_key_stroke_index_only_confirmed(
@@ -188,40 +111,6 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
             });
 
         wrong_ideal_key_stroke_count
-    }
-
-    /// Returns the position indexes of wrong key strokes of this chunk.
-    /// Basically indexes are relative inner the chunk, but offset can be used for adjusting absolute position.
-    fn wrong_key_stroke_positions(&self, offset: usize) -> Vec<usize> {
-        self.wrong_key_stroke_count_of_each_key_stroke_index()
-            .iter()
-            .enumerate()
-            .filter_map(
-                |(i, count)| {
-                    if *count > 0 {
-                        Some(i + offset)
-                    } else {
-                        None
-                    }
-                },
-            )
-            .collect()
-    }
-
-    #[deprecated(note = "Use `wrong_key_stroke_count_of_chunk_element_index` instead")]
-    /// Returns the count of wrong key strokes of the element index.
-    fn wrong_key_stroke_count_of_element_index(&self, element_index: ChunkElementIndex) -> usize {
-        self.wrong_key_stroke_count_of_key_stroke_index()
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| {
-                self.effective_candidate()
-                    .belonging_element_index_of_key_stroke(*i)
-                    .map_or(false, |index| index == element_index)
-            })
-            .map(|(_, count)| *count)
-            .reduce(|sum, count| sum + count)
-            .map_or(0, |count| count)
     }
 
     /// Returns the count of wrong key strokes that belongs to passed element index
@@ -268,58 +157,6 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
             });
 
         wrong_key_strokes
-    }
-
-    /// Returns the position indexes of wrong spell elements of this chunk.
-    /// Basically indexes are relative inner the chunk, but offset can be used for adjusting absolute position.
-    fn wrong_spell_element_positions(&self, offset: usize) -> Vec<usize> {
-        let mut positions_set = self
-            .wrong_key_stroke_positions(0)
-            .iter()
-            .filter_map(|key_stroke_index| {
-                self.effective_candidate()
-                    .belonging_element_index_of_key_stroke(*key_stroke_index)
-            })
-            .map(|element_index| element_index.into_absolute_index(offset))
-            .collect::<HashSet<usize>>()
-            .into_iter()
-            .collect::<Vec<usize>>();
-
-        positions_set.sort();
-        positions_set
-    }
-
-    /// Returns the position indexes of wrong spell of this chunk.
-    /// Basically indexes are relative inner the chunk, but offset can be used for adjusting absolute position.
-    fn wrong_spell_positions(&self, offset: usize) -> Vec<usize> {
-        let wrong_spell_element_positions = self.wrong_spell_element_positions(0);
-
-        match wrong_spell_element_positions.len() {
-            0 => vec![],
-            1 => match self.spell() {
-                ChunkSpell::DoubleChar(_) => {
-                    if self.effective_candidate().key_stroke().is_double_splitted() {
-                        vec![wrong_spell_element_positions.first().unwrap() + offset]
-                    } else {
-                        assert_eq!(wrong_spell_element_positions, vec![0]);
-                        vec![offset, offset + 1]
-                    }
-                }
-                _ => {
-                    assert_eq!(wrong_spell_element_positions, vec![0]);
-                    vec![offset]
-                }
-            },
-            2 => {
-                assert_eq!(wrong_spell_element_positions, vec![0, 1]);
-                assert!(self.effective_candidate().key_stroke().is_double_splitted());
-
-                vec![offset, offset + 1]
-            }
-            _ => {
-                unreachable!()
-            }
-        }
     }
 
     /// 打たれたキーストロークのそれぞれの位置は綴り末尾かどうか
@@ -411,8 +248,6 @@ mod test {
             vec![]
         );
 
-        assert_eq!(typed_chunk.wrong_key_stroke_positions(0), vec![0]);
-
         assert_eq!(
             typed_chunk.wrong_key_stroke_count_of_chunk_element_index(ChunkElementIndex::OnlyFirst),
             1
@@ -443,9 +278,6 @@ mod test {
             typed_chunk.wrong_key_strokes_of_chunk_element_index(ChunkElementIndex::DoubleSecond),
             vec![]
         );
-
-        assert_eq!(typed_chunk.wrong_spell_element_positions(0), vec![0]);
-        assert_eq!(typed_chunk.wrong_spell_positions(0), vec![0]);
     }
 
     #[test]
@@ -519,8 +351,6 @@ mod test {
             vec![3, 1]
         );
 
-        assert_eq!(typed_chunk.wrong_key_stroke_positions(0), vec![0, 1, 3]);
-
         assert_eq!(
             typed_chunk.wrong_key_stroke_count_of_chunk_element_index(ChunkElementIndex::OnlyFirst),
             0
@@ -555,9 +385,6 @@ mod test {
                 false
             ),]
         );
-
-        assert_eq!(typed_chunk.wrong_spell_element_positions(0), vec![0, 1]);
-        assert_eq!(typed_chunk.wrong_spell_positions(0), vec![0, 1]);
     }
 
     #[test]
@@ -611,8 +438,6 @@ mod test {
             vec![0, 3]
         );
 
-        assert_eq!(typed_chunk.wrong_key_stroke_positions(0), vec![1]);
-
         assert_eq!(
             typed_chunk.wrong_key_stroke_count_of_chunk_element_index(ChunkElementIndex::OnlyFirst),
             3
@@ -643,8 +468,5 @@ mod test {
             typed_chunk.wrong_key_strokes_of_chunk_element_index(ChunkElementIndex::DoubleSecond),
             vec![]
         );
-
-        assert_eq!(typed_chunk.wrong_spell_element_positions(0), vec![0]);
-        assert_eq!(typed_chunk.wrong_spell_positions(0), vec![0, 1]);
     }
 }

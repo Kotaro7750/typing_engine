@@ -88,14 +88,6 @@ impl ChunkInflight {
         }
     }
 
-    /// Returns the count of wrong key strokes in pending key strokes.
-    pub(crate) fn wrong_key_stroke_count_in_pending_key_strokes(&self) -> usize {
-        self.pending_key_strokes()
-            .iter()
-            .filter(|actual_key_stroke| !actual_key_stroke.is_correct())
-            .count()
-    }
-
     /// Returns wrong key strokes in pending key strokes.
     pub(crate) fn wrong_key_strokes_in_pending_key_strokes(&self) -> Vec<ActualKeyStroke> {
         self.pending_key_strokes()
@@ -103,11 +95,6 @@ impl ChunkInflight {
             .filter(|actual_key_stroke| !actual_key_stroke.is_correct())
             .cloned()
             .collect()
-    }
-
-    /// Returns the count of remaining key strokes of passed candidate.
-    pub(crate) fn remaining_key_stroke_count(&self, candidate: &ChunkKeyStrokeCandidate) -> usize {
-        candidate.calc_key_stroke_count() - self.key_stroke_cursor_position()
     }
 
     /// Returns remaining key stroke chars of passed candidate.
@@ -122,12 +109,6 @@ impl ChunkInflight {
             .into_iter()
             .skip(self.key_stroke_cursor_position())
             .collect()
-    }
-
-    /// Returns the count of wrong key strokes for current typing key stroke.
-    pub(crate) fn wrong_key_stroke_count_of_current_key_stroke(&self) -> usize {
-        self.wrong_key_strokes_of_key_stroke_index(self.key_stroke_cursor_position())
-            .len()
     }
 
     /// Returns wrong key strokes of current key stroke.
@@ -472,15 +453,6 @@ pub(crate) enum ChunkSpellCursorPosition {
 }
 
 impl ChunkSpellCursorPosition {
-    /// Returns the absolute cursor position of the spell for this chunk with passed offset added.
-    pub(crate) fn into_absolute_cursor_position(self, offset: usize) -> Vec<usize> {
-        match self {
-            Self::Single | Self::DoubleFirst => vec![offset],
-            Self::DoubleSecond => vec![offset + 1],
-            Self::DoubleCombined => vec![offset, offset + 1],
-        }
-    }
-
     /// Returns if the cursor count is double.
     pub(crate) fn is_cursor_count_double(&self) -> bool {
         matches!(self, Self::DoubleCombined)
