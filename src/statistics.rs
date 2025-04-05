@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 pub(crate) mod lap_statistics;
 pub(crate) mod multi_target_position_convert;
 pub(crate) mod result;
+pub(crate) mod skill_statistics;
 pub(crate) mod statistical_event;
 pub(crate) mod statistics_counter;
 
