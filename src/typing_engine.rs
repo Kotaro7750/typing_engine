@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::fmt::Display;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use crate::display_info::{DisplayInfo, KeyStrokeDisplayInfo, SpellDisplayInfo, ViewDisplayInfo};
 use crate::query::QueryRequest;
@@ -179,14 +179,28 @@ impl TypingEngine {
     /// this method returns error.
     pub fn stroke_key(&mut self, key_stroke: KeyStrokeChar) -> Result<bool, TypingEngineError> {
         if self.is_started() {
+            let elapsed_time = self.start_time.as_ref().unwrap().elapsed();
+            self.stroke_key_with_elapsed_time(key_stroke, elapsed_time)
+        } else {
+            Err(TypingEngineError::new(TypingEngineErrorKind::MustBeStarted))
+        }
+    }
+
+    /// Give a key stroke to [`TypingEngine`] with a specified elapsed time.
+    ///
+    /// This method is similar to [`stroke_key`](Self::stroke_key), but it allows specifying the elapsed time.
+    pub fn stroke_key_with_elapsed_time(
+        &mut self,
+        key_stroke: KeyStrokeChar,
+        elapsed_time: Duration,
+    ) -> Result<bool, TypingEngineError> {
+        if self.is_started() {
             let pci = self.processed_chunk_info.as_mut().unwrap();
             if pci.is_finished() {
                 return Err(TypingEngineError::new(
                     TypingEngineErrorKind::AlreadyFinished,
                 ));
             }
-
-            let elapsed_time = self.start_time.as_ref().unwrap().elapsed();
 
             let (_, statistical_events) = pci.stroke_key(key_stroke, elapsed_time);
             statistical_events.iter().for_each(|statistical_event| {
