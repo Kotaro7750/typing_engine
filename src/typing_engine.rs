@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 
 use crate::display_info::{DisplayInfo, KeyStrokeDisplayInfo, SpellDisplayInfo, ViewDisplayInfo};
 use crate::query::QueryRequest;
-use crate::statistics::result::{construct_result, TypingResultStatistics};
+use crate::statistics::result::{construct_result, TypingResult, TypingResultStatistics};
 use crate::statistics::{DisplayStringBuilder, LapRequest, StatisticsManager};
 use crate::typing_engine::processed_chunk_info::ProcessedChunkInfo;
 use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
@@ -282,6 +282,7 @@ impl TypingEngine {
         }
     }
 
+    #[deprecated(note = "Use TypingEngine::construct_result() instead.")]
     pub fn construst_result_statistics(
         &self,
         lap_request: LapRequest,
@@ -295,6 +296,28 @@ impl TypingEngine {
 
             if self.processed_chunk_info.as_ref().unwrap().is_finished() {
                 Ok(construct_result(confirmed_chunks, lap_request))
+            } else {
+                Err(TypingEngineError::new(TypingEngineErrorKind::NotFinished))
+            }
+        } else {
+            Err(TypingEngineError::new(TypingEngineErrorKind::MustBeStarted))
+        }
+    }
+
+    /// Construct [`TypingResult`](TypingResult).
+    /// This method must be called when typing is finished.
+    pub fn construct_result(
+        &self,
+        #[allow(unused)] lap_request: LapRequest,
+    ) -> Result<TypingResult, TypingEngineError> {
+        if self.is_started() {
+            let processed_chunk_info = self.processed_chunk_info.as_ref().unwrap();
+
+            if processed_chunk_info.is_finished() {
+                Ok(TypingResult::new(
+                    processed_chunk_info.last_key_stroke_elapsed_time().unwrap(),
+                    self.statistics_manager.construct_typing_result_summary(),
+                ))
             } else {
                 Err(TypingEngineError::new(TypingEngineErrorKind::NotFinished))
             }

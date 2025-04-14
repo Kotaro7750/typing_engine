@@ -1,5 +1,6 @@
 use std::{num::NonZeroUsize, time::Duration};
 
+use result::TypingResultSummary;
 use serde::{Deserialize, Serialize};
 
 pub(crate) mod lap_statistics;
@@ -456,6 +457,17 @@ impl StatisticsManager {
                 );
             }
         }
+    }
+
+    /// Construct [`TypingResultSummary`](TypingResultSummary) from holding information.
+    /// This method assume that typing is done and updating statistics is all done
+    pub(crate) fn construct_typing_result_summary(&self) -> TypingResultSummary {
+        TypingResultSummary::new(
+            (&self.key_stroke).into(),
+            (&self.ideal_key_stroke).into(),
+            (&self.spell).into(),
+            (&self.chunk).into(),
+        )
     }
 }
 

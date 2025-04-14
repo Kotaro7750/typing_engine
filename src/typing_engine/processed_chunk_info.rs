@@ -454,6 +454,22 @@ impl ProcessedChunkInfo {
             ideal_key_stroke_lap_statistics_builder,
         )
     }
+
+    /// Returns the elapsed time of the last key stroke
+    /// This return `None` if there is no key stroke.
+    pub(crate) fn last_key_stroke_elapsed_time(&self) -> Option<Duration> {
+        if let Some(inflight_chunk) = self.inflight_chunk.as_ref() {
+            if let Some(last_key_stroke_in_pending) = inflight_chunk.pending_key_strokes().last() {
+                Some(*last_key_stroke_in_pending.elapsed_time())
+            } else {
+                inflight_chunk.last_key_stroke_elapsed_time()
+            }
+        } else if let Some(last_confirmed_chunk) = self.confirmed_chunks.last() {
+            last_confirmed_chunk.last_key_stroke_elapsed_time()
+        } else {
+            None
+        }
+    }
 }
 
 /// Update `LapStatisticsBuilder` using `ChunkHasActualKeyStrokes`.

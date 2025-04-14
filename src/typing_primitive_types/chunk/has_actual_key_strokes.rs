@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use super::{Chunk, ChunkElementIndex, ChunkKeyStrokeCandidate};
 use crate::{
     statistics::multi_target_position_convert::convert_between_key_stroke_delta,
@@ -198,6 +200,14 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
         } else {
             self.spell().count()
         }
+    }
+
+    /// Returns the elapsed time of the last key stroke.
+    /// If there are no key strokes, returns None.
+    fn last_key_stroke_elapsed_time(&self) -> Option<Duration> {
+        self.actual_key_strokes()
+            .last()
+            .map(|key_stroke| *key_stroke.elapsed_time())
     }
 }
 

@@ -169,17 +169,72 @@ fn construct_result_output_correct_result() {
         .stroke_key_with_elapsed_time('a'.try_into().unwrap(), Duration::from_millis(100))
         .unwrap();
 
+    let lap_request = LapRequest::Spell(NonZeroUsize::new(3).unwrap());
+    let result_deprecated = engine
+        .construst_result_statistics(lap_request.clone())
+        .expect("Failed to get result");
     let result = engine
-        .construst_result_statistics(LapRequest::Spell(NonZeroUsize::new(3).unwrap()))
+        .construct_result(lap_request)
         .expect("Failed to get result");
 
-    assert_eq!(result.key_stroke().whole_count(), 1);
-    assert_eq!(result.key_stroke().completely_correct_count(), 1);
-    assert_eq!(result.key_stroke().missed_count(), 0);
+    // Assertion for construst_result_statistics()
+    assert_eq!(result_deprecated.key_stroke().whole_count(), 1);
+    assert_eq!(result_deprecated.key_stroke().completely_correct_count(), 1);
+    assert_eq!(result_deprecated.key_stroke().missed_count(), 0);
 
-    assert_eq!(result.ideal_key_stroke().whole_count(), 1);
-    assert_eq!(result.ideal_key_stroke().completely_correct_count(), 1);
-    assert_eq!(result.ideal_key_stroke().missed_count(), 0);
+    assert_eq!(result_deprecated.ideal_key_stroke().whole_count(), 1);
+    assert_eq!(
+        result_deprecated
+            .ideal_key_stroke()
+            .completely_correct_count(),
+        1
+    );
+    assert_eq!(result_deprecated.ideal_key_stroke().missed_count(), 0);
 
-    assert_eq!(result.total_time(), std::time::Duration::from_millis(100));
+    assert_eq!(
+        result_deprecated.total_time(),
+        std::time::Duration::from_millis(100)
+    );
+
+    // Assertion for construct_result()
+    assert_eq!(
+        result_deprecated.key_stroke().whole_count(),
+        result.summary().key_stroke().whole_count()
+    );
+    assert_eq!(
+        result_deprecated.key_stroke().completely_correct_count(),
+        result.summary().key_stroke().completely_correct_count()
+    );
+    assert_eq!(
+        result_deprecated.key_stroke().missed_count(),
+        result.summary().key_stroke().wrong_count()
+    );
+
+    assert_eq!(
+        result_deprecated.ideal_key_stroke().whole_count(),
+        result.summary().ideal_key_stroke().whole_count()
+    );
+    assert_eq!(
+        result_deprecated
+            .ideal_key_stroke()
+            .completely_correct_count(),
+        result
+            .summary()
+            .ideal_key_stroke()
+            .completely_correct_count()
+    );
+    assert_eq!(
+        result_deprecated.ideal_key_stroke().missed_count(),
+        result.summary().ideal_key_stroke().wrong_count()
+    );
+
+    assert_eq!(result.summary().spell().whole_count(), 1);
+    assert_eq!(result.summary().spell().completely_correct_count(), 1);
+    assert_eq!(result.summary().spell().wrong_count(), 0);
+
+    assert_eq!(result.summary().chunk().whole_count(), 1);
+    assert_eq!(result.summary().chunk().completely_correct_count(), 1);
+    assert_eq!(result.summary().chunk().wrong_count(), 0);
+
+    assert_eq!(result_deprecated.total_time(), result.total_time());
 }
