@@ -199,65 +199,25 @@ fn construct_result_output_correct_result() {
     let engine = init_engine_and_finish_typing();
 
     let lap_request = LapRequest::Spell(NonZeroUsize::new(3).unwrap());
-    let result_deprecated = engine
-        .construst_result_statistics(lap_request.clone())
-        .expect("Failed to get result");
     let result = engine
         .construct_result(lap_request)
         .expect("Failed to get result");
 
-    // Assertion for construst_result_statistics()
-    assert_eq!(result_deprecated.key_stroke().whole_count(), 1);
-    assert_eq!(result_deprecated.key_stroke().completely_correct_count(), 1);
-    assert_eq!(result_deprecated.key_stroke().missed_count(), 0);
+    assert_eq!(result.summary().key_stroke().whole_count(), 1);
+    assert_eq!(result.summary().key_stroke().finished_count(), 1);
+    assert_eq!(result.summary().key_stroke().completely_correct_count(), 1);
+    assert_eq!(result.summary().key_stroke().wrong_count(), 0);
 
-    assert_eq!(result_deprecated.ideal_key_stroke().whole_count(), 1);
+    assert_eq!(result.summary().ideal_key_stroke().whole_count(), 1);
+    assert_eq!(result.summary().ideal_key_stroke().finished_count(), 1);
     assert_eq!(
-        result_deprecated
+        result
+            .summary()
             .ideal_key_stroke()
             .completely_correct_count(),
         1
     );
-    assert_eq!(result_deprecated.ideal_key_stroke().missed_count(), 0);
-
-    assert_eq!(
-        result_deprecated.total_time(),
-        std::time::Duration::from_millis(100)
-    );
-
-    // Assertion for construct_result()
-    assert_eq!(
-        result_deprecated.key_stroke().whole_count(),
-        result.summary().key_stroke().whole_count()
-    );
-    assert_eq!(result.summary().key_stroke().finished_count(), 1);
-    assert_eq!(
-        result_deprecated.key_stroke().completely_correct_count(),
-        result.summary().key_stroke().completely_correct_count()
-    );
-    assert_eq!(
-        result_deprecated.key_stroke().missed_count(),
-        result.summary().key_stroke().wrong_count()
-    );
-
-    assert_eq!(
-        result_deprecated.ideal_key_stroke().whole_count(),
-        result.summary().ideal_key_stroke().whole_count()
-    );
-    assert_eq!(result.summary().ideal_key_stroke().finished_count(), 1);
-    assert_eq!(
-        result_deprecated
-            .ideal_key_stroke()
-            .completely_correct_count(),
-        result
-            .summary()
-            .ideal_key_stroke()
-            .completely_correct_count()
-    );
-    assert_eq!(
-        result_deprecated.ideal_key_stroke().missed_count(),
-        result.summary().ideal_key_stroke().wrong_count()
-    );
+    assert_eq!(result.summary().ideal_key_stroke().wrong_count(), 0);
 
     assert_eq!(result.summary().spell().whole_count(), 1);
     assert_eq!(result.summary().spell().finished_count(), 1);
@@ -269,5 +229,5 @@ fn construct_result_output_correct_result() {
     assert_eq!(result.summary().chunk().completely_correct_count(), 1);
     assert_eq!(result.summary().chunk().wrong_count(), 0);
 
-    assert_eq!(result_deprecated.total_time(), result.total_time());
+    assert_eq!(result.total_time(), std::time::Duration::from_millis(100));
 }

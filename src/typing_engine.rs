@@ -6,7 +6,7 @@ use crate::display_info::{
     DisplayInfo, IdealKeyStrokeDisplayInfo, KeyStrokeDisplayInfo, SpellDisplayInfo, ViewDisplayInfo,
 };
 use crate::query::QueryRequest;
-use crate::statistics::result::{construct_result, TypingResult, TypingResultStatistics};
+use crate::statistics::result::TypingResult;
 use crate::statistics::{DisplayStringBuilder, LapRequest, StatisticsManager};
 use crate::typing_engine::processed_chunk_info::ProcessedChunkInfo;
 use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
@@ -292,28 +292,6 @@ impl TypingEngine {
                 ideal_key_stroke_display_info,
                 lap_info,
             ))
-        } else {
-            Err(TypingEngineError::new(TypingEngineErrorKind::MustBeStarted))
-        }
-    }
-
-    #[deprecated(note = "Use TypingEngine::construct_result() instead.")]
-    pub fn construst_result_statistics(
-        &self,
-        lap_request: LapRequest,
-    ) -> Result<TypingResultStatistics, TypingEngineError> {
-        if self.is_started() {
-            let confirmed_chunks = self
-                .processed_chunk_info
-                .as_ref()
-                .unwrap()
-                .confirmed_chunks();
-
-            if self.processed_chunk_info.as_ref().unwrap().is_finished() {
-                Ok(construct_result(confirmed_chunks, lap_request))
-            } else {
-                Err(TypingEngineError::new(TypingEngineErrorKind::NotFinished))
-            }
         } else {
             Err(TypingEngineError::new(TypingEngineErrorKind::MustBeStarted))
         }

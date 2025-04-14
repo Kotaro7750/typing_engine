@@ -191,17 +191,6 @@ pub(crate) trait ChunkHasActualKeyStrokes: Chunk {
         spell_end_vector
     }
 
-    /// キーストロークが何個の綴りに対するものなのか
-    /// 基本的には1だが複数文字の綴りをまとめて打つ場合には2となる
-    fn effective_spell_count(&self) -> usize {
-        // 複数文字の綴りをまとめて打つ場合には綴りの統計は2文字分カウントする必要がある
-        if self.effective_candidate().key_stroke().is_double_splitted() {
-            1
-        } else {
-            self.spell().count()
-        }
-    }
-
     /// Returns the elapsed time of the last key stroke.
     /// If there are no key strokes, returns None.
     fn last_key_stroke_elapsed_time(&self) -> Option<Duration> {
