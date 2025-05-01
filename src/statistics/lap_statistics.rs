@@ -44,7 +44,7 @@ impl PrimitiveLapStatisticsBuilder {
     }
 
     /// Get count of whole targets.
-    pub(crate) fn whole_count(&self) -> usize {
+    pub(self) fn whole_count(&self) -> usize {
         self.whole_count
     }
 
@@ -325,5 +325,202 @@ impl LapStatiticsBuilder {
             self.spell,
             self.chunk,
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::num::NonZeroUsize;
+
+    use crate::typing_primitive_types::chunk::key_stroke_candidate::KeyStrokeElementCount;
+
+    use super::*;
+
+    #[test]
+    fn only_requested_entity_has_lap_end_when_chunk_is_requested() {
+        let lap_statistics =
+            LapStatiticsBuilder::new(LapRequest::Chunk(NonZeroUsize::new(5).unwrap()));
+
+        let (ks, iks, s, c) = lap_statistics.emit();
+
+        assert_eq!(ks.lap_end_time(), None);
+        assert_eq!(iks.lap_end_time(), None);
+        assert_eq!(s.lap_end_time(), None);
+        assert_eq!(c.lap_end_time(), Some(&vec![]));
+    }
+
+    #[test]
+    fn only_requested_entity_has_lap_end_when_spell_is_requested() {
+        let lap_statistics =
+            LapStatiticsBuilder::new(LapRequest::Spell(NonZeroUsize::new(5).unwrap()));
+
+        let (ks, iks, s, c) = lap_statistics.emit();
+
+        assert_eq!(ks.lap_end_time(), None);
+        assert_eq!(iks.lap_end_time(), None);
+        assert_eq!(s.lap_end_time(), Some(&vec![]));
+        assert_eq!(c.lap_end_time(), None);
+    }
+
+    #[test]
+    fn only_requested_entity_has_lap_end_when_ideal_key_stroke_is_requested() {
+        let lap_statistics =
+            LapStatiticsBuilder::new(LapRequest::IdealKeyStroke(NonZeroUsize::new(5).unwrap()));
+
+        let (ks, iks, s, c) = lap_statistics.emit();
+
+        assert_eq!(ks.lap_end_time(), None);
+        assert_eq!(iks.lap_end_time(), Some(&vec![]));
+        assert_eq!(s.lap_end_time(), None);
+        assert_eq!(c.lap_end_time(), None);
+    }
+
+    #[test]
+    fn only_requested_entity_has_lap_end_when_key_stroke_is_requested() {
+        let lap_statistics =
+            LapStatiticsBuilder::new(LapRequest::KeyStroke(NonZeroUsize::new(5).unwrap()));
+
+        let (ks, iks, s, c) = lap_statistics.emit();
+
+        assert_eq!(ks.lap_end_time(), Some(&vec![]));
+        assert_eq!(iks.lap_end_time(), None);
+        assert_eq!(s.lap_end_time(), None);
+        assert_eq!(c.lap_end_time(), None);
+    }
+
+    #[test]
+    fn lap_end_is_converted_correctly_when_chunk_is_requested() {
+        let mut lap_statistics =
+            LapStatiticsBuilder::new(LapRequest::Chunk(NonZeroUsize::new(2).unwrap()));
+
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2, 3]),
+            KeyStrokeElementCount::new(&[3]),
+            2,
+        );
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2]),
+            KeyStrokeElementCount::new(&[2]),
+            1,
+        );
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2, 3]),
+            KeyStrokeElementCount::new(&[3]),
+            2,
+        );
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2, 3]),
+            KeyStrokeElementCount::new(&[3]),
+            2,
+        );
+
+        let (ks, iks, s, c) = lap_statistics.emit();
+
+        assert_eq!(ks.lap_end_positions(), &vec![6, 16]);
+        assert_eq!(iks.lap_end_positions(), &vec![4, 10]);
+        assert_eq!(s.lap_end_positions(), &vec![2, 6]);
+        assert_eq!(c.lap_end_positions(), &vec![1, 3]);
+    }
+
+    #[test]
+    fn lap_end_is_converted_correctly_when_spell_is_requested() {
+        let mut lap_statistics =
+            LapStatiticsBuilder::new(LapRequest::Spell(NonZeroUsize::new(2).unwrap()));
+
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2, 3]),
+            KeyStrokeElementCount::new(&[3]),
+            2,
+        );
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2]),
+            KeyStrokeElementCount::new(&[2]),
+            1,
+        );
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2, 3]),
+            KeyStrokeElementCount::new(&[3]),
+            2,
+        );
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2, 3]),
+            KeyStrokeElementCount::new(&[3]),
+            2,
+        );
+
+        let (ks, iks, s, c) = lap_statistics.emit();
+
+        assert_eq!(ks.lap_end_positions(), &vec![4, 8, 13]);
+        assert_eq!(iks.lap_end_positions(), &vec![2, 5, 8]);
+        assert_eq!(s.lap_end_positions(), &vec![1, 3, 5]);
+        assert_eq!(c.lap_end_positions(), &vec![0, 2, 3]);
+    }
+
+    #[test]
+    fn lap_end_is_converted_correctly_when_ideal_key_stroke_is_requested() {
+        let mut lap_statistics =
+            LapStatiticsBuilder::new(LapRequest::IdealKeyStroke(NonZeroUsize::new(3).unwrap()));
+
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2, 3]),
+            KeyStrokeElementCount::new(&[3]),
+            2,
+        );
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2]),
+            KeyStrokeElementCount::new(&[2]),
+            1,
+        );
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2, 3]),
+            KeyStrokeElementCount::new(&[3]),
+            2,
+        );
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2, 3]),
+            KeyStrokeElementCount::new(&[3]),
+            2,
+        );
+
+        let (ks, iks, s, c) = lap_statistics.emit();
+
+        assert_eq!(ks.lap_end_positions(), &vec![4, 8, 13]);
+        assert_eq!(iks.lap_end_positions(), &vec![2, 5, 8]);
+        assert_eq!(s.lap_end_positions(), &vec![1, 3, 5]);
+        assert_eq!(c.lap_end_positions(), &vec![0, 2, 3]);
+    }
+
+    #[test]
+    fn lap_end_is_converted_correctly_when_key_stroke_is_requested() {
+        let mut lap_statistics =
+            LapStatiticsBuilder::new(LapRequest::KeyStroke(NonZeroUsize::new(5).unwrap()));
+
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2, 3]),
+            KeyStrokeElementCount::new(&[3]),
+            2,
+        );
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2]),
+            KeyStrokeElementCount::new(&[2]),
+            1,
+        );
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2, 3]),
+            KeyStrokeElementCount::new(&[3]),
+            2,
+        );
+        lap_statistics.on_add_chunk(
+            KeyStrokeElementCount::new(&[2, 3]),
+            KeyStrokeElementCount::new(&[3]),
+            2,
+        );
+
+        let (ks, iks, s, c) = lap_statistics.emit();
+
+        assert_eq!(ks.lap_end_positions(), &vec![4, 9, 14]);
+        assert_eq!(iks.lap_end_positions(), &vec![2, 6, 9]);
+        assert_eq!(s.lap_end_positions(), &vec![1, 4, 6]);
+        assert_eq!(c.lap_end_positions(), &vec![0, 2, 3]);
     }
 }
