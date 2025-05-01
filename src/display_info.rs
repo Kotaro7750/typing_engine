@@ -51,7 +51,7 @@ impl DisplayInfo {
 pub struct ViewDisplayInfo {
     view: String,
     current_cursor_positions: Vec<usize>,
-    missed_positions: Vec<usize>,
+    wrong_positions: Vec<usize>,
     last_position: usize,
 }
 
@@ -67,8 +67,8 @@ impl ViewDisplayInfo {
                 &spell_display_info.current_cursor_positions,
                 &view_position_of_spell,
             ),
-            missed_positions: corresponding_view_positions_for_spell(
-                &spell_display_info.missed_positions,
+            wrong_positions: corresponding_view_positions_for_spell(
+                &spell_display_info.wrong_positions,
                 &view_position_of_spell,
             ),
             last_position: view_position_of_spell[spell_display_info.last_position].last_position(),
@@ -92,10 +92,19 @@ impl ViewDisplayInfo {
 
     /// Index of character which is not correctly typed.
     ///
+    /// ex. When query string is `シュート`, and given key stroke was `s` -> `a(wrong type)` -> `y` -> `u` ->
+    /// `-`, this function returns `[0,1]`.
+    pub fn wrong_positions(&self) -> &Vec<usize> {
+        &self.wrong_positions
+    }
+
+    /// Index of character which is not correctly typed.
+    ///
     /// ex. When query string is `シュート`, and given key stroke was `s` -> `a(miss type)` -> `y` -> `u` ->
     /// `-`, this function returns `[0,1]`.
+    #[deprecated(note = "Use wrong_positions() instead")]
     pub fn missed_positions(&self) -> &Vec<usize> {
-        &self.missed_positions
+        self.wrong_positions()
     }
 
     /// Index of last view string to be typed.
@@ -113,7 +122,7 @@ pub struct SpellDisplayInfo {
     // 現在のカーソル位置
     // 複数文字をまとめて入力する場合もあるため複数持てるようにしている
     current_cursor_positions: Vec<usize>,
-    missed_positions: Vec<usize>,
+    wrong_positions: Vec<usize>,
     // タイプすべき最後のチャンクの綴りの末尾の位置
     // クエリをタイプ数で指定する場合には語彙の途中のチャンクで切れている可能性がある
     last_position: usize,
@@ -124,14 +133,14 @@ impl SpellDisplayInfo {
     pub(crate) fn new(
         spell: String,
         current_cursor_positions: Vec<usize>,
-        missed_positions: Vec<usize>,
+        wrong_positions: Vec<usize>,
         last_position: usize,
         on_typing_statistics: OnTypingStatisticsTarget,
     ) -> Self {
         Self {
             spell,
             current_cursor_positions,
-            missed_positions,
+            wrong_positions,
             last_position,
             on_typing_statistics,
         }
@@ -175,10 +184,19 @@ impl SpellDisplayInfo {
 
     /// Index of spell which is not correctly typed.
     ///
+    /// ex. When query string is `巨大` ( spell is `きょだい` ), and given key stroke was `k` -> `a(wrong type)` -> `y` -> `o` ->
+    /// `d`, this function returns `[0,1]`.
+    pub fn wrong_positions(&self) -> &Vec<usize> {
+        &self.wrong_positions
+    }
+
+    /// Index of spell which is not correctly typed.
+    ///
     /// ex. When query string is `巨大` ( spell is `きょだい` ), and given key stroke was `k` -> `a(miss type)` -> `y` -> `o` ->
     /// `d`, this function returns `[0,1]`.
+    #[deprecated(note = "Use wrong_positions() instead")]
     pub fn missed_positions(&self) -> &Vec<usize> {
-        &self.missed_positions
+        self.wrong_positions()
     }
 
     /// Index of last spell to be typed.
@@ -194,7 +212,7 @@ impl SpellDisplayInfo {
 pub struct KeyStrokeDisplayInfo {
     key_stroke: String,
     current_cursor_position: usize,
-    missed_positions: Vec<usize>,
+    wrong_positions: Vec<usize>,
     on_typing_statistics: OnTypingStatisticsTarget,
     on_typing_statistics_ideal: OnTypingStatisticsTarget,
 }
@@ -203,14 +221,14 @@ impl KeyStrokeDisplayInfo {
     pub(crate) fn new(
         key_stroke: String,
         current_cursor_position: usize,
-        missed_positions: Vec<usize>,
+        wrong_positions: Vec<usize>,
         on_typing_statistics: OnTypingStatisticsTarget,
         on_typing_statistics_ideal: OnTypingStatisticsTarget,
     ) -> Self {
         Self {
             key_stroke,
             current_cursor_position,
-            missed_positions,
+            wrong_positions,
             on_typing_statistics,
             on_typing_statistics_ideal,
         }
@@ -249,8 +267,14 @@ impl KeyStrokeDisplayInfo {
     }
 
     /// Index of key stroke which is not correctly typed.
+    pub fn wrong_positions(&self) -> &Vec<usize> {
+        &self.wrong_positions
+    }
+
+    /// Index of key stroke which is not correctly typed.
+    #[deprecated(note = "Use wrong_positions() instead")]
     pub fn missed_positions(&self) -> &Vec<usize> {
-        &self.missed_positions
+        self.wrong_positions()
     }
 
     pub fn on_typing_statistics(&self) -> &OnTypingStatisticsTarget {

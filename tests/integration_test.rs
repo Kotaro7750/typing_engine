@@ -76,7 +76,7 @@ fn construct_display_info_output_correct_display_string() {
         display_info.view_info().current_cursor_positions(),
         &vec![5]
     );
-    assert_eq!(display_info.view_info().missed_positions(), &vec![2, 3, 5]);
+    assert_eq!(display_info.view_info().wrong_positions(), &vec![2, 3, 5]);
     assert_eq!(display_info.view_info().last_position(), 5);
     // Assertion for spell
     assert_eq!(display_info.spell_info().spell(), "ぴょぴょんきち");
@@ -85,12 +85,12 @@ fn construct_display_info_output_correct_display_string() {
         display_info.spell_info().current_cursor_positions(),
         &vec![5]
     );
-    assert_eq!(display_info.view_info().missed_positions(), &vec![2, 3, 5]);
+    assert_eq!(display_info.view_info().wrong_positions(), &vec![2, 3, 5]);
     // Assertion for key stroke
     assert_eq!(display_info.key_stroke_info().key_stroke(), "pixyopyonkiti");
     assert_eq!(display_info.key_stroke_info().current_cursor_position(), 9);
     assert_eq!(
-        display_info.key_stroke_info().missed_positions(),
+        display_info.key_stroke_info().wrong_positions(),
         &vec![6, 9]
     );
 }
@@ -128,7 +128,7 @@ fn construct_display_info_when_finished_output_correct_display_string() {
         display_info.view_info().current_cursor_positions(),
         &vec![0]
     );
-    assert_eq!(display_info.view_info().missed_positions(), &vec![]);
+    assert_eq!(display_info.view_info().wrong_positions(), &vec![]);
     assert_eq!(display_info.view_info().last_position(), 0);
     // Assertion for spell
     assert_eq!(display_info.spell_info().spell(), "あ");
@@ -137,11 +137,11 @@ fn construct_display_info_when_finished_output_correct_display_string() {
         display_info.spell_info().current_cursor_positions(),
         &vec![1]
     );
-    assert_eq!(display_info.view_info().missed_positions(), &vec![]);
+    assert_eq!(display_info.view_info().wrong_positions(), &vec![]);
     // Assertion for key stroke
     assert_eq!(display_info.key_stroke_info().key_stroke(), "a");
     assert_eq!(display_info.key_stroke_info().current_cursor_position(), 1);
-    assert_eq!(display_info.key_stroke_info().missed_positions(), &vec![]);
+    assert_eq!(display_info.key_stroke_info().wrong_positions(), &vec![]);
 }
 
 #[test]
