@@ -115,6 +115,7 @@ impl ViewDisplayInfo {
     ///
     /// ex. When query string is `シュート`, and given key stroke was `s` -> `a(miss type)` -> `y` -> `u` ->
     /// `-`, this function returns `[0,1]`.
+    // TODO: remove this method in next major version.
     #[deprecated(note = "Use wrong_positions() instead")]
     pub fn missed_positions(&self) -> &Vec<usize> {
         self.wrong_positions()
@@ -203,6 +204,7 @@ impl SpellDisplayInfo {
     ///
     /// ex. When query string is `巨大` ( spell is `きょだい` ), and given key stroke was `k` -> `a(miss type)` -> `y` -> `o` ->
     /// `d`, this function returns `[0,1]`.
+    // TODO: remove this method in next major version.
     #[deprecated(note = "Use wrong_positions() instead")]
     pub fn missed_positions(&self) -> &Vec<usize> {
         self.wrong_positions()
