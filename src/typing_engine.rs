@@ -297,6 +297,7 @@ impl TypingEngine {
                 Ok(TypingResult::new(
                     processed_chunk_info.last_key_stroke_elapsed_time().unwrap(),
                     self.statistics_manager.construct_typing_result_summary(),
+                    self.statistics_manager.constuct_skill_statistics(),
                 ))
             } else {
                 Err(TypingEngineError::new(TypingEngineErrorKind::NotFinished))

@@ -1,19 +1,20 @@
-use std::{collections::HashMap, hash::Hash, time::Duration};
+use std::{collections::BTreeMap, hash::Hash, time::Duration};
 
 use super::StatisticalEvent;
 use crate::KeyStrokeChar;
-use public::EntitySkillStatistics;
+use public::{EntitySkillStatistics, SkillStatistics};
 
 /// A module for public items related to skill statistics.
-mod public;
+pub(crate) mod public;
 
-struct SkillStatisticsManager {
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub(crate) struct SkillStatisticsManager {
     /// Skill statistics for a single key stroke.
     single_key_stroke: SingleKeyStrokeSkillStatistics,
 }
 
 impl SkillStatisticsManager {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             single_key_stroke: SingleKeyStrokeSkillStatistics::new(),
         }
@@ -21,26 +22,39 @@ impl SkillStatisticsManager {
 
     /// Consume the event and update statistics.
     pub(crate) fn consume_event(&mut self, event: &StatisticalEvent) {
-        unimplemented!()
+        if let StatisticalEvent::KeyStrokeCorrect(key_stroke_correct_context) = event {
+            self.single_key_stroke.update(
+                key_stroke_correct_context.key_stroke(),
+                key_stroke_correct_context.required_time(),
+                key_stroke_correct_context.wrong_key_strokes(),
+            );
+        }
+    }
+
+    /// Construct [`SilkStatistics`](SkillStatistics)
+    pub(crate) fn construct_skill_statistics(&self) -> SkillStatistics {
+        SkillStatistics::new_with(self.single_key_stroke.skill_statisticses())
     }
 }
 
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// A struct representing skill statistics for a single key stroke.
-struct SingleKeyStrokeSkillStatistics {
+pub(crate) struct SingleKeyStrokeSkillStatistics {
     /// Map of [`PrimitiveSkillStatistics`](PrimitiveSkillStatistics) for each key stroke
     /// character.
-    statistics_per_key_stroke_char: HashMap<KeyStrokeChar, PrimitiveSkillStatistics<KeyStrokeChar>>,
+    statistics_per_key_stroke_char:
+        BTreeMap<KeyStrokeChar, PrimitiveSkillStatistics<KeyStrokeChar>>,
 }
 
 impl SingleKeyStrokeSkillStatistics {
     fn new() -> Self {
         Self {
-            statistics_per_key_stroke_char: HashMap::new(),
+            statistics_per_key_stroke_char: BTreeMap::new(),
         }
     }
 
     /// Returns a vector of [`SkillStatistics`](SkillStatistics) for each [`KeyStrokeChar`](KeyStrokeChar).
-    fn skill_statisticses(&self) -> Vec<EntitySkillStatistics<KeyStrokeChar>> {
+    pub(crate) fn skill_statisticses(&self) -> Vec<EntitySkillStatistics<KeyStrokeChar>> {
         self.statistics_per_key_stroke_char
             .iter()
             .map(|(k, v)| v.clone().into_with_entity(k.clone()))
@@ -61,7 +75,7 @@ impl SingleKeyStrokeSkillStatistics {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// A struct representing skill statistics for a single entity.
 struct PrimitiveSkillStatistics<T: Eq + Hash + Clone> {
     /// Count of occurrences of entity.
@@ -69,18 +83,18 @@ struct PrimitiveSkillStatistics<T: Eq + Hash + Clone> {
     /// Cumulative required time of all occurrences.
     cumulative_time: Duration,
     /// Map of wrong occurrences count for other entity.
-    wrong_count_map: HashMap<T, usize>,
+    wrong_count_map: BTreeMap<T, usize>,
     /// Count of occurrences without wrong.
     completely_correct_count: usize,
 }
 
-impl<T: Eq + Hash + Clone> PrimitiveSkillStatistics<T> {
+impl<T: Eq + Hash + Clone + Ord> PrimitiveSkillStatistics<T> {
     fn new() -> Self {
         Self {
             count: 0,
             completely_correct_count: 0,
             cumulative_time: Duration::from_secs(0),
-            wrong_count_map: HashMap::new(),
+            wrong_count_map: BTreeMap::new(),
         }
     }
 
@@ -100,19 +114,70 @@ impl<T: Eq + Hash + Clone> PrimitiveSkillStatistics<T> {
 
     /// Consume self and return [`SkillStatistics`](SkillStatistics) for the given entity.
     fn into_with_entity(self, entity: T) -> EntitySkillStatistics<T> {
-        EntitySkillStatistics {
+        EntitySkillStatistics::new_with(
             entity,
-            count: self.count,
-            cumulative_time: self.cumulative_time,
-            wrong_count_map: self.wrong_count_map,
-            completely_correct_count: self.completely_correct_count,
-        }
+            self.count,
+            self.cumulative_time,
+            self.wrong_count_map,
+            self.completely_correct_count,
+        )
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::statistics::statistical_event::KeyStrokeCorrectContext;
+
+    #[test]
+    fn empty_skill_statistics_manager() {
+        let ssm = SkillStatisticsManager::new();
+
+        assert_eq!(
+            ssm.construct_skill_statistics().single_key_stroke().len(),
+            0
+        );
+    }
+
+    #[test]
+    fn key_stroke_correct_event_update_singke_key_stroke_statistics() {
+        let mut ssm = SkillStatisticsManager::new();
+
+        ssm.consume_event(&StatisticalEvent::KeyStrokeCorrect(
+            KeyStrokeCorrectContext::new(
+                'a'.try_into().unwrap(),
+                Duration::from_secs(1),
+                vec!['b'.try_into().unwrap()],
+            ),
+        ));
+        ssm.consume_event(&StatisticalEvent::KeyStrokeCorrect(
+            KeyStrokeCorrectContext::new(
+                'b'.try_into().unwrap(),
+                Duration::from_secs(2),
+                vec!['c'.try_into().unwrap()],
+            ),
+        ));
+
+        assert_eq!(
+            ssm.construct_skill_statistics().single_key_stroke(),
+            vec![
+                EntitySkillStatistics::new_with(
+                    'a'.try_into().unwrap(),
+                    1,
+                    Duration::from_secs(1),
+                    BTreeMap::from([('b'.try_into().unwrap(), 1)]),
+                    0,
+                ),
+                EntitySkillStatistics::new_with(
+                    'b'.try_into().unwrap(),
+                    1,
+                    Duration::from_secs(2),
+                    BTreeMap::from([('c'.try_into().unwrap(), 1)]),
+                    0,
+                )
+            ]
+        );
+    }
 
     #[test]
     fn empty_primitive_skill_statistics() {
@@ -120,13 +185,13 @@ mod test {
 
         assert_eq!(
             pss.into_with_entity('a'.try_into().unwrap()),
-            EntitySkillStatistics::<KeyStrokeChar> {
-                entity: 'a'.try_into().unwrap(),
-                count: 0,
-                cumulative_time: Duration::from_secs(0),
-                wrong_count_map: HashMap::new(),
-                completely_correct_count: 0,
-            }
+            EntitySkillStatistics::new_with(
+                'a'.try_into().unwrap(),
+                0,
+                Duration::from_secs(0),
+                BTreeMap::new(),
+                0,
+            )
         );
     }
 
@@ -140,13 +205,13 @@ mod test {
 
         assert_eq!(
             pss.into_with_entity('a'.try_into().unwrap()),
-            EntitySkillStatistics::<KeyStrokeChar> {
-                entity: 'a'.try_into().unwrap(),
-                count: 1,
-                cumulative_time: Duration::from_secs(1),
-                wrong_count_map: HashMap::new(),
-                completely_correct_count: 1,
-            }
+            EntitySkillStatistics::new_with(
+                'a'.try_into().unwrap(),
+                1,
+                Duration::from_secs(1),
+                BTreeMap::new(),
+                1,
+            )
         );
     }
 
@@ -164,16 +229,13 @@ mod test {
 
         assert_eq!(
             pss.into_with_entity('a'.try_into().unwrap()),
-            EntitySkillStatistics::<KeyStrokeChar> {
-                entity: 'a'.try_into().unwrap(),
-                count: 1,
-                cumulative_time: Duration::from_secs(1),
-                wrong_count_map: HashMap::from([
-                    ('a'.try_into().unwrap(), 2),
-                    ('b'.try_into().unwrap(), 1),
-                ]),
-                completely_correct_count: 0,
-            }
+            EntitySkillStatistics::new_with(
+                'a'.try_into().unwrap(),
+                1,
+                Duration::from_secs(1),
+                BTreeMap::from([('a'.try_into().unwrap(), 2), ('b'.try_into().unwrap(), 1),]),
+                0,
+            )
         );
     }
 
@@ -190,16 +252,13 @@ mod test {
 
         assert_eq!(
             pss.into_with_entity('a'.try_into().unwrap()),
-            EntitySkillStatistics::<KeyStrokeChar> {
-                entity: 'a'.try_into().unwrap(),
-                count: 3,
-                cumulative_time: Duration::from_secs(6),
-                wrong_count_map: HashMap::from([
-                    ('a'.try_into().unwrap(), 2),
-                    ('b'.try_into().unwrap(), 1),
-                ]),
-                completely_correct_count: 1,
-            }
+            EntitySkillStatistics::new_with(
+                'a'.try_into().unwrap(),
+                3,
+                Duration::from_secs(6),
+                BTreeMap::from([('a'.try_into().unwrap(), 2), ('b'.try_into().unwrap(), 1),]),
+                1,
+            )
         );
     }
 }

@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fmt::Display;
 use std::ops::Deref;
@@ -8,7 +9,7 @@ use crate::utility::is_displayable_ascii;
 use super::chunk::inflight::KeyStrokeResult;
 
 /// A type representing a character can be used as a key stroke.
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct KeyStrokeChar(char);
 
 impl From<KeyStrokeChar> for char {

@@ -155,7 +155,11 @@ fn correct_stroke_to_processed_chunk_info_returns_key_stroke_correct_event() {
     assert_eq!(
         events,
         vec![StatisticalEvent::KeyStrokeCorrect(
-            KeyStrokeCorrectContext::new('k'.try_into().unwrap(), vec!['j'.try_into().unwrap()])
+            KeyStrokeCorrectContext::new(
+                'k'.try_into().unwrap(),
+                Duration::from_secs(2),
+                vec!['j'.try_into().unwrap()]
+            )
         ),]
     );
 }
@@ -183,6 +187,7 @@ fn correct_stroke_to_processed_chunk_info_returns_spell_finished_event() {
         vec![
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'i'.try_into().unwrap(),
+                Duration::from_secs(1),
                 vec![]
             )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
@@ -221,6 +226,7 @@ fn correct_stroke_to_processed_chunk_info_returns_chunk_confirmed_event() {
         vec![
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'o'.try_into().unwrap(),
+                Duration::from_secs(1),
                 vec![]
             )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
@@ -233,7 +239,7 @@ fn correct_stroke_to_processed_chunk_info_returns_chunk_confirmed_event() {
 }
 
 #[test]
-fn correct_stroke_to_processed_chunk_info_with_delayed_confirmabed_inflight_chunk_confirms_delayed_confirmed_candidate(
+fn correct_stroke_to_processed_chunk_info_with_delayed_confirmable_inflight_chunk_confirms_delayed_confirmed_candidate(
 ) {
     let (mut pci, _) = ProcessedChunkInfo::new(vec![
         gen_chunk_unprocessed!(
@@ -278,6 +284,7 @@ fn correct_stroke_to_processed_chunk_info_with_delayed_confirmabed_inflight_chun
             StatisticalEvent::ChunkConfirmed(ChunkConfirmedContext::new(1, vec![0])),
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'k'.try_into().unwrap(),
+                Duration::from_secs(2),
                 vec!['j'.try_into().unwrap()]
             ))
         ]
@@ -285,7 +292,7 @@ fn correct_stroke_to_processed_chunk_info_with_delayed_confirmabed_inflight_chun
 }
 
 #[test]
-fn correct_stroke_to_processed_chunk_info_with_delayed_confirmabed_inflight_chunk_confirms_not_delayed_confirmed_candidate(
+fn correct_stroke_to_processed_chunk_info_with_delayed_confirmable_inflight_chunk_confirms_not_delayed_confirmed_candidate(
 ) {
     let (mut pci, _) = ProcessedChunkInfo::new(vec![
         gen_chunk_unprocessed!(
@@ -325,6 +332,7 @@ fn correct_stroke_to_processed_chunk_info_with_delayed_confirmabed_inflight_chun
         vec![
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'n'.try_into().unwrap(),
+                Duration::from_secs(2),
                 vec!['j'.try_into().unwrap()]
             )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
@@ -337,7 +345,7 @@ fn correct_stroke_to_processed_chunk_info_with_delayed_confirmabed_inflight_chun
 }
 
 #[test]
-fn correct_stroke_to_processed_chunk_info_with_delayed_confirmabed_inflight_chunk_confirms_delayed_confirmed_candidate_and_next_chunk(
+fn correct_stroke_to_processed_chunk_info_with_delayed_confirmable_inflight_chunk_confirms_delayed_confirmed_candidate_and_next_chunk(
 ) {
     let (mut pci, _) = ProcessedChunkInfo::new(vec![
         gen_chunk_unprocessed!(
@@ -371,6 +379,7 @@ fn correct_stroke_to_processed_chunk_info_with_delayed_confirmabed_inflight_chun
             StatisticalEvent::ChunkConfirmed(ChunkConfirmedContext::new(1, vec![0])),
             StatisticalEvent::KeyStrokeCorrect(KeyStrokeCorrectContext::new(
                 'p'.try_into().unwrap(),
+                Duration::from_secs(1),
                 vec![]
             )),
             StatisticalEvent::SpellFinished(SpellFinishedContext::new(
@@ -512,6 +521,7 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_with_double_splitted() {
             []
         )),
         confirmed_chunks: vec![],
+        elapsed_time_of_last_correct_key_stroke: Duration::from_secs(3),
     };
 
     let events = pci.snapshot();
@@ -563,6 +573,7 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_without_wrong_key_stroke() 
             []
         )),
         confirmed_chunks: vec![],
+        elapsed_time_of_last_correct_key_stroke: Duration::from_secs(1),
     };
 
     let events = pci.snapshot();
@@ -612,6 +623,7 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_with_wrong_key_stroke() {
             []
         )),
         confirmed_chunks: vec![],
+        elapsed_time_of_last_correct_key_stroke: Duration::from_secs(4),
     };
 
     let events = pci.snapshot();
@@ -675,6 +687,7 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_with_delayed_confirmable_ca
             )]
         )),
         confirmed_chunks: vec![],
+        elapsed_time_of_last_correct_key_stroke: Duration::from_secs(2),
     };
 
     let events = pci.snapshot();

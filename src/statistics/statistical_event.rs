@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::utility::calc_ceil_div;
 use crate::{
     typing_primitive_types::chunk::{
@@ -128,14 +130,21 @@ impl SpellFinishedContext {
 pub(crate) struct KeyStrokeCorrectContext {
     /// Key stroke that generate event.
     key_stroke: KeyStrokeChar,
+    /// Required time for typing this key stroke.
+    required_time: Duration,
     /// Wrong key strokes for typing this key stroke.
     wrong_key_strokes: Vec<KeyStrokeChar>,
 }
 
 impl KeyStrokeCorrectContext {
-    pub(crate) fn new(key_stroke: KeyStrokeChar, wrong_key_strokes: Vec<KeyStrokeChar>) -> Self {
+    pub(crate) fn new(
+        key_stroke: KeyStrokeChar,
+        required_time: Duration,
+        wrong_key_strokes: Vec<KeyStrokeChar>,
+    ) -> Self {
         Self {
             key_stroke,
+            required_time,
             wrong_key_strokes,
         }
     }
@@ -143,6 +152,11 @@ impl KeyStrokeCorrectContext {
     /// Returns key stroke that generate event.
     pub(crate) fn key_stroke(&self) -> &KeyStrokeChar {
         &self.key_stroke
+    }
+
+    /// Returns required time for typing this key stroke.
+    pub(crate) fn required_time(&self) -> Duration {
+        self.required_time
     }
 
     /// Returns wrong key strokes for typing this key stroke.
@@ -250,6 +264,7 @@ impl IdealKeyStrokeDeemedFinishedContext {
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 /// Representing events generated when statistically meaningfull things happened
 pub(crate) enum StatisticalEvent {
+    /// Event generated when key stroke is correct
     KeyStrokeCorrect(KeyStrokeCorrectContext),
     /// Event generated when spell is finished
     SpellFinished(SpellFinishedContext),

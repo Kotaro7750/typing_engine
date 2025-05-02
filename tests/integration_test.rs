@@ -2,8 +2,8 @@ use std::num::NonZeroUsize;
 
 use std::time::Duration;
 use typing_engine::{
-    LapRequest, QueryRequest, TypingEngine, VocabularyEntry, VocabularyOrder, VocabularyQuantifier,
-    VocabularySeparator, VocabularySpellElement,
+    KeyStrokeChar, LapRequest, QueryRequest, TypingEngine, VocabularyEntry, VocabularyOrder,
+    VocabularyQuantifier, VocabularySeparator, VocabularySpellElement,
 };
 
 fn init_engine_and_type_halfway() -> TypingEngine {
@@ -255,4 +255,49 @@ fn construct_result_output_correct_result() {
     assert_eq!(result.summary().chunk().wrong_count(), 0);
 
     assert_eq!(result.total_time(), std::time::Duration::from_millis(100));
+}
+
+#[test]
+fn construct_result_output_correct_skill_statistics() {
+    let engine = init_engine_and_finish_typing();
+
+    let lap_request = LapRequest::Spell(NonZeroUsize::new(3).unwrap());
+    let result = engine
+        .construct_result(lap_request)
+        .expect("Failed to get result");
+    let skill_statistics = result.skill_statistics();
+
+    assert_eq!(skill_statistics.single_key_stroke().len(), 1);
+    assert_eq!(
+        skill_statistics
+            .single_key_stroke()
+            .get(0)
+            .unwrap()
+            .entity(),
+        &<char as TryInto<KeyStrokeChar>>::try_into('a').unwrap()
+    );
+    assert_eq!(
+        skill_statistics
+            .single_key_stroke()
+            .get(0)
+            .unwrap()
+            .accuracy(),
+        1.0
+    );
+    assert_eq!(
+        skill_statistics
+            .single_key_stroke()
+            .get(0)
+            .unwrap()
+            .average_time(),
+        Duration::from_millis(100)
+    );
+    assert_eq!(
+        skill_statistics
+            .single_key_stroke()
+            .get(0)
+            .unwrap()
+            .wrong_count_ranking(),
+        vec![]
+    );
 }

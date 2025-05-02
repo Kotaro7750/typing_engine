@@ -2,7 +2,9 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
-use super::statistics_counter::EntitySummaryStatistics;
+use super::{
+    skill_statistics::public::SkillStatistics, statistics_counter::EntitySummaryStatistics,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 /// A struct representing result of typing.
@@ -11,13 +13,20 @@ pub struct TypingResult {
     total_time: Duration,
     /// Aggregated result of typing
     summary: TypingResultSummary,
+    /// Detailed statistics representing typing skill
+    skill_statistics: SkillStatistics,
 }
 
 impl TypingResult {
-    pub(crate) fn new(total_time: Duration, summary: TypingResultSummary) -> Self {
+    pub(crate) fn new(
+        total_time: Duration,
+        summary: TypingResultSummary,
+        skill_statistics: SkillStatistics,
+    ) -> Self {
         Self {
             total_time,
             summary,
+            skill_statistics,
         }
     }
 
@@ -29,6 +38,11 @@ impl TypingResult {
     /// Returns aggregated result of typing
     pub fn summary(&self) -> &TypingResultSummary {
         &self.summary
+    }
+
+    /// Returns detailed statistics representing typing skill
+    pub fn skill_statistics(&self) -> &SkillStatistics {
+        &self.skill_statistics
     }
 }
 

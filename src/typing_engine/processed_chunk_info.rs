@@ -24,6 +24,7 @@ pub(crate) struct ProcessedChunkInfo {
     unprocessed_chunks: VecDeque<ChunkUnprocessed>,
     inflight_chunk: Option<ChunkInflight>,
     confirmed_chunks: Vec<ChunkConfirmed>,
+    elapsed_time_of_last_correct_key_stroke: Duration,
 }
 
 impl ProcessedChunkInfo {
@@ -39,6 +40,7 @@ impl ProcessedChunkInfo {
                 unprocessed_chunks: chunks.into(),
                 inflight_chunk: None,
                 confirmed_chunks: vec![],
+                elapsed_time_of_last_correct_key_stroke: Duration::ZERO,
             },
             chunk_added_events,
         )
@@ -138,12 +140,15 @@ impl ProcessedChunkInfo {
                             statistical_events.push(StatisticalEvent::new_from_key_stroke_correct(
                                 KeyStrokeCorrectContext::new(
                                     key_stroke_char.clone(),
+                                    *elapsed_time - self.elapsed_time_of_last_correct_key_stroke,
                                     wrong_key_strokes
                                         .iter()
                                         .map(|key_stroke| key_stroke.key_stroke().clone())
                                         .collect(),
                                 ),
                             ));
+
+                            self.elapsed_time_of_last_correct_key_stroke = *elapsed_time;
                         }
 
                         if let Some(spell_finished_context) =

@@ -1,31 +1,64 @@
-use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::hash::Hash;
 use std::time::Duration;
 
 use crate::KeyStrokeChar;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SkillStatistics {
-    pub single_key_stroke: Vec<EntitySkillStatistics<KeyStrokeChar>>,
+    single_key_stroke: Vec<EntitySkillStatistics<KeyStrokeChar>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+impl SkillStatistics {
+    pub(crate) fn new_with(single_key_stroke: Vec<EntitySkillStatistics<KeyStrokeChar>>) -> Self {
+        Self { single_key_stroke }
+    }
+
+    /// Returns skill statistics for a single key stroke.
+    pub fn single_key_stroke(&self) -> &[EntitySkillStatistics<KeyStrokeChar>] {
+        &self.single_key_stroke
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 /// A struct representing skill statistics for a single entity.
 /// Entity is like a [`KeyStrokeChar`](KeyStrokeChar).
-pub struct EntitySkillStatistics<T: Eq + Hash + Clone> {
+pub struct EntitySkillStatistics<T: Eq + Hash + Clone + Ord> {
     /// The entity for which the statistics are taken.
-    pub entity: T,
+    entity: T,
     /// Count of occurrences of entity.
-    pub count: usize,
+    count: usize,
     /// Cumulative required time of all occurrences.
-    pub cumulative_time: Duration,
+    cumulative_time: Duration,
     /// Map of wrong occurrences count for other entity.
-    pub wrong_count_map: HashMap<T, usize>,
+    wrong_count_map: BTreeMap<T, usize>,
     /// Count of occurrences without wrong.
-    pub completely_correct_count: usize,
+    completely_correct_count: usize,
 }
 
-impl<T: Eq + Hash + Clone> EntitySkillStatistics<T> {
+impl<T: Eq + Hash + Clone + Ord> EntitySkillStatistics<T> {
+    pub(crate) fn new_with(
+        entity: T,
+        count: usize,
+        cumulative_time: Duration,
+        wrong_count_map: BTreeMap<T, usize>,
+        completely_correct_count: usize,
+    ) -> Self {
+        Self {
+            entity,
+            count,
+            cumulative_time,
+            wrong_count_map,
+            completely_correct_count,
+        }
+    }
+
+    /// Returns entity.
+    pub fn entity(&self) -> &T {
+        &self.entity
+    }
+
     /// Returns entities and counts of wrong occurrences sorted by count.
     /// Sort order is descending, it means that the most wrong entity is first.
     /// Each element of the vector is ( entity, count of wrong occurrences).
@@ -69,7 +102,7 @@ mod test {
             entity: 'a'.try_into().unwrap(),
             count: 0,
             cumulative_time: Duration::from_secs(0),
-            wrong_count_map: HashMap::new(),
+            wrong_count_map: BTreeMap::new(),
             completely_correct_count: 0,
         };
 
@@ -84,7 +117,7 @@ mod test {
             entity: 'a'.try_into().unwrap(),
             count: 4,
             cumulative_time: Duration::from_secs(4),
-            wrong_count_map: HashMap::new(),
+            wrong_count_map: BTreeMap::new(),
             completely_correct_count: 1,
         };
 
@@ -97,7 +130,7 @@ mod test {
             entity: 'a'.try_into().unwrap(),
             count: 4,
             cumulative_time: Duration::from_secs(5),
-            wrong_count_map: HashMap::new(),
+            wrong_count_map: BTreeMap::new(),
             completely_correct_count: 1,
         };
 
@@ -110,7 +143,7 @@ mod test {
             entity: 'a'.try_into().unwrap(),
             count: 4,
             cumulative_time: Duration::from_secs(4),
-            wrong_count_map: HashMap::from([
+            wrong_count_map: BTreeMap::from([
                 ('a'.try_into().unwrap(), 2),
                 ('b'.try_into().unwrap(), 1),
                 ('c'.try_into().unwrap(), 3),
