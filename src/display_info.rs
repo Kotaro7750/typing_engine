@@ -1,11 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::statistics::lap_statistics::{LapInfo, PrimitiveLapStatisticsBuilder};
-use crate::statistics::statistics_counter::PrimitiveStatisticsCounter;
-use crate::statistics::{
-    construct_on_typing_statistics_target, KeyStrokeDisplayStringBuilder, OnTypingStatisticsTarget,
-    SpellDisplayStringBuilder,
-};
+use crate::statistics::lap_statistics::LapInfo;
+use crate::statistics::{KeyStrokeDisplayStringBuilder, SpellDisplayStringBuilder};
 use crate::typing_primitive_types::vocabulary::{
     corresponding_view_positions_for_spell, ViewPosition,
 };
@@ -143,7 +139,6 @@ pub struct SpellDisplayInfo {
     // タイプすべき最後のチャンクの綴りの末尾の位置
     // クエリをタイプ数で指定する場合には語彙の途中のチャンクで切れている可能性がある
     last_position: usize,
-    on_typing_statistics: OnTypingStatisticsTarget,
     summary_statistics: EntitySummaryStatistics,
 }
 
@@ -153,7 +148,6 @@ impl SpellDisplayInfo {
         current_cursor_positions: Vec<usize>,
         wrong_positions: Vec<usize>,
         last_position: usize,
-        on_typing_statistics: OnTypingStatisticsTarget,
         summary_statistics: EntitySummaryStatistics,
     ) -> Self {
         Self {
@@ -161,15 +155,12 @@ impl SpellDisplayInfo {
             current_cursor_positions,
             wrong_positions,
             last_position,
-            on_typing_statistics,
             summary_statistics,
         }
     }
 
     pub(crate) fn new_with(
         spell_display_string_builder: &SpellDisplayStringBuilder,
-        spell_statistics_counter: &PrimitiveStatisticsCounter,
-        spell_lap_statistics_builder: &PrimitiveLapStatisticsBuilder,
         summary_statistics: EntitySummaryStatistics,
     ) -> Self {
         Self::new(
@@ -179,10 +170,6 @@ impl SpellDisplayInfo {
                 .construct_vec(),
             spell_display_string_builder.wrong_positions().to_vec(),
             spell_display_string_builder.last_position(),
-            construct_on_typing_statistics_target(
-                spell_statistics_counter,
-                spell_lap_statistics_builder,
-            ),
             summary_statistics,
         )
     }
@@ -240,8 +227,6 @@ pub struct KeyStrokeDisplayInfo {
     key_stroke: String,
     current_cursor_position: usize,
     wrong_positions: Vec<usize>,
-    on_typing_statistics: OnTypingStatisticsTarget,
-    on_typing_statistics_ideal: OnTypingStatisticsTarget,
     summary_statistics: EntitySummaryStatistics,
 }
 
@@ -250,40 +235,24 @@ impl KeyStrokeDisplayInfo {
         key_stroke: String,
         current_cursor_position: usize,
         wrong_positions: Vec<usize>,
-        on_typing_statistics: OnTypingStatisticsTarget,
-        on_typing_statistics_ideal: OnTypingStatisticsTarget,
         summary_statistics: EntitySummaryStatistics,
     ) -> Self {
         Self {
             key_stroke,
             current_cursor_position,
             wrong_positions,
-            on_typing_statistics,
-            on_typing_statistics_ideal,
             summary_statistics,
         }
     }
 
     pub(crate) fn new_with(
         key_stroke_display_string_builder: &KeyStrokeDisplayStringBuilder,
-        key_stroke_statistics_counter: &PrimitiveStatisticsCounter,
-        key_stroke_lap_statistics_builder: &PrimitiveLapStatisticsBuilder,
-        ideal_key_stroke_statistics_counter: &PrimitiveStatisticsCounter,
-        ideal_key_stroke_lap_statistics_builder: &PrimitiveLapStatisticsBuilder,
         summary_statistics: EntitySummaryStatistics,
     ) -> Self {
         Self::new(
             key_stroke_display_string_builder.key_stroke().to_string(),
             key_stroke_display_string_builder.cursor_position(),
             key_stroke_display_string_builder.wrong_positions().to_vec(),
-            construct_on_typing_statistics_target(
-                key_stroke_statistics_counter,
-                key_stroke_lap_statistics_builder,
-            ),
-            construct_on_typing_statistics_target(
-                ideal_key_stroke_statistics_counter,
-                ideal_key_stroke_lap_statistics_builder,
-            ),
             summary_statistics,
         )
     }
@@ -301,24 +270,6 @@ impl KeyStrokeDisplayInfo {
     /// Index of key stroke which is not correctly typed.
     pub fn wrong_positions(&self) -> &Vec<usize> {
         &self.wrong_positions
-    }
-
-    /// Index of key stroke which is not correctly typed.
-    #[deprecated(note = "Use wrong_positions() instead")]
-    pub fn missed_positions(&self) -> &Vec<usize> {
-        self.wrong_positions()
-    }
-
-    #[deprecated(note = "Use `DisplayInfo::lap_info()` and `summary_statistics()` instead")]
-    pub fn on_typing_statistics(&self) -> &OnTypingStatisticsTarget {
-        &self.on_typing_statistics
-    }
-
-    #[deprecated(
-        note = "Use `DisplayInfo::lap_info()` and `IdealKeyStrokeDisplayInfo::summary_statistics()` instead"
-    )]
-    pub fn on_typing_statistics_ideal(&self) -> &OnTypingStatisticsTarget {
-        &self.on_typing_statistics_ideal
     }
 
     /// Return aggregated statistics of key strokes.

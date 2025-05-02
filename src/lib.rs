@@ -3,7 +3,7 @@ pub use crate::query::{QueryRequest, VocabularyOrder, VocabularyQuantifier, Voca
 pub use crate::statistics::lap_statistics::LapInfo;
 pub use crate::statistics::result::{TypingResult, TypingResultSummary};
 pub use crate::statistics::statistics_counter::EntitySummaryStatistics;
-pub use crate::statistics::{LapRequest, OnTypingStatisticsTarget};
+pub use crate::statistics::LapRequest;
 pub use crate::typing_engine::*;
 pub use crate::typing_primitive_types::key_stroke::{KeyStrokeChar, KeyStrokeCharError};
 pub use crate::typing_primitive_types::spell::{SpellString, SpellStringError};

@@ -243,20 +243,11 @@ impl TypingEngine {
                 self.vocabulary_infos.as_ref().unwrap(),
             );
 
-            let (
-                spell_lap_statistics_builder,
-                key_stroke_lap_statistics_builder,
-                ideal_key_stroke_lap_statistics_builder,
-                lap_info,
-            ) = processed_chunk_info
+            let lap_info = processed_chunk_info
                 .construct_lap_statistics(lap_request.clone(), &view_position_of_spell);
 
             let key_stroke_display_info = KeyStrokeDisplayInfo::new_with(
                 display_string_builder.key_stroke(),
-                statistics_manager.key_stroke_statistics_counter(),
-                &key_stroke_lap_statistics_builder,
-                statistics_manager.ideal_key_stroke_statistics_counter(),
-                &ideal_key_stroke_lap_statistics_builder,
                 self.statistics_manager
                     .key_stroke_statistics_counter()
                     .into(),
@@ -268,8 +259,6 @@ impl TypingEngine {
             );
             let spell_display_info = SpellDisplayInfo::new_with(
                 display_string_builder.spell(),
-                statistics_manager.spell_statistics_counter(),
-                &spell_lap_statistics_builder,
                 statistics_manager.spell_statistics_counter().into(),
             );
 

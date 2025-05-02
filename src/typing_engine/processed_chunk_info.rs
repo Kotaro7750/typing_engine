@@ -1,9 +1,7 @@
 use std::collections::VecDeque;
 use std::time::Duration;
 
-use crate::statistics::lap_statistics::{
-    LapInfo, LapStatiticsBuilder, PrimitiveLapStatisticsBuilder,
-};
+use crate::statistics::lap_statistics::{LapInfo, LapStatiticsBuilder};
 use crate::statistics::statistical_event::{
     IdealKeyStrokeDeemedFinishedContext, InflightSpellSnapshottedContext, KeyStrokeCorrectContext,
     KeyStrokeSnapshottedContext, SpellFinishedContext, StatisticalEvent,
@@ -369,12 +367,7 @@ impl ProcessedChunkInfo {
         &self,
         lap_request: LapRequest,
         view_position_of_spell: &[ViewPosition],
-    ) -> (
-        PrimitiveLapStatisticsBuilder,
-        PrimitiveLapStatisticsBuilder,
-        PrimitiveLapStatisticsBuilder,
-        LapInfo,
-    ) {
+    ) -> LapInfo {
         let mut lap_statistics_builder = LapStatiticsBuilder::new(lap_request);
 
         // 1. 確定したチャンク
@@ -442,21 +435,7 @@ impl ProcessedChunkInfo {
                 };
             });
 
-        let lap_info = lap_statistics_builder.construct_lap_info(view_position_of_spell);
-
-        let (
-            key_stroke_lap_statistics_builder,
-            ideal_key_stroke_lap_statistics_builder,
-            spell_lap_statistics_builder,
-            _,
-        ) = lap_statistics_builder.emit();
-
-        (
-            spell_lap_statistics_builder,
-            key_stroke_lap_statistics_builder,
-            ideal_key_stroke_lap_statistics_builder,
-            lap_info,
-        )
+        lap_statistics_builder.construct_lap_info(view_position_of_spell)
     }
 
     /// Returns the elapsed time of the last key stroke
