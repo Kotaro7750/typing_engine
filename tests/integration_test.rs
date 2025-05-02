@@ -155,10 +155,13 @@ fn construct_display_info_output_correct_lap_info() {
             Duration::from_millis(300),
         ]
     );
-    assert_eq!(lap_info.key_stroke_lap_end_positions(), vec![1, 3, 5, 7]);
-    assert_eq!(lap_info.spell_lap_end_positions(), vec![0, 1, 2, 3]);
-    assert_eq!(lap_info.chunk_lap_end_positions(), vec![0, 0, 1, 1]);
-    assert_eq!(lap_info.view_lap_end_positions(), vec![0, 1, 2, 3]);
+    assert_eq!(
+        lap_info.key_stroke_lap_end_positions(),
+        vec![1, 3, 5, 7, 9, 11]
+    );
+    assert_eq!(lap_info.spell_lap_end_positions(), vec![0, 1, 2, 3, 5, 6]);
+    assert_eq!(lap_info.chunk_lap_end_positions(), vec![0, 0, 1, 1, 3, 4]);
+    assert_eq!(lap_info.view_lap_end_positions(), vec![0, 1, 2, 3, 5, 5]);
 }
 
 #[test]

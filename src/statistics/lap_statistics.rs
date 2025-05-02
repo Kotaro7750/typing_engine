@@ -13,17 +13,27 @@ use crate::typing_primitive_types::vocabulary::{
 /// A struct representing lap information.
 pub struct LapInfo {
     /// Each lap information.
-    laps: Vec<SingleLapInfo>,
+    finished_laps: Vec<SingleFinishedLapInfo>,
+    unfinished_laps: Vec<SingleUnfinishedLapInfo>,
 }
 
 impl LapInfo {
-    pub(crate) fn new(laps: Vec<SingleLapInfo>) -> Self {
-        Self { laps }
+    pub(crate) fn new(
+        finished_laps: Vec<SingleFinishedLapInfo>,
+        unfinished_laps: Vec<SingleUnfinishedLapInfo>,
+    ) -> Self {
+        Self {
+            finished_laps,
+            unfinished_laps,
+        }
     }
 
     /// Returns elapsed times of laps since typing started.
     pub fn elapsed_times(&self) -> Vec<Duration> {
-        self.laps.iter().map(|lap| lap.elapsed_time()).collect()
+        self.finished_laps
+            .iter()
+            .map(|lap| lap.elapsed_time())
+            .collect()
     }
 
     /// Returns duration time of each lap.
@@ -40,49 +50,104 @@ impl LapInfo {
 
     /// Returns position indexes of lap ends for key stroke.
     pub fn key_stroke_lap_end_positions(&self) -> Vec<usize> {
-        self.laps
+        self.finished_laps
             .iter()
-            .map(|lap| lap.key_stroke_lap_end_position())
+            .map(|lap: &SingleFinishedLapInfo| SingleLapHasLapEnd::key_stroke_lap_end_position(lap))
+            .chain(
+                self.unfinished_laps
+                    .iter()
+                    .map(|lap: &SingleUnfinishedLapInfo| {
+                        SingleLapHasLapEnd::key_stroke_lap_end_position(lap)
+                    }),
+            )
             .collect()
     }
 
     #[allow(dead_code)] // TODO: Currently, ideal key stroke string is not constructed.
     /// Returns position indexes of lap ends for ideal key stroke.
     fn ideal_key_stroke_lap_end_positions(&self) -> Vec<usize> {
-        self.laps
+        self.finished_laps
             .iter()
-            .map(|lap| lap.ideal_key_stroke_lap_end_position())
+            .map(|lap: &SingleFinishedLapInfo| {
+                SingleLapHasLapEnd::ideal_key_stroke_lap_end_position(lap)
+            })
+            .chain(
+                self.unfinished_laps
+                    .iter()
+                    .map(|lap: &SingleUnfinishedLapInfo| {
+                        SingleLapHasLapEnd::ideal_key_stroke_lap_end_position(lap)
+                    }),
+            )
             .collect()
     }
 
     /// Returns position indexes of lap ends for spell.
     pub fn spell_lap_end_positions(&self) -> Vec<usize> {
-        self.laps
+        self.finished_laps
             .iter()
-            .map(|lap| lap.spell_lap_end_position())
+            .map(|lap: &SingleFinishedLapInfo| SingleLapHasLapEnd::spell_lap_end_position(lap))
+            .chain(
+                self.unfinished_laps
+                    .iter()
+                    .map(|lap: &SingleUnfinishedLapInfo| {
+                        SingleLapHasLapEnd::spell_lap_end_position(lap)
+                    }),
+            )
             .collect()
     }
 
     /// Returns position indexes of lap ends for chunk.
     pub fn chunk_lap_end_positions(&self) -> Vec<usize> {
-        self.laps
+        self.finished_laps
             .iter()
-            .map(|lap| lap.chunk_lap_end_position())
+            .map(|lap: &SingleFinishedLapInfo| SingleLapHasLapEnd::chunk_lap_end_position(lap))
+            .chain(
+                self.unfinished_laps
+                    .iter()
+                    .map(|lap: &SingleUnfinishedLapInfo| {
+                        SingleLapHasLapEnd::chunk_lap_end_position(lap)
+                    }),
+            )
             .collect()
     }
 
     /// Returns position indexes of lap ends for view.
     pub fn view_lap_end_positions(&self) -> Vec<usize> {
-        self.laps
+        self.finished_laps
             .iter()
-            .map(|lap| lap.view_lap_end_position())
+            .map(|lap: &SingleFinishedLapInfo| SingleLapHasLapEnd::view_lap_end_position(lap))
+            .chain(
+                self.unfinished_laps
+                    .iter()
+                    .map(|lap: &SingleUnfinishedLapInfo| {
+                        SingleLapHasLapEnd::view_lap_end_position(lap)
+                    }),
+            )
             .collect()
     }
 }
 
+/// A trait representing common behavior of lap end position
+trait SingleLapHasLapEnd {
+    /// Returns position index of this lap end for key stroke.
+    fn key_stroke_lap_end_position(&self) -> usize;
+
+    /// Returns position index of this lap end for ideal key stroke.
+    fn ideal_key_stroke_lap_end_position(&self) -> usize;
+
+    /// Returns position index of this lap end for spell.
+    fn spell_lap_end_position(&self) -> usize;
+
+    /// Returns position index of this lap end for chunk.
+    fn chunk_lap_end_position(&self) -> usize;
+
+    /// Returns position index of this lap end for view.
+    fn view_lap_end_position(&self) -> usize;
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-/// A struct representing single lap information.
-pub(crate) struct SingleLapInfo {
+/// A struct representing single finished lap information.
+pub(crate) struct SingleFinishedLapInfo {
     /// Elapsed time of this lap end since typing started.
     elapsed_time: Duration,
     /// Position index of this lap end for key stroke.
@@ -97,7 +162,7 @@ pub(crate) struct SingleLapInfo {
     view_lap_end_position: usize,
 }
 
-impl SingleLapInfo {
+impl SingleFinishedLapInfo {
     pub(crate) fn new(
         elapsed_time: Duration,
         key_stroke_lap_end_position: usize,
@@ -120,28 +185,80 @@ impl SingleLapInfo {
     fn elapsed_time(&self) -> Duration {
         self.elapsed_time
     }
+}
 
-    /// Returns position index of this lap end for key stroke.
+impl SingleLapHasLapEnd for SingleFinishedLapInfo {
     fn key_stroke_lap_end_position(&self) -> usize {
         self.key_stroke_lap_end_position
     }
 
-    /// Returns position index of this lap end for ideal key stroke.
     fn ideal_key_stroke_lap_end_position(&self) -> usize {
         self.ideal_key_stroke_lap_end_position
     }
 
-    /// Returns position index of this lap end for spell.
     fn spell_lap_end_position(&self) -> usize {
         self.spell_lap_end_position
     }
 
-    /// Returns position index of this lap end for chunk.
     fn chunk_lap_end_position(&self) -> usize {
         self.chunk_lap_end_position
     }
 
-    /// Returns position index of this lap end for view.
+    fn view_lap_end_position(&self) -> usize {
+        self.view_lap_end_position
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+/// A struct representing single unfinished lap information.
+pub(crate) struct SingleUnfinishedLapInfo {
+    /// Position index of this lap end for key stroke.
+    key_stroke_lap_end_position: usize,
+    /// Position index of this lap end for ideal key stroke.
+    ideal_key_stroke_lap_end_position: usize,
+    /// Position index of this lap end for spell.
+    spell_lap_end_position: usize,
+    /// Position index of this lap end for chunk.
+    chunk_lap_end_position: usize,
+    /// Position index of this lap end for view.
+    view_lap_end_position: usize,
+}
+
+impl SingleUnfinishedLapInfo {
+    pub(crate) fn new(
+        key_stroke_lap_end_position: usize,
+        ideal_key_stroke_lap_end_position: usize,
+        spell_lap_end_position: usize,
+        chunk_lap_end_position: usize,
+        view_lap_end_position: usize,
+    ) -> Self {
+        Self {
+            key_stroke_lap_end_position,
+            ideal_key_stroke_lap_end_position,
+            spell_lap_end_position,
+            chunk_lap_end_position,
+            view_lap_end_position,
+        }
+    }
+}
+
+impl SingleLapHasLapEnd for SingleUnfinishedLapInfo {
+    fn key_stroke_lap_end_position(&self) -> usize {
+        self.key_stroke_lap_end_position
+    }
+
+    fn ideal_key_stroke_lap_end_position(&self) -> usize {
+        self.ideal_key_stroke_lap_end_position
+    }
+
+    fn spell_lap_end_position(&self) -> usize {
+        self.spell_lap_end_position
+    }
+
+    fn chunk_lap_end_position(&self) -> usize {
+        self.chunk_lap_end_position
+    }
+
     fn view_lap_end_position(&self) -> usize {
         self.view_lap_end_position
     }
@@ -489,7 +606,9 @@ impl LapStatiticsBuilder {
         assert!(key_stroke_positions.len() == spell_positions.len());
         assert!(key_stroke_positions.len() == chunk_positions.len());
 
-        let laps = lap_end_times
+        assert!(key_stroke_positions.len() >= lap_end_times.len());
+
+        let finished_laps = lap_end_times
             .iter()
             .enumerate()
             .map(|(i, &elapsed_time)| {
@@ -499,7 +618,7 @@ impl LapStatiticsBuilder {
                 let chunk_pos = chunk_positions[i];
                 let view_pos = view_positions[i];
 
-                SingleLapInfo::new(
+                SingleFinishedLapInfo::new(
                     elapsed_time,
                     key_stroke_pos,
                     ideal_key_stroke_pos,
@@ -510,7 +629,25 @@ impl LapStatiticsBuilder {
             })
             .collect();
 
-        LapInfo::new(laps)
+        let unfinished_laps = (lap_end_times.len()..key_stroke_positions.len())
+            .map(|i| {
+                let key_stroke_pos = key_stroke_positions[i];
+                let ideal_key_stroke_pos = ideal_key_stroke_positions[i];
+                let spell_pos = spell_positions[i];
+                let chunk_pos = chunk_positions[i];
+                let view_pos = view_positions[i];
+
+                SingleUnfinishedLapInfo::new(
+                    key_stroke_pos,
+                    ideal_key_stroke_pos,
+                    spell_pos,
+                    chunk_pos,
+                    view_pos,
+                )
+            })
+            .collect();
+
+        LapInfo::new(finished_laps, unfinished_laps)
     }
 }
 
@@ -711,22 +848,28 @@ mod tests {
     }
 
     fn tested_lap_info() -> LapInfo {
-        LapInfo::new(vec![
-            SingleLapInfo::new(Duration::from_secs(1), 0, 0, 0, 0, 0),
-            SingleLapInfo::new(Duration::from_secs(3), 1, 2, 3, 4, 5),
-            SingleLapInfo::new(Duration::from_secs(4), 2, 4, 6, 8, 10),
-        ])
+        LapInfo::new(
+            vec![
+                SingleFinishedLapInfo::new(Duration::from_secs(1), 0, 0, 0, 0, 0),
+                SingleFinishedLapInfo::new(Duration::from_secs(3), 1, 2, 3, 4, 5),
+                SingleFinishedLapInfo::new(Duration::from_secs(4), 2, 4, 6, 8, 10),
+            ],
+            vec![SingleUnfinishedLapInfo::new(3, 6, 9, 12, 15)],
+        )
     }
 
     #[test]
     fn lap_info_construct_lap_end_correctly() {
         let lap_info = tested_lap_info();
 
-        assert_eq!(lap_info.key_stroke_lap_end_positions(), vec![0, 1, 2]);
-        assert_eq!(lap_info.ideal_key_stroke_lap_end_positions(), vec![0, 2, 4]);
-        assert_eq!(lap_info.spell_lap_end_positions(), vec![0, 3, 6]);
-        assert_eq!(lap_info.chunk_lap_end_positions(), vec![0, 4, 8]);
-        assert_eq!(lap_info.view_lap_end_positions(), vec![0, 5, 10]);
+        assert_eq!(lap_info.key_stroke_lap_end_positions(), vec![0, 1, 2, 3]);
+        assert_eq!(
+            lap_info.ideal_key_stroke_lap_end_positions(),
+            vec![0, 2, 4, 6]
+        );
+        assert_eq!(lap_info.spell_lap_end_positions(), vec![0, 3, 6, 9]);
+        assert_eq!(lap_info.chunk_lap_end_positions(), vec![0, 4, 8, 12]);
+        assert_eq!(lap_info.view_lap_end_positions(), vec![0, 5, 10, 15]);
     }
 
     #[test]
