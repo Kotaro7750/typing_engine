@@ -78,6 +78,62 @@ impl PrimitiveStatisticsCounter {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+/// A struct representing aggregated statistics of typing for each entities.
+pub struct EntitySummaryStatistics {
+    /// Count how many entities are target of typing
+    whole_count: usize,
+    /// Count how many entities are finished typing
+    finished_count: usize,
+    /// Count how many entities are finished typing without wrong types
+    completely_correct_count: usize,
+    /// Count how many wrong entity is observed
+    /// This count includes duplication, so count may be above 1 when typed wrong multiple times
+    wrong_count: usize,
+}
+
+impl EntitySummaryStatistics {
+    /// Returns count how many entities are target of typing
+    pub fn whole_count(&self) -> usize {
+        self.whole_count
+    }
+
+    /// Returns count how many entities are finished typing
+    pub fn finished_count(&self) -> usize {
+        self.finished_count
+    }
+
+    /// Returns progress of typing
+    pub fn progress(&self) -> f64 {
+        if self.whole_count == 0 {
+            return 0.0;
+        }
+        self.finished_count as f64 / self.whole_count as f64
+    }
+
+    /// Returns count how many entities are finished typing without wrong types
+    pub fn completely_correct_count(&self) -> usize {
+        self.completely_correct_count
+    }
+
+    /// Returns count how many wrong entity is observed
+    /// This count includes duplication, so count may be above 1 when typed wrong multiple times
+    pub fn wrong_count(&self) -> usize {
+        self.wrong_count
+    }
+}
+
+impl From<&PrimitiveStatisticsCounter> for EntitySummaryStatistics {
+    fn from(value: &PrimitiveStatisticsCounter) -> Self {
+        Self {
+            whole_count: value.whole_count(),
+            finished_count: value.finished_count(),
+            completely_correct_count: value.completely_correct_count(),
+            wrong_count: value.wrong_count(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 /// A struct representing statistics counter.
 pub(crate) struct StatisticsCounter {
     key_stroke: PrimitiveStatisticsCounter,

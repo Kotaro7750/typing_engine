@@ -2,7 +2,9 @@ use std::error::Error;
 use std::fmt::Display;
 use std::time::{Duration, Instant};
 
-use crate::display_info::{DisplayInfo, KeyStrokeDisplayInfo, SpellDisplayInfo, ViewDisplayInfo};
+use crate::display_info::{
+    DisplayInfo, IdealKeyStrokeDisplayInfo, KeyStrokeDisplayInfo, SpellDisplayInfo, ViewDisplayInfo,
+};
 use crate::query::QueryRequest;
 use crate::statistics::result::{construct_result, TypingResult, TypingResultStatistics};
 use crate::statistics::{DisplayStringBuilder, LapRequest, StatisticsManager};
@@ -255,11 +257,20 @@ impl TypingEngine {
                 &key_stroke_lap_statistics_builder,
                 statistics_manager.ideal_key_stroke_statistics_counter(),
                 &ideal_key_stroke_lap_statistics_builder,
+                self.statistics_manager
+                    .key_stroke_statistics_counter()
+                    .into(),
+            );
+            let ideal_key_stroke_display_info = IdealKeyStrokeDisplayInfo::new_with(
+                self.statistics_manager
+                    .ideal_key_stroke_statistics_counter()
+                    .into(),
             );
             let spell_display_info = SpellDisplayInfo::new_with(
                 display_string_builder.spell(),
                 statistics_manager.spell_statistics_counter(),
                 &spell_lap_statistics_builder,
+                statistics_manager.spell_statistics_counter().into(),
             );
 
             let view = self
@@ -278,6 +289,7 @@ impl TypingEngine {
                 view_display_info,
                 spell_display_info,
                 key_stroke_display_info,
+                ideal_key_stroke_display_info,
                 lap_info,
             ))
         } else {

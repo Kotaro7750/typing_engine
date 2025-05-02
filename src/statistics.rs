@@ -19,6 +19,7 @@ use statistics_counter::PrimitiveStatisticsCounter;
 
 use self::multi_target_position_convert::BaseTarget;
 
+#[deprecated(note = "Use `LapInfo` and `EntitySummaryStatistics` via `DisplayInfo` instead")]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct OnTypingStatisticsTarget {
     // 対象を何個打ち終えたか
@@ -62,22 +63,34 @@ impl OnTypingStatisticsTarget {
     }
 
     /// Get count of finished targets.
+    #[deprecated(
+        note = "Use `EntitySummaryStatistics::finished_count()` via `KeyStrokeDisplayInfo::summary_statistics()` instead"
+    )]
     pub fn finished_count(&self) -> usize {
         self.finished_count
     }
 
     /// Get count of whole targets.
+    #[deprecated(
+        note = "Use `EntitySummaryStatistics::whole_count()` via `KeyStrokeDisplayInfo::summary_statistics()` instead"
+    )]
     pub fn whole_count(&self) -> usize {
         self.whole_count
     }
 
     /// Get count of targets that are finished without miss.
+    #[deprecated(
+        note = "Use `EntitySummaryStatistics::completely_correct_count()` via `KeyStrokeDisplayInfo::summary_statistics()` instead"
+    )]
     pub fn completely_correct_count(&self) -> usize {
         self.completely_correct_count
     }
 
     /// Get count of wrong typed targets.
     /// Multiple miss types in same targets are counted separately.
+    #[deprecated(
+        note = "Use `EntitySummaryStatistics::wrong_count()` via `KeyStrokeDisplayInfo::summary_statistics()` instead"
+    )]
     pub fn wrong_count(&self) -> usize {
         self.wrong_count
     }

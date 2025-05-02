@@ -9,6 +9,7 @@ use crate::statistics::{
 use crate::typing_primitive_types::vocabulary::{
     corresponding_view_positions_for_spell, ViewPosition,
 };
+use crate::EntitySummaryStatistics;
 
 /// A type for composing typing game UI.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -16,6 +17,7 @@ pub struct DisplayInfo {
     view: ViewDisplayInfo,
     spell: SpellDisplayInfo,
     key_stroke: KeyStrokeDisplayInfo,
+    ideal_key_stroke: IdealKeyStrokeDisplayInfo,
     lap_info: LapInfo,
 }
 
@@ -24,12 +26,14 @@ impl DisplayInfo {
         view: ViewDisplayInfo,
         spell: SpellDisplayInfo,
         key_stroke: KeyStrokeDisplayInfo,
+        ideal_key_stroke: IdealKeyStrokeDisplayInfo,
         lap_info: LapInfo,
     ) -> Self {
         Self {
             view,
             spell,
             key_stroke,
+            ideal_key_stroke,
             lap_info,
         }
     }
@@ -46,6 +50,11 @@ impl DisplayInfo {
     /// Get an information about key strokes of query string.
     pub fn key_stroke_info(&self) -> &KeyStrokeDisplayInfo {
         &self.key_stroke
+    }
+
+    /// Get an information about ideal key strokes of query string.
+    pub fn ideal_key_stroke_info(&self) -> &IdealKeyStrokeDisplayInfo {
+        &self.ideal_key_stroke
     }
 
     /// Get an information about lap.
@@ -135,6 +144,7 @@ pub struct SpellDisplayInfo {
     // クエリをタイプ数で指定する場合には語彙の途中のチャンクで切れている可能性がある
     last_position: usize,
     on_typing_statistics: OnTypingStatisticsTarget,
+    summary_statistics: EntitySummaryStatistics,
 }
 
 impl SpellDisplayInfo {
@@ -144,6 +154,7 @@ impl SpellDisplayInfo {
         wrong_positions: Vec<usize>,
         last_position: usize,
         on_typing_statistics: OnTypingStatisticsTarget,
+        summary_statistics: EntitySummaryStatistics,
     ) -> Self {
         Self {
             spell,
@@ -151,6 +162,7 @@ impl SpellDisplayInfo {
             wrong_positions,
             last_position,
             on_typing_statistics,
+            summary_statistics,
         }
     }
 
@@ -158,6 +170,7 @@ impl SpellDisplayInfo {
         spell_display_string_builder: &SpellDisplayStringBuilder,
         spell_statistics_counter: &PrimitiveStatisticsCounter,
         spell_lap_statistics_builder: &PrimitiveLapStatisticsBuilder,
+        summary_statistics: EntitySummaryStatistics,
     ) -> Self {
         Self::new(
             spell_display_string_builder.spell().to_string(),
@@ -170,6 +183,7 @@ impl SpellDisplayInfo {
                 spell_statistics_counter,
                 spell_lap_statistics_builder,
             ),
+            summary_statistics,
         )
     }
 
@@ -213,6 +227,11 @@ impl SpellDisplayInfo {
     pub fn last_position(&self) -> usize {
         self.last_position
     }
+
+    /// Return aggregated statistics of spell.
+    pub fn summary_statistics(&self) -> &EntitySummaryStatistics {
+        &self.summary_statistics
+    }
 }
 
 /// Information about key stroke of query string.
@@ -223,6 +242,7 @@ pub struct KeyStrokeDisplayInfo {
     wrong_positions: Vec<usize>,
     on_typing_statistics: OnTypingStatisticsTarget,
     on_typing_statistics_ideal: OnTypingStatisticsTarget,
+    summary_statistics: EntitySummaryStatistics,
 }
 
 impl KeyStrokeDisplayInfo {
@@ -232,6 +252,7 @@ impl KeyStrokeDisplayInfo {
         wrong_positions: Vec<usize>,
         on_typing_statistics: OnTypingStatisticsTarget,
         on_typing_statistics_ideal: OnTypingStatisticsTarget,
+        summary_statistics: EntitySummaryStatistics,
     ) -> Self {
         Self {
             key_stroke,
@@ -239,6 +260,7 @@ impl KeyStrokeDisplayInfo {
             wrong_positions,
             on_typing_statistics,
             on_typing_statistics_ideal,
+            summary_statistics,
         }
     }
 
@@ -248,6 +270,7 @@ impl KeyStrokeDisplayInfo {
         key_stroke_lap_statistics_builder: &PrimitiveLapStatisticsBuilder,
         ideal_key_stroke_statistics_counter: &PrimitiveStatisticsCounter,
         ideal_key_stroke_lap_statistics_builder: &PrimitiveLapStatisticsBuilder,
+        summary_statistics: EntitySummaryStatistics,
     ) -> Self {
         Self::new(
             key_stroke_display_string_builder.key_stroke().to_string(),
@@ -261,6 +284,7 @@ impl KeyStrokeDisplayInfo {
                 ideal_key_stroke_statistics_counter,
                 ideal_key_stroke_lap_statistics_builder,
             ),
+            summary_statistics,
         )
     }
 
@@ -285,11 +309,41 @@ impl KeyStrokeDisplayInfo {
         self.wrong_positions()
     }
 
+    #[deprecated(note = "Use `DisplayInfo::lap_info()` and `summary_statistics()` instead")]
     pub fn on_typing_statistics(&self) -> &OnTypingStatisticsTarget {
         &self.on_typing_statistics
     }
 
+    #[deprecated(
+        note = "Use `DisplayInfo::lap_info()` and `IdealKeyStrokeDisplayInfo::summary_statistics()` instead"
+    )]
     pub fn on_typing_statistics_ideal(&self) -> &OnTypingStatisticsTarget {
         &self.on_typing_statistics_ideal
+    }
+
+    /// Return aggregated statistics of key strokes.
+    pub fn summary_statistics(&self) -> &EntitySummaryStatistics {
+        &self.summary_statistics
+    }
+}
+
+/// Information about ideal key stroke of query string.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct IdealKeyStrokeDisplayInfo {
+    summary_statistics: EntitySummaryStatistics,
+}
+
+impl IdealKeyStrokeDisplayInfo {
+    pub(crate) fn new(summary_statistics: EntitySummaryStatistics) -> Self {
+        Self { summary_statistics }
+    }
+
+    pub(crate) fn new_with(summary_statistics: EntitySummaryStatistics) -> Self {
+        Self::new(summary_statistics)
+    }
+
+    /// Return aggregated statistics of ideal key strokes.
+    pub fn summary_statistics(&self) -> &EntitySummaryStatistics {
+        &self.summary_statistics
     }
 }

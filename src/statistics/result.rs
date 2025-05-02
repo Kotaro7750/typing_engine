@@ -2,7 +2,8 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
-use super::statistics_counter::{PrimitiveStatisticsCounter, StatisticsCounter};
+use super::statistics_counter::EntitySummaryStatistics;
+use super::statistics_counter::StatisticsCounter;
 use crate::typing_primitive_types::chunk::confirmed::ChunkConfirmed;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use crate::typing_primitive_types::chunk::Chunk;
@@ -86,46 +87,6 @@ impl TypingResultSummary {
     /// Returns aggregated result for key stroke
     pub fn chunk(&self) -> &EntitySummaryStatistics {
         &self.chunk
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-/// A struct representing aggregated result of typing for each entities.
-pub struct EntitySummaryStatistics {
-    /// Count how many entities are target of typing
-    whole_count: usize,
-    /// Count how many entities are finished typing without wrong types
-    completely_correct_count: usize,
-    /// Count how many wrong entity is observed
-    /// This count includes duplication, so count may be above 1 when typed wrong multiple times
-    wrong_count: usize,
-}
-
-impl EntitySummaryStatistics {
-    /// Returns count how many entities are target of typing
-    pub fn whole_count(&self) -> usize {
-        self.whole_count
-    }
-
-    /// Returns count how many entities are finished typing without wrong types
-    pub fn completely_correct_count(&self) -> usize {
-        self.completely_correct_count
-    }
-
-    /// Returns count how many wrong entity is observed
-    /// This count includes duplication, so count may be above 1 when typed wrong multiple times
-    pub fn wrong_count(&self) -> usize {
-        self.wrong_count
-    }
-}
-
-impl From<&PrimitiveStatisticsCounter> for EntitySummaryStatistics {
-    fn from(value: &PrimitiveStatisticsCounter) -> Self {
-        Self {
-            whole_count: value.whole_count(),
-            completely_correct_count: value.completely_correct_count(),
-            wrong_count: value.wrong_count(),
-        }
     }
 }
 

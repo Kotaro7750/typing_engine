@@ -227,6 +227,7 @@ fn construct_result_output_correct_result() {
         result_deprecated.key_stroke().whole_count(),
         result.summary().key_stroke().whole_count()
     );
+    assert_eq!(result.summary().key_stroke().finished_count(), 1);
     assert_eq!(
         result_deprecated.key_stroke().completely_correct_count(),
         result.summary().key_stroke().completely_correct_count()
@@ -240,6 +241,7 @@ fn construct_result_output_correct_result() {
         result_deprecated.ideal_key_stroke().whole_count(),
         result.summary().ideal_key_stroke().whole_count()
     );
+    assert_eq!(result.summary().ideal_key_stroke().finished_count(), 1);
     assert_eq!(
         result_deprecated
             .ideal_key_stroke()
@@ -255,10 +257,12 @@ fn construct_result_output_correct_result() {
     );
 
     assert_eq!(result.summary().spell().whole_count(), 1);
+    assert_eq!(result.summary().spell().finished_count(), 1);
     assert_eq!(result.summary().spell().completely_correct_count(), 1);
     assert_eq!(result.summary().spell().wrong_count(), 0);
 
     assert_eq!(result.summary().chunk().whole_count(), 1);
+    assert_eq!(result.summary().chunk().finished_count(), 1);
     assert_eq!(result.summary().chunk().completely_correct_count(), 1);
     assert_eq!(result.summary().chunk().wrong_count(), 0);
 
