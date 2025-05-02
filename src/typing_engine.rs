@@ -248,12 +248,10 @@ impl TypingEngine {
 
             let key_stroke_display_info = KeyStrokeDisplayInfo::new_with(
                 display_string_builder.key_stroke(),
-                self.statistics_manager
-                    .key_stroke_statistics_counter()
-                    .into(),
+                statistics_manager.key_stroke_statistics_counter().into(),
             );
             let ideal_key_stroke_display_info = IdealKeyStrokeDisplayInfo::new_with(
-                self.statistics_manager
+                statistics_manager
                     .ideal_key_stroke_statistics_counter()
                     .into(),
             );

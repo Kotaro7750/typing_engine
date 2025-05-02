@@ -129,6 +129,31 @@ fn construct_display_info_output_correct_display_string() {
 }
 
 #[test]
+fn construct_display_info_output_correct_summary_statistics() {
+    let engine = init_engine_and_type_halfway();
+
+    let display_info = engine
+        .construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()))
+        .unwrap();
+    let key_stroke_summary = display_info.key_stroke_info().summary_statistics();
+    let ideal_key_stroke_summary = display_info.ideal_key_stroke_info().summary_statistics();
+    let spell_summary = display_info.spell_info().summary_statistics();
+
+    assert_eq!(key_stroke_summary.whole_count(), 13);
+    assert_eq!(key_stroke_summary.finished_count(), 9);
+    assert_eq!(key_stroke_summary.wrong_count(), 2);
+    assert_eq!(key_stroke_summary.completely_correct_count(), 8);
+    assert_eq!(ideal_key_stroke_summary.whole_count(), 11);
+    assert_eq!(ideal_key_stroke_summary.finished_count(), 7);
+    assert_eq!(ideal_key_stroke_summary.wrong_count(), 2);
+    assert_eq!(ideal_key_stroke_summary.completely_correct_count(), 6);
+    assert_eq!(spell_summary.whole_count(), 7);
+    assert_eq!(spell_summary.finished_count(), 5);
+    assert_eq!(spell_summary.wrong_count(), 3);
+    assert_eq!(spell_summary.completely_correct_count(), 3);
+}
+
+#[test]
 fn construct_display_info_output_correct_lap_info() {
     let engine = init_engine_and_type_halfway();
 
