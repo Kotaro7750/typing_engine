@@ -6,8 +6,7 @@ use typing_engine::{
     VocabularySeparator, VocabularySpellElement,
 };
 
-#[test]
-fn construct_display_info_output_correct_display_string() {
+fn init_engine_and_type_halfway() -> TypingEngine {
     let mut engine = TypingEngine::new();
     let vocabularies = vec![VocabularyEntry::new(
         "ピョピョン吉".to_string(),
@@ -66,6 +65,40 @@ fn construct_display_info_output_correct_display_string() {
         .stroke_key_with_elapsed_time('j'.try_into().unwrap(), Duration::from_millis(1100))
         .unwrap();
 
+    engine
+}
+
+fn init_engine_and_finish_typing() -> TypingEngine {
+    let mut engine = TypingEngine::new();
+    let vocabularies = vec![VocabularyEntry::new(
+        "阿".to_string(),
+        vec![VocabularySpellElement::Normal(
+            "あ".to_string().try_into().unwrap(),
+        )],
+    )
+    .unwrap()];
+    let vocabularies_slice: Vec<&VocabularyEntry> = vocabularies.iter().map(|v| v).collect();
+    let query_request = QueryRequest::new(
+        &vocabularies_slice,
+        VocabularyQuantifier::Vocabulary(NonZeroUsize::new(1).unwrap()),
+        VocabularySeparator::None,
+        VocabularyOrder::InOrder,
+    );
+    engine.init(query_request);
+    engine
+        .start()
+        .expect("start() should be finished without errors");
+    engine
+        .stroke_key_with_elapsed_time('a'.try_into().unwrap(), Duration::from_millis(100))
+        .unwrap();
+
+    engine
+}
+
+#[test]
+fn construct_display_info_output_correct_display_string() {
+    let engine = init_engine_and_type_halfway();
+
     let display_info = engine
         .construct_display_info(LapRequest::Spell(NonZeroUsize::new(3).unwrap()))
         .unwrap();
@@ -96,27 +129,41 @@ fn construct_display_info_output_correct_display_string() {
 }
 
 #[test]
-fn construct_display_info_when_finished_output_correct_display_string() {
-    let mut engine = TypingEngine::new();
-    let vocabularies = vec![VocabularyEntry::new(
-        "阿".to_string(),
-        vec![VocabularySpellElement::Normal(
-            "あ".to_string().try_into().unwrap(),
-        )],
-    )
-    .unwrap()];
-    let vocabularies_slice: Vec<&VocabularyEntry> = vocabularies.iter().map(|v| v).collect();
-    let query_request = QueryRequest::new(
-        &vocabularies_slice,
-        VocabularyQuantifier::Vocabulary(NonZeroUsize::new(1).unwrap()),
-        VocabularySeparator::None,
-        VocabularyOrder::InOrder,
+fn construct_display_info_output_correct_lap_info() {
+    let engine = init_engine_and_type_halfway();
+
+    let display_info = engine
+        .construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()))
+        .unwrap();
+    let lap_info = display_info.lap_info();
+
+    assert_eq!(
+        lap_info.elapsed_times(),
+        vec![
+            Duration::from_millis(200),
+            Duration::from_millis(400),
+            Duration::from_millis(600),
+            Duration::from_millis(900),
+        ]
     );
-    engine.init(query_request);
-    engine
-        .start()
-        .expect("start() should be finished without errors");
-    engine.stroke_key('a'.try_into().unwrap()).unwrap();
+    assert_eq!(
+        lap_info.lap_times(),
+        vec![
+            Duration::from_millis(200),
+            Duration::from_millis(200),
+            Duration::from_millis(200),
+            Duration::from_millis(300),
+        ]
+    );
+    assert_eq!(lap_info.key_stroke_lap_end_positions(), vec![1, 3, 5, 7]);
+    assert_eq!(lap_info.spell_lap_end_positions(), vec![0, 1, 2, 3]);
+    assert_eq!(lap_info.chunk_lap_end_positions(), vec![0, 0, 1, 1]);
+    assert_eq!(lap_info.view_lap_end_positions(), vec![0, 1, 2, 3]);
+}
+
+#[test]
+fn construct_display_info_when_finished_output_correct_display_string() {
+    let engine = init_engine_and_finish_typing();
 
     let display_info = engine
         .construct_display_info(LapRequest::Spell(NonZeroUsize::new(3).unwrap()))
@@ -146,28 +193,7 @@ fn construct_display_info_when_finished_output_correct_display_string() {
 
 #[test]
 fn construct_result_output_correct_result() {
-    let mut engine = TypingEngine::new();
-    let vocabularies = vec![VocabularyEntry::new(
-        "阿".to_string(),
-        vec![VocabularySpellElement::Normal(
-            "あ".to_string().try_into().unwrap(),
-        )],
-    )
-    .unwrap()];
-    let vocabularies_slice: Vec<&VocabularyEntry> = vocabularies.iter().map(|v| v).collect();
-    let query_request = QueryRequest::new(
-        &vocabularies_slice,
-        VocabularyQuantifier::Vocabulary(NonZeroUsize::new(1).unwrap()),
-        VocabularySeparator::None,
-        VocabularyOrder::InOrder,
-    );
-    engine.init(query_request);
-    engine
-        .start()
-        .expect("start() should be finished without errors");
-    engine
-        .stroke_key_with_elapsed_time('a'.try_into().unwrap(), Duration::from_millis(100))
-        .unwrap();
+    let engine = init_engine_and_finish_typing();
 
     let lap_request = LapRequest::Spell(NonZeroUsize::new(3).unwrap());
     let result_deprecated = engine

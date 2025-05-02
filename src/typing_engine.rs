@@ -237,11 +237,17 @@ impl TypingEngine {
                     statistics_manager.consume_event(event);
                 });
 
+            let view_position_of_spell = view_position_of_spell_for_vocabulary_infos(
+                self.vocabulary_infos.as_ref().unwrap(),
+            );
+
             let (
                 spell_lap_statistics_builder,
                 key_stroke_lap_statistics_builder,
                 ideal_key_stroke_lap_statistics_builder,
-            ) = processed_chunk_info.construct_lap_statistics(lap_request.clone());
+                lap_info,
+            ) = processed_chunk_info
+                .construct_lap_statistics(lap_request.clone(), &view_position_of_spell);
 
             let key_stroke_display_info = KeyStrokeDisplayInfo::new_with(
                 display_string_builder.key_stroke(),
@@ -254,10 +260,6 @@ impl TypingEngine {
                 display_string_builder.spell(),
                 statistics_manager.spell_statistics_counter(),
                 &spell_lap_statistics_builder,
-            );
-
-            let view_position_of_spell = view_position_of_spell_for_vocabulary_infos(
-                self.vocabulary_infos.as_ref().unwrap(),
             );
 
             let view = self
@@ -276,6 +278,7 @@ impl TypingEngine {
                 view_display_info,
                 spell_display_info,
                 key_stroke_display_info,
+                lap_info,
             ))
         } else {
             Err(TypingEngineError::new(TypingEngineErrorKind::MustBeStarted))

@@ -84,12 +84,14 @@ impl OnTypingStatisticsTarget {
 
     /// Get lap end time of target.
     /// This returns [`None`](std::option::Option::None) when target is not a target for take laps.
+    #[deprecated(note = "Use `DisplayInfo::lap_info()` instead")]
     pub fn lap_end_time(&self) -> Option<&Vec<Duration>> {
         self.lap_end_time.as_ref()
     }
 
     /// Get lap end positions of target.
     /// Each positions is converted from requested target.
+    #[deprecated(note = "Use `DisplayInfo::lap_info()` instead")]
     pub fn lap_end_positions(&self) -> &Vec<usize> {
         &self.lap_end_position
     }

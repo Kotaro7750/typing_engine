@@ -5,6 +5,147 @@ use serde::{Deserialize, Serialize};
 use super::multi_target_position_convert::MultiTargetDeltaConverter;
 use super::LapRequest;
 use crate::typing_primitive_types::chunk::key_stroke_candidate::KeyStrokeElementCount;
+use crate::typing_primitive_types::vocabulary::{
+    corresponding_view_positions_for_spell, ViewPosition,
+};
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+/// A struct representing lap information.
+pub struct LapInfo {
+    /// Each lap information.
+    laps: Vec<SingleLapInfo>,
+}
+
+impl LapInfo {
+    pub(crate) fn new(laps: Vec<SingleLapInfo>) -> Self {
+        Self { laps }
+    }
+
+    /// Returns elapsed times of laps since typing started.
+    pub fn elapsed_times(&self) -> Vec<Duration> {
+        self.laps.iter().map(|lap| lap.elapsed_time()).collect()
+    }
+
+    /// Returns duration time of each lap.
+    pub fn lap_times(&self) -> Vec<Duration> {
+        self.elapsed_times()
+            .iter()
+            .scan(Duration::default(), |prev, &current| {
+                let duration = current - *prev;
+                *prev = current;
+                Some(duration)
+            })
+            .collect()
+    }
+
+    /// Returns position indexes of lap ends for key stroke.
+    pub fn key_stroke_lap_end_positions(&self) -> Vec<usize> {
+        self.laps
+            .iter()
+            .map(|lap| lap.key_stroke_lap_end_position())
+            .collect()
+    }
+
+    #[allow(dead_code)] // TODO: Currently, ideal key stroke string is not constructed.
+    /// Returns position indexes of lap ends for ideal key stroke.
+    fn ideal_key_stroke_lap_end_positions(&self) -> Vec<usize> {
+        self.laps
+            .iter()
+            .map(|lap| lap.ideal_key_stroke_lap_end_position())
+            .collect()
+    }
+
+    /// Returns position indexes of lap ends for spell.
+    pub fn spell_lap_end_positions(&self) -> Vec<usize> {
+        self.laps
+            .iter()
+            .map(|lap| lap.spell_lap_end_position())
+            .collect()
+    }
+
+    /// Returns position indexes of lap ends for chunk.
+    pub fn chunk_lap_end_positions(&self) -> Vec<usize> {
+        self.laps
+            .iter()
+            .map(|lap| lap.chunk_lap_end_position())
+            .collect()
+    }
+
+    /// Returns position indexes of lap ends for view.
+    pub fn view_lap_end_positions(&self) -> Vec<usize> {
+        self.laps
+            .iter()
+            .map(|lap| lap.view_lap_end_position())
+            .collect()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+/// A struct representing single lap information.
+pub(crate) struct SingleLapInfo {
+    /// Elapsed time of this lap end since typing started.
+    elapsed_time: Duration,
+    /// Position index of this lap end for key stroke.
+    key_stroke_lap_end_position: usize,
+    /// Position index of this lap end for ideal key stroke.
+    ideal_key_stroke_lap_end_position: usize,
+    /// Position index of this lap end for spell.
+    spell_lap_end_position: usize,
+    /// Position index of this lap end for chunk.
+    chunk_lap_end_position: usize,
+    /// Position index of this lap end for view.
+    view_lap_end_position: usize,
+}
+
+impl SingleLapInfo {
+    pub(crate) fn new(
+        elapsed_time: Duration,
+        key_stroke_lap_end_position: usize,
+        ideal_key_stroke_lap_end_position: usize,
+        spell_lap_end_position: usize,
+        chunk_lap_end_position: usize,
+        view_lap_end_position: usize,
+    ) -> Self {
+        Self {
+            elapsed_time,
+            key_stroke_lap_end_position,
+            ideal_key_stroke_lap_end_position,
+            spell_lap_end_position,
+            chunk_lap_end_position,
+            view_lap_end_position,
+        }
+    }
+
+    /// Returns elapsed time of this lap since typing started.
+    fn elapsed_time(&self) -> Duration {
+        self.elapsed_time
+    }
+
+    /// Returns position index of this lap end for key stroke.
+    fn key_stroke_lap_end_position(&self) -> usize {
+        self.key_stroke_lap_end_position
+    }
+
+    /// Returns position index of this lap end for ideal key stroke.
+    fn ideal_key_stroke_lap_end_position(&self) -> usize {
+        self.ideal_key_stroke_lap_end_position
+    }
+
+    /// Returns position index of this lap end for spell.
+    fn spell_lap_end_position(&self) -> usize {
+        self.spell_lap_end_position
+    }
+
+    /// Returns position index of this lap end for chunk.
+    fn chunk_lap_end_position(&self) -> usize {
+        self.chunk_lap_end_position
+    }
+
+    /// Returns position index of this lap end for view.
+    fn view_lap_end_position(&self) -> usize {
+        self.view_lap_end_position
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 /// A struct representing lap statistics for each primitive type entities.
@@ -326,6 +467,51 @@ impl LapStatiticsBuilder {
             self.chunk,
         )
     }
+
+    /// Construct [`LapInfo`](LapInfo)
+    pub(crate) fn construct_lap_info(&self, view_position_of_spell: &[ViewPosition]) -> LapInfo {
+        let lap_end_times = match self.lap_request {
+            LapRequest::KeyStroke(_) => self.key_stroke.lap_end_time().unwrap().clone(),
+            LapRequest::IdealKeyStroke(_) => self.ideal_key_stroke.lap_end_time().unwrap().clone(),
+            LapRequest::Spell(_) => self.spell.lap_end_time().unwrap().clone(),
+            LapRequest::Chunk(_) => self.chunk.lap_end_time().unwrap().clone(),
+        };
+
+        let key_stroke_positions = self.key_stroke.lap_end_positions();
+        let ideal_key_stroke_positions = self.ideal_key_stroke.lap_end_positions();
+        let spell_positions = self.spell.lap_end_positions();
+        let chunk_positions = self.chunk.lap_end_positions();
+        let view_positions =
+            &corresponding_view_positions_for_spell(spell_positions, view_position_of_spell);
+
+        // TODO This assertion should be satisfied at compile time by using type system.
+        assert!(key_stroke_positions.len() == ideal_key_stroke_positions.len());
+        assert!(key_stroke_positions.len() == spell_positions.len());
+        assert!(key_stroke_positions.len() == chunk_positions.len());
+
+        let laps = lap_end_times
+            .iter()
+            .enumerate()
+            .map(|(i, &elapsed_time)| {
+                let key_stroke_pos = key_stroke_positions[i];
+                let ideal_key_stroke_pos = ideal_key_stroke_positions[i];
+                let spell_pos = spell_positions[i];
+                let chunk_pos = chunk_positions[i];
+                let view_pos = view_positions[i];
+
+                SingleLapInfo::new(
+                    elapsed_time,
+                    key_stroke_pos,
+                    ideal_key_stroke_pos,
+                    spell_pos,
+                    chunk_pos,
+                    view_pos,
+                )
+            })
+            .collect();
+
+        LapInfo::new(laps)
+    }
 }
 
 #[cfg(test)]
@@ -522,5 +708,52 @@ mod tests {
         assert_eq!(iks.lap_end_positions(), &vec![2, 6, 9]);
         assert_eq!(s.lap_end_positions(), &vec![1, 4, 6]);
         assert_eq!(c.lap_end_positions(), &vec![0, 2, 3]);
+    }
+
+    fn tested_lap_info() -> LapInfo {
+        LapInfo::new(vec![
+            SingleLapInfo::new(Duration::from_secs(1), 0, 0, 0, 0, 0),
+            SingleLapInfo::new(Duration::from_secs(3), 1, 2, 3, 4, 5),
+            SingleLapInfo::new(Duration::from_secs(4), 2, 4, 6, 8, 10),
+        ])
+    }
+
+    #[test]
+    fn lap_info_construct_lap_end_correctly() {
+        let lap_info = tested_lap_info();
+
+        assert_eq!(lap_info.key_stroke_lap_end_positions(), vec![0, 1, 2]);
+        assert_eq!(lap_info.ideal_key_stroke_lap_end_positions(), vec![0, 2, 4]);
+        assert_eq!(lap_info.spell_lap_end_positions(), vec![0, 3, 6]);
+        assert_eq!(lap_info.chunk_lap_end_positions(), vec![0, 4, 8]);
+        assert_eq!(lap_info.view_lap_end_positions(), vec![0, 5, 10]);
+    }
+
+    #[test]
+    fn lap_info_construct_elapsed_time_correctly() {
+        let lap_info = tested_lap_info();
+
+        assert_eq!(
+            lap_info.elapsed_times(),
+            vec![
+                Duration::from_secs(1),
+                Duration::from_secs(3),
+                Duration::from_secs(4),
+            ]
+        );
+    }
+
+    #[test]
+    fn lap_info_construct_lap_time_correctly() {
+        let lap_info = tested_lap_info();
+
+        assert_eq!(
+            lap_info.lap_times(),
+            vec![
+                Duration::from_secs(1),
+                Duration::from_secs(2),
+                Duration::from_secs(1),
+            ]
+        );
     }
 }

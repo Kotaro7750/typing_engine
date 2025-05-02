@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::statistics::lap_statistics::PrimitiveLapStatisticsBuilder;
+use crate::statistics::lap_statistics::{LapInfo, PrimitiveLapStatisticsBuilder};
 use crate::statistics::statistics_counter::PrimitiveStatisticsCounter;
 use crate::statistics::{
     construct_on_typing_statistics_target, KeyStrokeDisplayStringBuilder, OnTypingStatisticsTarget,
@@ -16,6 +16,7 @@ pub struct DisplayInfo {
     view: ViewDisplayInfo,
     spell: SpellDisplayInfo,
     key_stroke: KeyStrokeDisplayInfo,
+    lap_info: LapInfo,
 }
 
 impl DisplayInfo {
@@ -23,11 +24,13 @@ impl DisplayInfo {
         view: ViewDisplayInfo,
         spell: SpellDisplayInfo,
         key_stroke: KeyStrokeDisplayInfo,
+        lap_info: LapInfo,
     ) -> Self {
         Self {
             view,
             spell,
             key_stroke,
+            lap_info,
         }
     }
     /// Get an information about query string itself.
@@ -43,6 +46,11 @@ impl DisplayInfo {
     /// Get an information about key strokes of query string.
     pub fn key_stroke_info(&self) -> &KeyStrokeDisplayInfo {
         &self.key_stroke
+    }
+
+    /// Get an information about lap.
+    pub fn lap_info(&self) -> &LapInfo {
+        &self.lap_info
     }
 }
 

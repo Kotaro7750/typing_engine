@@ -1,7 +1,9 @@
 use std::collections::VecDeque;
 use std::time::Duration;
 
-use crate::statistics::lap_statistics::{LapStatiticsBuilder, PrimitiveLapStatisticsBuilder};
+use crate::statistics::lap_statistics::{
+    LapInfo, LapStatiticsBuilder, PrimitiveLapStatisticsBuilder,
+};
 use crate::statistics::statistical_event::{
     IdealKeyStrokeDeemedFinishedContext, InflightSpellSnapshottedContext, KeyStrokeCorrectContext,
     KeyStrokeSnapshottedContext, SpellFinishedContext, StatisticalEvent,
@@ -14,6 +16,7 @@ use crate::typing_primitive_types::chunk::unprocessed::ChunkUnprocessed;
 use crate::typing_primitive_types::chunk::Chunk;
 use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
 use crate::typing_primitive_types::key_stroke::KeyStrokeHitMiss;
+use crate::typing_primitive_types::vocabulary::ViewPosition;
 
 #[cfg(test)]
 mod test;
@@ -365,14 +368,16 @@ impl ProcessedChunkInfo {
     }
 
     /// Construct [`LapStatisticsBuilder`](LapStatiticsBuilder) for current state.
-    /// Returned tuple is (spell, key stroke, ideal key stroke) lap statistics builder.
+    /// First 3 elements in tuple are spell, key stroke and ideal key stroke lap statistics builder.
     pub(crate) fn construct_lap_statistics(
         &self,
         lap_request: LapRequest,
+        view_position_of_spell: &[ViewPosition],
     ) -> (
         PrimitiveLapStatisticsBuilder,
         PrimitiveLapStatisticsBuilder,
         PrimitiveLapStatisticsBuilder,
+        LapInfo,
     ) {
         let mut lap_statistics_builder = LapStatiticsBuilder::new(lap_request);
 
@@ -441,6 +446,8 @@ impl ProcessedChunkInfo {
                 };
             });
 
+        let lap_info = lap_statistics_builder.construct_lap_info(view_position_of_spell);
+
         let (
             key_stroke_lap_statistics_builder,
             ideal_key_stroke_lap_statistics_builder,
@@ -452,6 +459,7 @@ impl ProcessedChunkInfo {
             spell_lap_statistics_builder,
             key_stroke_lap_statistics_builder,
             ideal_key_stroke_lap_statistics_builder,
+            lap_info,
         )
     }
 
