@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::fmt::Display;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use crate::display_info::{
     DisplayInfo, IdealKeyStrokeDisplayInfo, KeyStrokeDisplayInfo, SpellDisplayInfo, ViewDisplayInfo,
@@ -74,7 +74,6 @@ enum TypingEngineState {
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct TypingEngine {
     state: TypingEngineState,
-    start_time: Option<Instant>,
     processed_chunk_info: Option<ProcessedChunkInfo>,
     vocabulary_infos: Option<Vec<VocabularyInfo>>,
     statistics_manager: StatisticsManager,
@@ -89,7 +88,6 @@ impl TypingEngine {
     pub fn new() -> Self {
         Self {
             state: TypingEngineState::Uninitialized,
-            start_time: None,
             processed_chunk_info: None,
             vocabulary_infos: None,
             statistics_manager: StatisticsManager::new(),
@@ -166,7 +164,6 @@ impl TypingEngine {
                 .move_next_chunk();
 
             self.state = TypingEngineState::Started;
-            self.start_time.replace(Instant::now());
             Ok(())
         } else {
             Err(TypingEngineError::new(
@@ -175,22 +172,7 @@ impl TypingEngine {
         }
     }
 
-    /// Give a key stroke to [`TypingEngine`].
-    ///
-    /// If this method is called before initializing via calling [`start`](Self::start()) method,
-    /// this method returns error.
-    pub fn stroke_key(&mut self, key_stroke: KeyStrokeChar) -> Result<bool, TypingEngineError> {
-        if self.is_started() {
-            let elapsed_time = self.start_time.as_ref().unwrap().elapsed();
-            self.stroke_key_with_elapsed_time(key_stroke, elapsed_time)
-        } else {
-            Err(TypingEngineError::new(TypingEngineErrorKind::MustBeStarted))
-        }
-    }
-
     /// Give a key stroke to [`TypingEngine`] with a specified elapsed time.
-    ///
-    /// This method is similar to [`stroke_key`](Self::stroke_key), but it allows specifying the elapsed time.
     pub fn stroke_key_with_elapsed_time(
         &mut self,
         key_stroke: KeyStrokeChar,
