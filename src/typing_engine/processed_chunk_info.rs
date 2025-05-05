@@ -51,7 +51,6 @@ impl ProcessedChunkInfo {
         self.unprocessed_chunks.is_empty() && self.inflight_chunk.is_none()
     }
 
-    #[must_use]
     pub(crate) fn append_chunks(&mut self, chunks: Vec<ChunkUnprocessed>) -> Vec<StatisticalEvent> {
         let chunk_added_events = chunks
             .iter()
