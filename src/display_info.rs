@@ -111,16 +111,6 @@ impl ViewDisplayInfo {
         &self.wrong_positions
     }
 
-    /// Index of character which is not correctly typed.
-    ///
-    /// ex. When query string is `シュート`, and given key stroke was `s` -> `a(miss type)` -> `y` -> `u` ->
-    /// `-`, this function returns `[0,1]`.
-    // TODO: remove this method in next major version.
-    #[deprecated(note = "Use wrong_positions() instead")]
-    pub fn missed_positions(&self) -> &Vec<usize> {
-        self.wrong_positions()
-    }
-
     /// Index of last view string to be typed.
     ///
     /// This function is useful to distinct view string character to be typed and not to be typed.
@@ -198,16 +188,6 @@ impl SpellDisplayInfo {
     /// `d`, this function returns `[0,1]`.
     pub fn wrong_positions(&self) -> &Vec<usize> {
         &self.wrong_positions
-    }
-
-    /// Index of spell which is not correctly typed.
-    ///
-    /// ex. When query string is `巨大` ( spell is `きょだい` ), and given key stroke was `k` -> `a(miss type)` -> `y` -> `o` ->
-    /// `d`, this function returns `[0,1]`.
-    // TODO: remove this method in next major version.
-    #[deprecated(note = "Use wrong_positions() instead")]
-    pub fn missed_positions(&self) -> &Vec<usize> {
-        self.wrong_positions()
     }
 
     /// Index of last spell to be typed.
