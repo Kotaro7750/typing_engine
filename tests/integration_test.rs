@@ -6,8 +6,9 @@ use typing_engine::{
     VocabularyQuantifier, VocabularySeparator, VocabularySpellElement,
 };
 
-fn init_engine_and_type_halfway() -> TypingEngine {
-    let mut engine = TypingEngine::new();
+fn init_engine_and_type_halfway(engine: Option<TypingEngine>) -> TypingEngine {
+    let mut engine = engine.unwrap_or(TypingEngine::new());
+
     let vocabularies = vec![VocabularyEntry::new(
         "ピョピョン吉".to_string(),
         vec![
@@ -68,8 +69,9 @@ fn init_engine_and_type_halfway() -> TypingEngine {
     engine
 }
 
-fn init_engine_and_finish_typing() -> TypingEngine {
-    let mut engine = TypingEngine::new();
+fn init_engine_and_finish_typing(engine: Option<TypingEngine>) -> TypingEngine {
+    let mut engine = engine.unwrap_or(TypingEngine::new());
+
     let vocabularies = vec![VocabularyEntry::new(
         "阿".to_string(),
         vec![VocabularySpellElement::Normal(
@@ -97,7 +99,7 @@ fn init_engine_and_finish_typing() -> TypingEngine {
 
 #[test]
 fn construct_display_info_output_correct_display_string() {
-    let engine = init_engine_and_type_halfway();
+    let engine = init_engine_and_type_halfway(None);
 
     let display_info = engine
         .construct_display_info(LapRequest::Spell(NonZeroUsize::new(3).unwrap()))
@@ -130,7 +132,7 @@ fn construct_display_info_output_correct_display_string() {
 
 #[test]
 fn construct_display_info_output_correct_summary_statistics() {
-    let engine = init_engine_and_type_halfway();
+    let engine = init_engine_and_type_halfway(None);
 
     let display_info = engine
         .construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()))
@@ -155,7 +157,7 @@ fn construct_display_info_output_correct_summary_statistics() {
 
 #[test]
 fn construct_display_info_output_correct_lap_info() {
-    let engine = init_engine_and_type_halfway();
+    let engine = init_engine_and_type_halfway(None);
 
     let display_info = engine
         .construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()))
@@ -191,7 +193,7 @@ fn construct_display_info_output_correct_lap_info() {
 
 #[test]
 fn construct_display_info_when_finished_output_correct_display_string() {
-    let engine = init_engine_and_finish_typing();
+    let engine = init_engine_and_finish_typing(None);
 
     let display_info = engine
         .construct_display_info(LapRequest::Spell(NonZeroUsize::new(3).unwrap()))
@@ -221,7 +223,7 @@ fn construct_display_info_when_finished_output_correct_display_string() {
 
 #[test]
 fn construct_result_output_correct_result() {
-    let engine = init_engine_and_finish_typing();
+    let engine = init_engine_and_finish_typing(None);
 
     let lap_request = LapRequest::Spell(NonZeroUsize::new(3).unwrap());
     let result = engine
@@ -259,7 +261,7 @@ fn construct_result_output_correct_result() {
 
 #[test]
 fn construct_result_output_correct_skill_statistics() {
-    let engine = init_engine_and_finish_typing();
+    let engine = init_engine_and_finish_typing(None);
 
     let lap_request = LapRequest::Spell(NonZeroUsize::new(3).unwrap());
     let result = engine
@@ -300,4 +302,13 @@ fn construct_result_output_correct_skill_statistics() {
             .wrong_count_ranking(),
         vec![]
     );
+}
+
+#[test]
+fn init_engine_twice_initialized_correctly() {
+    let engine = init_engine_and_type_halfway(None);
+    let engine_inited_twice = init_engine_and_finish_typing(Some(engine));
+    let reference_engine = init_engine_and_finish_typing(None);
+
+    assert_eq!(engine_inited_twice, reference_engine);
 }

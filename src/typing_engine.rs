@@ -104,6 +104,9 @@ impl TypingEngine {
         self.processed_chunk_info.replace(processed_chunk_info);
         self.vocabulary_infos.replace(vocabulary_infos);
 
+        self.display_string_builder = DisplayStringBuilder::new();
+        self.statistics_manager = StatisticsManager::new();
+
         statistical_events.iter().for_each(|statistical_event| {
             self.statistics_manager
                 .consume_event(statistical_event.clone());
