@@ -270,38 +270,16 @@ fn construct_result_output_correct_skill_statistics() {
     let skill_statistics = result.skill_statistics();
 
     assert_eq!(skill_statistics.single_key_stroke().len(), 1);
+    let stat = skill_statistics.single_key_stroke().first().unwrap();
     assert_eq!(
-        skill_statistics
-            .single_key_stroke()
-            .get(0)
-            .unwrap()
-            .entity(),
+        stat.entity(),
         &<char as TryInto<KeyStrokeChar>>::try_into('a').unwrap()
     );
-    assert_eq!(
-        skill_statistics
-            .single_key_stroke()
-            .get(0)
-            .unwrap()
-            .accuracy(),
-        1.0
-    );
-    assert_eq!(
-        skill_statistics
-            .single_key_stroke()
-            .get(0)
-            .unwrap()
-            .average_time(),
-        Duration::from_millis(100)
-    );
-    assert_eq!(
-        skill_statistics
-            .single_key_stroke()
-            .get(0)
-            .unwrap()
-            .wrong_count_ranking(),
-        vec![]
-    );
+    assert_eq!(stat.accuracy(), 1.0);
+    assert_eq!(stat.average_time(), Duration::from_millis(100));
+    assert_eq!(stat.wrong_count_ranking(), vec![]);
+    assert_eq!(stat.completely_correct_count(), 1);
+    assert_eq!(stat.count(), 1);
 }
 
 #[test]

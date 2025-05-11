@@ -59,6 +59,11 @@ impl<T: Eq + Hash + Clone + Ord> EntitySkillStatistics<T> {
         &self.entity
     }
 
+    /// Returns count of occurrences of entity.
+    pub fn count(&self) -> usize {
+        self.count
+    }
+
     /// Returns entities and counts of wrong occurrences sorted by count.
     /// Sort order is descending, it means that the most wrong entity is first.
     /// Each element of the vector is ( entity, count of wrong occurrences).
@@ -89,6 +94,11 @@ impl<T: Eq + Hash + Clone + Ord> EntitySkillStatistics<T> {
         } else {
             self.cumulative_time / self.count as u32
         }
+    }
+
+    /// Returns count of occurrences without wrong.
+    pub fn completely_correct_count(&self) -> usize {
+        self.completely_correct_count
     }
 }
 
