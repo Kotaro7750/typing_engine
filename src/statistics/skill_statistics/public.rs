@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::hash::Hash;
+use std::ops::Add;
 use std::time::Duration;
 
 use crate::KeyStrokeChar;
@@ -18,6 +19,32 @@ impl SkillStatistics {
     /// Returns skill statistics for a single key stroke.
     pub fn single_key_stroke(&self) -> &[EntitySkillStatistics<KeyStrokeChar>] {
         &self.single_key_stroke
+    }
+}
+
+impl Add for SkillStatistics {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        let mut result_map = BTreeMap::new();
+
+        // Process the elements from self
+        for stat in self.single_key_stroke.iter() {
+            result_map.insert(stat.entity().clone(), stat.clone());
+        }
+
+        // Process the elements from rhs
+        for stat in rhs.single_key_stroke.iter() {
+            if let Some(existing_stat) = result_map.get_mut(stat.entity()) {
+                // If the entity already exists, add the statistics
+                *existing_stat = existing_stat.clone() + stat.clone();
+            } else {
+                // If the entity doesn't exist, insert it
+                result_map.insert(stat.entity().clone(), stat.clone());
+            }
+        }
+
+        Self::new_with(result_map.into_values().collect())
     }
 }
 
@@ -102,6 +129,26 @@ impl<T: Eq + Hash + Clone + Ord> EntitySkillStatistics<T> {
     }
 }
 
+impl<T: Eq + Hash + Clone + Ord> Add for EntitySkillStatistics<T> {
+    type Output = Self;
+
+    /// Adds two [`EntitySkillStatistics`](EntitySkillStatistics) together.
+    /// When add instances with different entities, the entity of the first instance is used.
+    fn add(self, rhs: Self) -> Self::Output {
+        let mut wrong_count_map = self.wrong_count_map.clone();
+        for (k, v) in rhs.wrong_count_map.iter() {
+            *wrong_count_map.entry(k.clone()).or_insert(0) += *v;
+        }
+        Self::new_with(
+            self.entity,
+            self.count + rhs.count,
+            self.cumulative_time + rhs.cumulative_time,
+            wrong_count_map,
+            self.completely_correct_count + rhs.completely_correct_count,
+        )
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -119,6 +166,72 @@ mod test {
         assert_eq!(ss.accuracy(), 0.0);
         assert_eq!(ss.average_time(), Duration::from_secs(0));
         assert_eq!(ss.wrong_count_ranking(), vec![]);
+    }
+
+    #[test]
+    fn add_entity_skill_statistics_with_same_entity() {
+        let ss1 = EntitySkillStatistics::<KeyStrokeChar>::new_with(
+            'a'.try_into().unwrap(),
+            2,
+            Duration::from_secs(2),
+            BTreeMap::from([('b'.try_into().unwrap(), 1), ('c'.try_into().unwrap(), 3)]),
+            1,
+        );
+
+        let ss2 = EntitySkillStatistics::<KeyStrokeChar>::new_with(
+            'a'.try_into().unwrap(),
+            3,
+            Duration::from_secs(3),
+            BTreeMap::from([('a'.try_into().unwrap(), 1), ('b'.try_into().unwrap(), 1)]),
+            2,
+        );
+
+        let added = ss1 + ss2;
+
+        assert_eq!(added.entity(), &KeyStrokeChar::try_from('a').unwrap());
+        assert_eq!(added.count(), 5);
+        assert_eq!(added.completely_correct_count(), 3);
+        assert_eq!(
+            added.wrong_count_ranking(),
+            vec![
+                (KeyStrokeChar::try_from('c').unwrap(), 3),
+                (KeyStrokeChar::try_from('b').unwrap(), 2),
+                (KeyStrokeChar::try_from('a').unwrap(), 1),
+            ]
+        );
+    }
+
+    #[test]
+    fn add_entity_skill_statistics_with_different_entity() {
+        let ss1 = EntitySkillStatistics::<KeyStrokeChar>::new_with(
+            'a'.try_into().unwrap(),
+            2,
+            Duration::from_secs(2),
+            BTreeMap::from([('b'.try_into().unwrap(), 1), ('c'.try_into().unwrap(), 3)]),
+            1,
+        );
+
+        let ss2 = EntitySkillStatistics::<KeyStrokeChar>::new_with(
+            'b'.try_into().unwrap(),
+            3,
+            Duration::from_secs(3),
+            BTreeMap::from([('a'.try_into().unwrap(), 1), ('b'.try_into().unwrap(), 1)]),
+            2,
+        );
+
+        let added = ss1 + ss2;
+
+        assert_eq!(added.entity(), &KeyStrokeChar::try_from('a').unwrap());
+        assert_eq!(added.count(), 5);
+        assert_eq!(added.completely_correct_count(), 3);
+        assert_eq!(
+            added.wrong_count_ranking(),
+            vec![
+                (KeyStrokeChar::try_from('c').unwrap(), 3),
+                (KeyStrokeChar::try_from('b').unwrap(), 2),
+                (KeyStrokeChar::try_from('a').unwrap(), 1),
+            ]
+        );
     }
 
     #[test]
@@ -171,5 +284,69 @@ mod test {
                 ('b'.try_into().unwrap(), 1),
             ]
         );
+    }
+
+    #[test]
+    fn add_skill_statistics() {
+        let ss1 = SkillStatistics::new_with(vec![
+            EntitySkillStatistics::<KeyStrokeChar>::new_with(
+                'a'.try_into().unwrap(),
+                2,
+                Duration::from_secs(2),
+                BTreeMap::new(),
+                1,
+            ),
+            EntitySkillStatistics::<KeyStrokeChar>::new_with(
+                'b'.try_into().unwrap(),
+                3,
+                Duration::from_secs(3),
+                BTreeMap::new(),
+                2,
+            ),
+        ]);
+        let ss2 = SkillStatistics::new_with(vec![
+            EntitySkillStatistics::<KeyStrokeChar>::new_with(
+                'c'.try_into().unwrap(),
+                5,
+                Duration::from_secs(5),
+                BTreeMap::new(),
+                4,
+            ),
+            EntitySkillStatistics::<KeyStrokeChar>::new_with(
+                'a'.try_into().unwrap(),
+                4,
+                Duration::from_secs(4),
+                BTreeMap::new(),
+                3,
+            ),
+        ]);
+
+        let added = ss1 + ss2;
+
+        let expected = SkillStatistics::new_with(vec![
+            EntitySkillStatistics::<KeyStrokeChar>::new_with(
+                'a'.try_into().unwrap(),
+                6,
+                Duration::from_secs(6),
+                BTreeMap::new(),
+                4,
+            ),
+            EntitySkillStatistics::<KeyStrokeChar>::new_with(
+                'b'.try_into().unwrap(),
+                3,
+                Duration::from_secs(3),
+                BTreeMap::new(),
+                2,
+            ),
+            EntitySkillStatistics::<KeyStrokeChar>::new_with(
+                'c'.try_into().unwrap(),
+                5,
+                Duration::from_secs(5),
+                BTreeMap::new(),
+                4,
+            ),
+        ]);
+
+        assert_eq!(added, expected);
     }
 }

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::ops::Add;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 /// A struct representing statistics counter for each primitive type entities.
@@ -127,6 +128,24 @@ impl From<&PrimitiveStatisticsCounter> for EntitySummaryStatistics {
             finished_count: value.finished_count(),
             completely_correct_count: value.completely_correct_count(),
             wrong_count: value.wrong_count(),
+        }
+    }
+}
+
+impl Add for EntitySummaryStatistics {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        let whole_count = self.whole_count + rhs.whole_count;
+        let finished_count = self.finished_count + rhs.finished_count;
+        let completely_correct_count = self.completely_correct_count + rhs.completely_correct_count;
+        let wrong_count = self.wrong_count + rhs.wrong_count;
+
+        Self {
+            whole_count,
+            finished_count,
+            completely_correct_count,
+            wrong_count,
         }
     }
 }
