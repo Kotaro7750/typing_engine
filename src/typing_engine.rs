@@ -142,6 +142,8 @@ impl TypingEngine {
             statistical_events.iter().for_each(|statistical_event| {
                 self.statistics_manager
                     .consume_event(statistical_event.clone());
+                self.display_string_builder
+                    .consume_event(statistical_event.clone());
             });
 
             Ok(())
