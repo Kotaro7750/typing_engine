@@ -5,20 +5,21 @@ use crate::typing_primitive_types::chunk_key_stroke_dictionary::CHUNK_SPELL_TO_K
 use crate::typing_primitive_types::spell::SpellString;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
-/// Each spells of a vocabulary.
-/// [`Vec<VocabularySpellElement>`] represents spells for single vocabulary.
+/// Each spell element of a vocabulary.
+/// [`Vec<VocabularySpellElement>`] represents the spell for a single vocabulary.
 pub enum VocabularySpellElement {
     /// Spell for almost all of spells.
-    /// This variant represents spells for single charactor of view.
+    /// This variant represents a spell for a single view character.
     ///
     /// Ex. When vocabulary is
     /// * `巨大`, spells are `[Normal("きょ"), Normal("だい")]`
     /// * `Big`, spells are `[Normal("B"), Normal("i"), Normal("g")]`
     Normal(SpellString),
     /// Spell for compound vocabularies(熟字訓).
-    /// This variant represents spells for some parts of view.
+    /// This variant represents a spell that spans multiple view characters.
     ///
-    /// Second element of inner tuple represents how many view charactors this spell corresponds to.
+    /// The second element of the inner tuple represents how many view characters this spell
+    /// corresponds to.
     ///
     /// Ex. When vocabulary is
     /// * `今日`, spells are `[Compound("きょう", 2)]`
@@ -78,7 +79,7 @@ impl VocabularyEntry {
     }
 
     /// Construct the whole spell of this entry.
-    /// This is accomlished by concatenating spell elements of this entry.
+    /// This is accomplished by concatenating the spell elements of this entry.
     pub(crate) fn construct_whole_spell(&self) -> SpellString {
         let mut s = String::new();
 
@@ -162,11 +163,11 @@ impl VocabularyEntry {
     }
 }
 
-/// An enum representing position indexes in view string for each spell charactors.
+/// An enum representing position indexes in the view string for each spell character.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum ViewPosition {
     Normal(usize),
-    /// Represents position indexes for a spell charactor in compound vocabulary.
+    /// Represents position indexes for a spell character in a compound vocabulary.
     Compound(Vec<usize>),
 }
 
@@ -181,7 +182,7 @@ impl ViewPosition {
         }
     }
 
-    /// Return the last view position of corrensponding spell charactor.
+    /// Return the last view position of the corresponding spell character.
     pub(crate) fn last_position(&self) -> usize {
         match self {
             Self::Normal(position) => *position,
@@ -190,7 +191,7 @@ impl ViewPosition {
     }
 }
 
-/// Return view position indexes for each spell positions.
+/// Return view position indexes for each spell position.
 pub(crate) fn corresponding_view_positions_for_spell(
     spell_positions: &[usize],
     view_position_of_spell: &[ViewPosition],
@@ -221,7 +222,8 @@ pub(crate) fn corresponding_view_positions_for_spell(
 pub(crate) struct VocabularyInfo {
     view: String,
     spell: SpellString,
-    /// Corresponding position index in view string for each spell charactors. Position is 0 oriented.
+    /// Corresponding position indexes in the view string for each spell character. Position is
+    /// 0-based.
     view_position_of_spell: Vec<ViewPosition>,
     chunk_count: NonZeroUsize,
 }
@@ -258,7 +260,7 @@ impl VocabularyInfo {
     }
 }
 
-/// Construct view position indexes for spell charactors concatenated from passed VocabularyInfos.
+/// Construct view position indexes for spell characters concatenated from passed VocabularyInfos.
 pub(crate) fn view_position_of_spell_for_vocabulary_infos(
     vocabulary_infos: &[VocabularyInfo],
 ) -> Vec<ViewPosition> {

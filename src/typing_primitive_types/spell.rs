@@ -8,12 +8,12 @@ use std::{
 use super::chunk::ChunkSpell;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-/// A string only contains characters which can be used as spells.
+/// A string that only contains characters usable as spells.
 ///
-/// Characters can be used as spells are
-/// * A displayable ASCII. (`U+20` ~ `U+7E`)
-/// * A japanese hiragana. (`U+3041` ~ `U+308F`, `U+3092` ~ `U+3094`)
-/// * A japanese symbol.
+/// Characters usable as spells are:
+/// * Displayable ASCII (`U+0020` to `U+007E`).
+/// * Japanese Hiragana (`U+3041` to `U+308F`, `U+3092` to `U+3094`).
+/// * Japanese symbols (see `is_japanese_symbol`).
 pub struct SpellString(String);
 
 impl SpellString {

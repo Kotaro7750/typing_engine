@@ -200,11 +200,11 @@ fn construct_spell_strings(strs: &[String]) -> Result<Vec<SpellString>, Vocabula
     Ok(spell_strings)
 }
 
-/// Separate passed line into multiple components with passed separator charactor.
-/// Backslashed separators are recognized as separator charactor itself.
-/// Backslash not followed after separator is retain.
+/// Separate a line into components using the given separator character.
+/// A backslashed separator is treated as a literal separator character.
+/// A backslash not followed by the separator is kept as-is.
 ///
-/// Ex. When separator is colon ( : ),
+/// Ex. When separator is colon (`:`),
 /// a:b:c -> (a,b,c)
 /// a<bslash>:b:c -> (a:b, c)
 /// a<bslash><bslash>:b:c -> (a<bslash>:b, c)
@@ -218,7 +218,7 @@ fn split_by_non_escaped_separator(line: &str, separator: char) -> Vec<String> {
 
     for char in line.chars() {
         if char == separator {
-            // Escaped separator is recognized as separator charactor itself
+            // Escaped separator is recognized as the separator character itself.
             if is_prev_escape {
                 component.push(char);
 

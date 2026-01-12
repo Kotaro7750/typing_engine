@@ -39,7 +39,9 @@ pub fn is_japanese_symbol(c: char) -> bool {
     )
 }
 
-/// Return ceil(a/b)
+/// Return ceil(a / b).
+///
+/// `b` must be non-zero.
 pub(crate) fn calc_ceil_div(a: usize, b: usize) -> usize {
     (a + b - 1) / b
 }

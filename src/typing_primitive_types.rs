@@ -1,12 +1,12 @@
-//! Primitive types which construct targets being typed.
+//! Primitive types that represent what is being typed.
 //!
-//! In this module, mainly 4 modules are defined:
-//! - `key_stroke`: Module for each key stroke during typing.
-//! - `vocabulary`: Module for each vocabulary. Vocabularies are comonents of query being typed.
-//! - `spell`: Module for each spell. Spells are representations of vocabularies in a form of
-//!     sequence of fundamental characters such as alphabets and hiraganas.
-//! - `chunk`: Private module for each chunk, which is specific concept to Japanese. In Japanase, some
-//!     sequences of key strokes can type multiple characters of spell.
+//! This module groups the core primitives:
+//! - `key_stroke`: Per-keystroke input during typing.
+//! - `vocabulary`: Per-vocabulary units that compose a query.
+//! - `spell`: Spellings for vocabularies, as sequences of fundamental characters such as ASCII
+//!   or Hiragana.
+//! - `chunk`: Internal typing units used mainly for Japanese, where a sequence of key strokes can
+//!   produce multiple spell characters.
 
 pub(crate) mod chunk;
 pub(crate) mod chunk_key_stroke_dictionary;

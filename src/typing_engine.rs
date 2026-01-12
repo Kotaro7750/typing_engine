@@ -70,7 +70,7 @@ enum TypingEngineState {
     Started,
 }
 
-/// The main engine of typing game.
+/// The main typing game engine.
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct TypingEngine {
     state: TypingEngineState,
@@ -81,10 +81,10 @@ pub struct TypingEngine {
 }
 
 impl TypingEngine {
-    /// Construct an empty engine.
+    /// Construct an empty engine in the uninitialized state.
     ///
-    /// This method only do construct typing engine, so you must call [`init`](Self::init()) method to construct
-    /// query and [`start`](Self::start()) method to start typing.
+    /// This only constructs the engine; call [`init`](Self::init()) to build the query and
+    /// [`start`](Self::start()) to begin typing.
     pub fn new() -> Self {
         Self {
             state: TypingEngineState::Uninitialized,
@@ -271,6 +271,8 @@ impl TypingEngine {
 
     /// Construct [`TypingResult`](TypingResult).
     /// This method must be called when typing is finished.
+    ///
+    /// `lap_request` is currently unused but kept for API compatibility with display construction.
     pub fn construct_result(
         &self,
         #[allow(unused)] lap_request: LapRequest,
