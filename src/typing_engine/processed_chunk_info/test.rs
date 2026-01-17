@@ -6,9 +6,9 @@ use crate::statistics::statistical_event::{
     ChunkAddedContext, ChunkConfirmedContext, IdealKeyStrokeDeemedFinishedContext,
     SpellFinishedContext,
 };
+use crate::typing_primitive_types::chunk::ChunkSpell;
 use crate::typing_primitive_types::chunk::inflight::ChunkSpellCursorPosition;
 use crate::typing_primitive_types::chunk::key_stroke_candidate::KeyStrokeElementCount;
-use crate::typing_primitive_types::chunk::ChunkSpell;
 use crate::typing_primitive_types::key_stroke::ActualKeyStroke;
 use crate::{gen_candidate, gen_candidate_key_stroke, gen_chunk_inflight, gen_chunk_unprocessed};
 
@@ -239,8 +239,8 @@ fn correct_stroke_to_processed_chunk_info_returns_chunk_confirmed_event() {
 }
 
 #[test]
-fn correct_stroke_to_processed_chunk_info_with_delayed_confirmable_inflight_chunk_confirms_delayed_confirmed_candidate(
-) {
+fn correct_stroke_to_processed_chunk_info_with_delayed_confirmable_inflight_chunk_confirms_delayed_confirmed_candidate()
+ {
     let (mut pci, _) = ProcessedChunkInfo::new(vec![
         gen_chunk_unprocessed!(
             "か",
@@ -292,8 +292,8 @@ fn correct_stroke_to_processed_chunk_info_with_delayed_confirmable_inflight_chun
 }
 
 #[test]
-fn correct_stroke_to_processed_chunk_info_with_delayed_confirmable_inflight_chunk_confirms_not_delayed_confirmed_candidate(
-) {
+fn correct_stroke_to_processed_chunk_info_with_delayed_confirmable_inflight_chunk_confirms_not_delayed_confirmed_candidate()
+ {
     let (mut pci, _) = ProcessedChunkInfo::new(vec![
         gen_chunk_unprocessed!(
             "か",
@@ -345,8 +345,8 @@ fn correct_stroke_to_processed_chunk_info_with_delayed_confirmable_inflight_chun
 }
 
 #[test]
-fn correct_stroke_to_processed_chunk_info_with_delayed_confirmable_inflight_chunk_confirms_delayed_confirmed_candidate_and_next_chunk(
-) {
+fn correct_stroke_to_processed_chunk_info_with_delayed_confirmable_inflight_chunk_confirms_delayed_confirmed_candidate_and_next_chunk()
+ {
     let (mut pci, _) = ProcessedChunkInfo::new(vec![
         gen_chunk_unprocessed!(
             "ん",
@@ -715,5 +715,115 @@ fn snapshot_processed_chunk_info_with_inflight_chunk_with_delayed_confirmable_ca
                 &'i'.try_into().unwrap(),
             )),
         ]
+    );
+}
+
+#[test]
+fn last_key_stroke_elapsed_time_none_when_no_chunks() {
+    let (pci, _) = ProcessedChunkInfo::new(vec![]);
+
+    assert_eq!(pci.last_key_stroke_elapsed_time(), None);
+}
+
+#[test]
+fn last_key_stroke_elapsed_time_none_when_inflight_has_no_key_stroke() {
+    let (mut pci, _) = ProcessedChunkInfo::new(vec![gen_chunk_unprocessed!(
+        "か",
+        vec![gen_candidate!(gen_candidate_key_stroke!("ka"))],
+        gen_candidate!(gen_candidate_key_stroke!("ka"))
+    )]);
+
+    pci.move_next_chunk();
+
+    assert_eq!(pci.last_key_stroke_elapsed_time(), None);
+}
+
+#[test]
+fn last_key_stroke_elapsed_time_updates_on_wrong_stroke() {
+    let (mut pci, _) = ProcessedChunkInfo::new(vec![gen_chunk_unprocessed!(
+        "か",
+        vec![gen_candidate!(gen_candidate_key_stroke!("ka"))],
+        gen_candidate!(gen_candidate_key_stroke!("ka"))
+    )]);
+
+    pci.move_next_chunk();
+    pci.stroke_key('x'.try_into().unwrap(), Duration::new(1, 0));
+
+    assert_eq!(
+        pci.last_key_stroke_elapsed_time(),
+        Some(Duration::new(1, 0))
+    );
+}
+
+#[test]
+fn last_key_stroke_elapsed_time_uses_pending_key_stroke() {
+    let (mut pci, _) = ProcessedChunkInfo::new(vec![
+        gen_chunk_unprocessed!(
+            "ん",
+            vec![
+                gen_candidate!(gen_candidate_key_stroke!("n"), ['p']),
+                gen_candidate!(gen_candidate_key_stroke!("nn")),
+                gen_candidate!(gen_candidate_key_stroke!("xn"))
+            ],
+            gen_candidate!(gen_candidate_key_stroke!("n"), ['p'])
+        ),
+        gen_chunk_unprocessed!(
+            "ぴ",
+            vec![gen_candidate!(gen_candidate_key_stroke!("p")),],
+            gen_candidate!(gen_candidate_key_stroke!("p"))
+        ),
+    ]);
+
+    pci.move_next_chunk();
+    pci.stroke_key('n'.try_into().unwrap(), Duration::new(1, 0));
+    pci.stroke_key('m'.try_into().unwrap(), Duration::new(2, 0));
+
+    assert_eq!(
+        pci.last_key_stroke_elapsed_time(),
+        Some(Duration::new(2, 0))
+    );
+}
+
+#[test]
+fn last_key_stroke_elapsed_time_keeps_after_finish() {
+    let (mut pci, _) = ProcessedChunkInfo::new(vec![gen_chunk_unprocessed!(
+        "か",
+        vec![gen_candidate!(gen_candidate_key_stroke!("ka"))],
+        gen_candidate!(gen_candidate_key_stroke!("ka"))
+    )]);
+
+    pci.move_next_chunk();
+    pci.stroke_key('k'.try_into().unwrap(), Duration::new(1, 0));
+    pci.stroke_key('a'.try_into().unwrap(), Duration::new(2, 0));
+
+    assert!(pci.is_finished());
+    assert_eq!(
+        pci.last_key_stroke_elapsed_time(),
+        Some(Duration::new(2, 0))
+    );
+}
+
+#[test]
+fn last_key_stroke_elapsed_time_uses_confirmed_when_inflight_has_no_input() {
+    let (mut pci, _) = ProcessedChunkInfo::new(vec![
+        gen_chunk_unprocessed!(
+            "か",
+            vec![gen_candidate!(gen_candidate_key_stroke!("ka"))],
+            gen_candidate!(gen_candidate_key_stroke!("ka"))
+        ),
+        gen_chunk_unprocessed!(
+            "き",
+            vec![gen_candidate!(gen_candidate_key_stroke!("ki"))],
+            gen_candidate!(gen_candidate_key_stroke!("ki"))
+        ),
+    ]);
+
+    pci.move_next_chunk();
+    pci.stroke_key('k'.try_into().unwrap(), Duration::new(1, 0));
+    pci.stroke_key('a'.try_into().unwrap(), Duration::new(2, 0));
+
+    assert_eq!(
+        pci.last_key_stroke_elapsed_time(),
+        Some(Duration::new(2, 0))
     );
 }

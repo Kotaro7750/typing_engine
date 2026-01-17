@@ -1,17 +1,17 @@
 use std::collections::VecDeque;
 use std::time::Duration;
 
+use crate::statistics::LapRequest;
 use crate::statistics::lap_statistics::{LapInfo, LapStatiticsBuilder};
 use crate::statistics::statistical_event::{
     IdealKeyStrokeDeemedFinishedContext, InflightSpellSnapshottedContext, KeyStrokeCorrectContext,
     KeyStrokeSnapshottedContext, SpellFinishedContext, StatisticalEvent,
 };
-use crate::statistics::LapRequest;
+use crate::typing_primitive_types::chunk::Chunk;
 use crate::typing_primitive_types::chunk::confirmed::ChunkConfirmed;
 use crate::typing_primitive_types::chunk::has_actual_key_strokes::ChunkHasActualKeyStrokes;
 use crate::typing_primitive_types::chunk::inflight::{ChunkInflight, KeyStrokeResult};
 use crate::typing_primitive_types::chunk::unprocessed::ChunkUnprocessed;
-use crate::typing_primitive_types::chunk::Chunk;
 use crate::typing_primitive_types::key_stroke::KeyStrokeChar;
 use crate::typing_primitive_types::key_stroke::KeyStrokeHitMiss;
 use crate::typing_primitive_types::vocabulary::ViewPosition;
@@ -445,17 +445,19 @@ impl ProcessedChunkInfo {
     /// Returns the elapsed time of the last key stroke
     /// This return `None` if there is no key stroke.
     pub(crate) fn last_key_stroke_elapsed_time(&self) -> Option<Duration> {
-        if let Some(inflight_chunk) = self.inflight_chunk.as_ref() {
-            if let Some(last_key_stroke_in_pending) = inflight_chunk.pending_key_strokes().last() {
-                Some(*last_key_stroke_in_pending.elapsed_time())
-            } else {
-                inflight_chunk.last_key_stroke_elapsed_time()
-            }
-        } else if let Some(last_confirmed_chunk) = self.confirmed_chunks.last() {
-            last_confirmed_chunk.last_key_stroke_elapsed_time()
-        } else {
-            None
-        }
+        let inflight_elapsed_time = self.inflight_chunk.as_ref().and_then(|inflight_chunk| {
+            inflight_chunk
+                .pending_key_strokes()
+                .last()
+                .map(|key_stroke| *key_stroke.elapsed_time())
+                .or_else(|| inflight_chunk.last_key_stroke_elapsed_time())
+        });
+
+        inflight_elapsed_time.or_else(|| {
+            self.confirmed_chunks
+                .last()
+                .and_then(|chunk| chunk.last_key_stroke_elapsed_time())
+        })
     }
 }
 
