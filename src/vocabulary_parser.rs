@@ -17,6 +17,9 @@ enum VocabularyParseErrorKind {
     Internal(String),
 }
 
+/// Error returned when parsing a vocabulary entry from a string fails.
+///
+/// See [`parse_vocabulary_entry`](crate::parse_vocabulary_entry) for the expected input format.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VocabularyParseError {
     kind: VocabularyParseErrorKind,

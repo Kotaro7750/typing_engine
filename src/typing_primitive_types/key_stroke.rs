@@ -24,6 +24,7 @@ impl PartialEq<char> for KeyStrokeChar {
     }
 }
 
+/// Error returned when a character cannot be used as a key stroke.
 #[derive(Debug)]
 pub struct KeyStrokeCharError;
 

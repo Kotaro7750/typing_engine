@@ -6,6 +6,9 @@ use std::time::Duration;
 
 use crate::KeyStrokeChar;
 
+/// Aggregated skill statistics derived from typing results.
+///
+/// This summary is built from per-entity statistics and can be merged across sessions.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SkillStatistics {
     single_key_stroke: Vec<EntitySkillStatistics<KeyStrokeChar>>,
