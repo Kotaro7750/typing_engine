@@ -28,7 +28,9 @@ fn init_engine_and_type_halfway(engine: Option<TypingEngine>) -> TypingEngine {
         VocabularySeparator::None,
         VocabularyOrder::InOrder,
     );
+    #[allow(deprecated)]
     engine.init(query_request);
+    #[allow(deprecated)]
     engine
         .start()
         .expect("start() should be finished without errors");
@@ -86,7 +88,9 @@ fn init_engine_and_finish_typing(engine: Option<TypingEngine>) -> TypingEngine {
         VocabularySeparator::None,
         VocabularyOrder::InOrder,
     );
+    #[allow(deprecated)]
     engine.init(query_request);
+    #[allow(deprecated)]
     engine
         .start()
         .expect("start() should be finished without errors");
@@ -101,6 +105,7 @@ fn init_engine_and_finish_typing(engine: Option<TypingEngine>) -> TypingEngine {
 fn construct_display_info_output_correct_display_string() {
     let engine = init_engine_and_type_halfway(None);
 
+    #[allow(deprecated)]
     let display_info = engine
         .construct_display_info(LapRequest::Spell(NonZeroUsize::new(3).unwrap()))
         .unwrap();
@@ -134,6 +139,7 @@ fn construct_display_info_output_correct_display_string() {
 fn construct_display_info_output_correct_summary_statistics() {
     let engine = init_engine_and_type_halfway(None);
 
+    #[allow(deprecated)]
     let display_info = engine
         .construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()))
         .unwrap();
@@ -159,6 +165,7 @@ fn construct_display_info_output_correct_summary_statistics() {
 fn construct_display_info_output_correct_lap_info() {
     let engine = init_engine_and_type_halfway(None);
 
+    #[allow(deprecated)]
     let display_info = engine
         .construct_display_info(LapRequest::KeyStroke(NonZeroUsize::new(2).unwrap()))
         .unwrap();
@@ -195,6 +202,7 @@ fn construct_display_info_output_correct_lap_info() {
 fn construct_display_info_when_finished_output_correct_display_string() {
     let engine = init_engine_and_finish_typing(None);
 
+    #[allow(deprecated)]
     let display_info = engine
         .construct_display_info(LapRequest::Spell(NonZeroUsize::new(3).unwrap()))
         .unwrap();
@@ -226,6 +234,7 @@ fn construct_result_output_correct_result() {
     let engine = init_engine_and_finish_typing(None);
 
     let lap_request = LapRequest::Spell(NonZeroUsize::new(3).unwrap());
+    #[allow(deprecated)]
     let result = engine
         .construct_result(lap_request)
         .expect("Failed to get result");
@@ -264,6 +273,7 @@ fn construct_result_output_correct_skill_statistics() {
     let engine = init_engine_and_finish_typing(None);
 
     let lap_request = LapRequest::Spell(NonZeroUsize::new(3).unwrap());
+    #[allow(deprecated)]
     let result = engine
         .construct_result(lap_request)
         .expect("Failed to get result");

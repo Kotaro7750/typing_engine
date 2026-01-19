@@ -75,6 +75,7 @@ fn append_query_allows_finish_and_result_is_correct() {
         .stroke_key_with_elapsed_time('u'.try_into().unwrap(), Duration::from_millis(400))
         .unwrap();
 
+    #[allow(deprecated)]
     let result = engine
         .construct_result(LapRequest::Spell(NonZeroUsize::new(2).unwrap()))
         .unwrap();
@@ -96,6 +97,7 @@ fn append_query_after_finished_allows_second_run_and_result_is_correct() {
         .stroke_key_with_elapsed_time('u'.try_into().unwrap(), Duration::from_millis(400))
         .unwrap();
 
+    #[allow(deprecated)]
     let result = engine
         .construct_result(LapRequest::Spell(NonZeroUsize::new(2).unwrap()))
         .unwrap();
@@ -140,7 +142,9 @@ fn init_engine_after_wrong_then_correct() -> TypingEngine {
         VocabularySeparator::None,
         VocabularyOrder::InOrder,
     );
+    #[allow(deprecated)]
     engine.init(query_request);
+    #[allow(deprecated)]
     engine
         .start()
         .expect("start() should be finished without errors");
@@ -194,12 +198,14 @@ fn append_third_vocabulary(engine: &mut TypingEngine) {
         VocabularySeparator::None,
         VocabularyOrder::InOrder,
     );
+    #[allow(deprecated)]
     engine
         .append_query(append_request)
         .expect("append_query() should be finished without errors");
 }
 
 fn construct_display_info(engine: &mut TypingEngine) -> typing_engine::DisplayInfo {
+    #[allow(deprecated)]
     engine
         .construct_display_info(LapRequest::Spell(NonZeroUsize::new(2).unwrap()))
         .unwrap()

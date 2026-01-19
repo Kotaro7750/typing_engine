@@ -28,17 +28,18 @@
 //! // Prepare vocabulary entries for the engine
 //! let vocabularies_slice: Vec<&VocabularyEntry> = vocabularies.iter().collect();
 //!
-//! // Initialize the engine with query request
+//! // Add a typing target and activate it
 //! let query_request = QueryRequest::new(
 //!     &vocabularies_slice,
 //!     VocabularyQuantifier::Vocabulary(NonZeroUsize::new(1).unwrap()),
 //!     VocabularySeparator::None,
 //!     VocabularyOrder::InOrder,
 //! );
-//! engine.init(query_request);
+//! engine.add_target(query_request);
+//! engine.activate_target(0, Duration::from_millis(0));
 //!
-//! // Start the typing game
-//! engine.start().expect("Failed to start typing");
+//! // Start the typing game for the active target
+//! engine.start_target(0).expect("Failed to start typing");
 //!
 //! // Process key strokes
 //! engine
@@ -59,12 +60,12 @@
 //!
 //! // Get display information
 //! let display_info = engine
-//!     .construct_display_info(LapRequest::Spell(NonZeroUsize::new(3).unwrap()))
+//!     .construct_display_info_of_target(0, LapRequest::Spell(NonZeroUsize::new(3).unwrap()))
 //!     .unwrap();
 //!
 //! // Get the result after finishing
 //! let result = engine
-//!     .construct_result(LapRequest::Spell(NonZeroUsize::new(3).unwrap()))
+//!     .construct_aggregated_result()
 //!     .expect("Failed to get result");
 //! ```
 //!
@@ -99,7 +100,7 @@
 //!     ]
 //! ).unwrap();
 //!
-//! // Initialize and start typing
+//! // Add and start typing
 //! let vocabularies = vec![&vocabulary];
 //! let query_request = QueryRequest::new(
 //!     &vocabularies,
@@ -107,8 +108,9 @@
 //!     VocabularySeparator::None,
 //!     VocabularyOrder::InOrder,
 //! );
-//! engine.init(query_request);
-//! engine.start().expect("Failed to start typing");
+//! engine.add_target(query_request);
+//! engine.activate_target(0, std::time::Duration::from_millis(0));
+//! engine.start_target(0).expect("Failed to start typing");
 //!
 //! // Continue with key strokes...
 //! ```
@@ -129,6 +131,64 @@
 //! // Using escaped characters
 //! let escaped_entry = parse_vocabulary_entry(r"a\:b:a,\:,b").unwrap();
 //! assert_eq!(escaped_entry.view(), "a:b");
+//! ```
+//!
+//! # Switching Between Multiple Targets
+//! ```rust
+//! use std::num::NonZeroUsize;
+//! use std::time::Duration;
+//! use typing_engine::{
+//!     QueryRequest, TypingEngine, VocabularyEntry, VocabularyOrder, VocabularyQuantifier,
+//!     VocabularySeparator, VocabularySpellElement,
+//! };
+//!
+//! let entry_a = VocabularyEntry::new(
+//!     "阿".to_string(),
+//!     vec![VocabularySpellElement::Normal(
+//!         "あ".to_string().try_into().unwrap(),
+//!     )],
+//! )
+//! .unwrap();
+//! let entry_i = VocabularyEntry::new(
+//!     "胃".to_string(),
+//!     vec![VocabularySpellElement::Normal(
+//!         "い".to_string().try_into().unwrap(),
+//!     )],
+//! )
+//! .unwrap();
+//!
+//! let mut engine = TypingEngine::new();
+//! let request_a = QueryRequest::new(
+//!     vec![&entry_a].as_ref(),
+//!     VocabularyQuantifier::Vocabulary(NonZeroUsize::new(1).unwrap()),
+//!     VocabularySeparator::None,
+//!     VocabularyOrder::InOrder,
+//! );
+//! let request_i = QueryRequest::new(
+//!     vec![&entry_i].as_ref(),
+//!     VocabularyQuantifier::Vocabulary(NonZeroUsize::new(1).unwrap()),
+//!     VocabularySeparator::None,
+//!     VocabularyOrder::InOrder,
+//! );
+//!
+//! engine.add_target(request_a);
+//! engine.add_target(request_i);
+//!
+//! engine.activate_target(0, Duration::from_millis(0));
+//! engine.start_target(0).expect("Failed to start target 0");
+//! engine
+//!     .stroke_key_with_elapsed_time('a'.try_into().unwrap(), Duration::from_millis(100))
+//!     .unwrap();
+//!
+//! engine.activate_target(1, Duration::from_millis(200));
+//! engine.start_target(1).expect("Failed to start target 1");
+//! engine
+//!     .stroke_key_with_elapsed_time('i'.try_into().unwrap(), Duration::from_millis(300))
+//!     .unwrap();
+//!
+//! // Aggregate results across started targets.
+//! let result = engine.construct_aggregated_result().unwrap();
+//! assert_eq!(result.summary().spell().finished_count(), 2);
 //! ```
 
 pub use crate::display_info::DisplayInfo;

@@ -21,7 +21,7 @@ impl SkillStatisticsManager {
     }
 
     /// Consume the event and update statistics.
-    pub(crate) fn consume_event(&mut self, event: &StatisticalEvent) {
+    pub(crate) fn consume_event(&mut self, event: StatisticalEvent) {
         if let StatisticalEvent::KeyStrokeCorrect(key_stroke_correct_context) = event {
             self.single_key_stroke.update(
                 key_stroke_correct_context.key_stroke(),
@@ -143,14 +143,14 @@ mod test {
     fn key_stroke_correct_event_update_singke_key_stroke_statistics() {
         let mut ssm = SkillStatisticsManager::new();
 
-        ssm.consume_event(&StatisticalEvent::KeyStrokeCorrect(
+        ssm.consume_event(StatisticalEvent::KeyStrokeCorrect(
             KeyStrokeCorrectContext::new(
                 'a'.try_into().unwrap(),
                 Duration::from_secs(1),
                 vec!['b'.try_into().unwrap()],
             ),
         ));
-        ssm.consume_event(&StatisticalEvent::KeyStrokeCorrect(
+        ssm.consume_event(StatisticalEvent::KeyStrokeCorrect(
             KeyStrokeCorrectContext::new(
                 'b'.try_into().unwrap(),
                 Duration::from_secs(2),

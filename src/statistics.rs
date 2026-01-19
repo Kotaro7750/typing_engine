@@ -2,7 +2,6 @@ use std::num::NonZeroUsize;
 
 use result::TypingResultSummary;
 use serde::{Deserialize, Serialize};
-use skill_statistics::{public::SkillStatistics, SkillStatisticsManager};
 
 pub(crate) mod lap_statistics;
 pub(crate) mod multi_target_position_convert;
@@ -20,6 +19,10 @@ use statistics_counter::PrimitiveStatisticsCounter;
 
 use self::multi_target_position_convert::BaseTarget;
 
+/// Configuration for lap statistics aggregation in display/result construction.
+///
+/// Each variant chooses the base unit (key stroke, ideal key stroke, spell, or chunk) and the
+/// `NonZeroUsize` value specifies how many units are grouped into a single lap.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LapRequest {
     KeyStroke(NonZeroUsize),
@@ -264,7 +267,6 @@ pub(crate) struct StatisticsManager {
     ideal_key_stroke: PrimitiveStatisticsCounter,
     spell: PrimitiveStatisticsCounter,
     chunk: PrimitiveStatisticsCounter,
-    skill_statistics: SkillStatisticsManager,
 }
 
 impl StatisticsManager {
@@ -274,7 +276,6 @@ impl StatisticsManager {
             ideal_key_stroke: PrimitiveStatisticsCounter::empty_counter(),
             spell: PrimitiveStatisticsCounter::empty_counter(),
             chunk: PrimitiveStatisticsCounter::empty_counter(),
-            skill_statistics: SkillStatisticsManager::new(),
         }
     }
 
@@ -301,8 +302,6 @@ impl StatisticsManager {
 
     /// Consume event and update statistics.
     pub(crate) fn consume_event(&mut self, event: statistical_event::StatisticalEvent) {
-        self.skill_statistics.consume_event(&event);
-
         match event {
             StatisticalEvent::KeyStrokeCorrect(key_stroke_correct_context) => {
                 let wrong_key_strokes_count = key_stroke_correct_context.wrong_key_strokes().len();
@@ -380,12 +379,6 @@ impl StatisticsManager {
             (&self.spell).into(),
             (&self.chunk).into(),
         )
-    }
-
-    /// Construct [`SkillStatistics`](SkillStatistics) from holding information.
-    /// This method assume that typing is done and updating statistics is all done
-    pub(crate) fn constuct_skill_statistics(&self) -> SkillStatistics {
-        self.skill_statistics.construct_skill_statistics()
     }
 }
 
